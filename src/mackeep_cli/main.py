@@ -433,22 +433,28 @@ def _app_json(app_db: ApplicationsDatabase, app_name: str) -> dict[str, Any]:
     files: list[dict[str, Any]] = []
     for path in sorted(app_db.get_home_files(app_name)):
         full_path: str = os.path.join(home, path)
+        reason: str | None = utils.sensitive_reason(path)
         files.append(
             {
                 "path": path,
                 "exists": os.path.exists(full_path),
                 "is_dir": os.path.isdir(full_path),
+                "sensitive": reason is not None,
+                "sensitive_reason": reason,
             },
         )
 
     xdg_files: list[dict[str, Any]] = []
     for path in sorted(app_db.get_xdg_files(app_name)):
         full_path = os.path.join(xdg_config_home, path)
+        reason = utils.sensitive_reason(path)
         xdg_files.append(
             {
                 "path": path,
                 "exists": os.path.exists(full_path),
                 "is_dir": os.path.isdir(full_path),
+                "sensitive": reason is not None,
+                "sensitive_reason": reason,
             },
         )
 

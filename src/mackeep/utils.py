@@ -2,6 +2,7 @@
 
 import base64
 import binascii
+import fnmatch
 import os
 import platform
 import shutil
@@ -24,6 +25,53 @@ CAN_RUN_AS_ROOT: bool = False
 
 # The legacy paths that were used during this run
 LEGACY_WARNINGS: list[str] = []
+
+# The warning about the sensitive files is printed once per run
+SENSITIVE_WARNINGS: list[str] = []
+
+# The files that hold a public key, they are not secrets
+SAFE_SUFFIXES: tuple[str, ...] = (".pub",)
+
+
+def sensitive_reason(path: str) -> str | None:
+    """
+    Get the reason why a path holds secrets, if it does.
+
+    The path is relative to the home directory, or to the XDG config home.
+
+    Args:
+        path (str): The path, relative to the home directory.
+
+    Returns:
+        str or None: The reason, None when the path is not sensitive.
+    """
+    if path.endswith(SAFE_SUFFIXES):
+        return None
+
+    for pattern, reason in constants.SENSITIVE_PATTERNS.items():
+        if fnmatch.fnmatch(path, pattern):
+            return reason
+    return None
+
+
+def warn_sensitive_file(path: str, reason: str) -> None:
+    """
+    Warn about a file that holds secrets, once per run.
+
+    Args:
+        path (str): The path of the file, relative to the home directory.
+        reason (str): Why the file is sensitive.
+    """
+    if SENSITIVE_WARNINGS:
+        return
+
+    SENSITIVE_WARNINGS.append(path)
+    print(
+        f"Warning: {path} holds secrets ({reason}), it is copied in plain"
+        " text to the backup.",
+        file=sys.stderr,
+    )
+
 
 def legacy_warning(message: str) -> None:
     """

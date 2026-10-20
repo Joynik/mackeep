@@ -209,15 +209,51 @@ class ApplicationProfile:
         """
         Report an operation to the reporter, if any.
 
+        The paths that hold secrets are marked, so the front-ends can warn
+        about them. The human-readable output warns about them once.
+
         Args:
             action (str): The action, e.g. "copy" or "skip_excluded".
             details: The details of the operation.
         """
+        relative: str = self._home_relative(str(details.get("src", "")))
+        reason: str | None = utils.sensitive_reason(relative) if relative else None
+        details["sensitive"] = reason is not None
+        details["sensitive_reason"] = reason
+
         if self.reporter is None:
+            if action == "copy" and reason is not None:
+                utils.warn_sensitive_file(relative, reason)
             return
         payload: dict[str, Any] = {"app": self.app_name, "action": action}
         payload.update(details)
         self.reporter(action, payload)
+
+    @staticmethod
+    def _home_relative(path: str) -> str:
+        """
+        Get the path relative to the home directory, when it is inside it.
+
+        Args:
+            path (str): The path of a file.
+
+        Returns:
+            str: The path relative to the home directory, an empty string
+            when the path is outside of it.
+        """
+        if not path:
+            return ""
+
+        home: str = os.environ["HOME"]
+        try:
+            relative: str = os.path.relpath(path, home)
+        except ValueError:
+            return ""
+
+        if relative.startswith(".."):
+            return ""
+
+        return relative
 
     def _walk(self, src: str, relative: str) -> Iterator[tuple[str, str, bool]]:
         """

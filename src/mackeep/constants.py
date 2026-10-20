@@ -53,6 +53,29 @@ ENGINE_ICLOUD: str = "icloud"
 
 DOCUMENTATION_URL: str = "https://github.com/Joynik/mackeep/blob/master/doc/README.md"
 
+# The paths that hold secrets. The keys are the patterns of the paths,
+# relative to the home directory (or to the XDG config home), the values are
+# the reason why the path is sensitive.
+SENSITIVE_PATTERNS: dict[str, str] = {
+    ".ssh/id_*": "A private key of SSH",
+    ".gnupg": "The keys of GnuPG",
+    ".gnupg/*": "The keys of GnuPG",
+    ".aws/credentials": "The credentials of AWS",
+    ".aws/config": "The configuration of AWS",
+    ".docker/config.json": "The credentials of Docker",
+    ".kube/config": "The configuration of Kubernetes",
+    ".netrc": "The credentials of the network",
+    ".pypirc": "The credentials of PyPI",
+    ".password-store": "The password store of pass",
+    ".password-store/*": "The password store of pass",
+    "Library/Keychains": "The keychain of macOS",
+    "Library/Keychains/*": "The keychain of macOS",
+    "*.pem": "A private key",
+    "gcloud/*": "The credentials of Google Cloud",
+    "gh/hosts.yml": "The tokens of GitHub",
+    "op/*": "The vaults of 1Password",
+}
+
 # Error message displayed when mackeep can't find the storage specified
 # in the config (or the default one).
 ERROR_UNABLE_TO_FIND_STORAGE: str = (
