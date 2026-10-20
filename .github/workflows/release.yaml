@@ -21,6 +21,8 @@ jobs:
             suffix: macos-arm64
           - os: ubuntu-24.04
             suffix: linux-x86_64
+          - os: ubuntu-24.04-arm
+            suffix: linux-arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -78,7 +80,8 @@ jobs:
           WORK_DIR="$(mktemp -d)"
           ARCHIVE="dist/mackeep-cli-$(uv version --short)-${{ matrix.suffix }}.tar.gz"
           HOME_DIR="$WORK_DIR/home"
-          mkdir -p "$WORK_DIR/app" "$HOME_DIR/storage/Mackeep"
+          XDG_DIR="$HOME_DIR/.config"
+          mkdir -p "$WORK_DIR/app" "$HOME_DIR/storage/Mackeep" "$XDG_DIR"
           tar -xzf "$ARCHIVE" -C "$WORK_DIR/app"
           BIN="$WORK_DIR/app/mackeep-cli"
           chmod +x "$BIN"
@@ -86,10 +89,11 @@ jobs:
             "$HOME_DIR/storage" > "$HOME_DIR/.mackeep.cfg"
 
           echo "--- the version ---"
-          HOME="$HOME_DIR" "$BIN" --version
+          HOME="$HOME_DIR" XDG_CONFIG_HOME="$XDG_DIR" "$BIN" --version
 
           echo "--- the list of the applications ---"
-          HOME="$HOME_DIR" "$BIN" --json list > "$WORK_DIR/list.json"
+          HOME="$HOME_DIR" XDG_CONFIG_HOME="$XDG_DIR" \
+            "$BIN" --json list > "$WORK_DIR/list.json"
           COUNT="$(jq 'length' "$WORK_DIR/list.json")"
           echo "applications in the binary: $COUNT"
           if [ "$COUNT" -lt 500 ]; then
@@ -98,7 +102,7 @@ jobs:
           fi
 
           echo "--- the backup ---"
-          HOME="$HOME_DIR" "$BIN" backup --json
+          HOME="$HOME_DIR" XDG_CONFIG_HOME="$XDG_DIR" "$BIN" backup --json
 
       - uses: actions/upload-artifact@v7
         with:
