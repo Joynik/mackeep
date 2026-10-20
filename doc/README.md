@@ -681,3 +681,22 @@ With `--json`, the plan and the result are written as JSON:
   }
 }
 ```
+
+## The desktop application
+
+The desktop application of Mackeep is written in SwiftUI for macOS 15 and
+above. It is not released yet, but it is built from the `desktop/` folder of
+the repository:
+
+```bash
+cd desktop
+make project   # The project of XcodeGen is generated
+make build     # The application is built
+make test      # The unit tests and the UI tests are run
+```
+
+The application does not keep its own copy of the configuration: it edits
+`~/.mackeep.cfg` and the files of `~/.mackeep/` and it drives the terminal
+version through the JSON interface. The terminal version must be installed
+and found in `/opt/homebrew/bin` or `/usr/local/bin`, the path can be set in
+the settings of the application.

@@ -2,21 +2,89 @@ import XCTest
 
 /// The UI tests of the application.
 final class MackeepDesktopUITests: XCTestCase {
+    /// The identifier of the application.
+    private static let identifier: String = "com.joynik.mackeep"
+
+    /// The application of Mackeep.
+    private var application: XCUIApplication {
+        XCUIApplication(bundleIdentifier: Self.identifier)
+    }
+
     /// The window of the application.
     private var window: XCUIElement {
-        XCUIApplication().windows.firstMatch
+        application.windows.firstMatch
     }
 
-    func testTheWindowOpens() {
-        XCUIApplication().launch()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
 
-        XCTAssertTrue(window.waitForExistence(timeout: 20))
+        // A running copy of the application takes the windows for itself,
+        // so the new copy stays without a window
+        stopTheApplication()
     }
 
-    func testTheApplicationsAreListed() {
-        XCUIApplication().launch()
+    override func tearDownWithError() throws {
+        stopTheApplication()
 
-        XCTAssertTrue(window.waitForExistence(timeout: 20))
+        try super.tearDownWithError()
+    }
+
+    /// Start the application.
+    ///
+    /// The application is started through the LaunchServices, because a
+    /// application, that is started directly, does not get a window.
+    private func startTheApplication() throws {
+        let process: Process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        process.arguments = ["-n", "-a", Self.applicationPath().path]
+        try process.run()
+        process.waitUntilExit()
+
+        // The application comes to the front when it starts
+        application.activate()
+    }
+
+    /// Stop every copy of the application and wait for them.
+    private func stopTheApplication() {
+        let running: [NSRunningApplication] = NSRunningApplication
+            .runningApplications(withBundleIdentifier: Self.identifier)
+
+        for copy: NSRunningApplication in running {
+            copy.terminate()
+        }
+
+        let deadline: Date = Date().addingTimeInterval(10)
+        while Date() < deadline {
+            let copies: [NSRunningApplication] = NSRunningApplication
+                .runningApplications(withBundleIdentifier: Self.identifier)
+            if copies.isEmpty { return }
+
+            usleep(200_000)
+        }
+    }
+
+    /// The path of the built application.
+    private static func applicationPath() -> URL {
+        var folder: URL = Bundle(for: MackeepDesktopUITests.self).bundleURL
+        while folder.pathComponents.count > 1,
+              folder.lastPathComponent != "Debug"
+        {
+            folder = folder.deletingLastPathComponent()
+        }
+
+        return folder.appendingPathComponent("Mackeep.app")
+    }
+
+    func testTheWindowOpens() throws {
+        try startTheApplication()
+
+        XCTAssertTrue(window.waitForExistence(timeout: 30))
+    }
+
+    func testTheApplicationsAreListed() throws {
+        try startTheApplication()
+
+        XCTAssertTrue(window.waitForExistence(timeout: 30))
 
         // The applications of Mackeep are listed
         let list: XCUIElement = window.outlines.element(boundBy: 1)

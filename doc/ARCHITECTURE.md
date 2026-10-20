@@ -337,9 +337,21 @@ src/
     └── main.py         # CLI entry point
 ```
 
-The desktop version will live in `src/mackeep_desktop/`. It talks to the
-terminal version through the JSON interface, so it does not need anything
+The desktop version lives in `desktop/` and is written in SwiftUI. It talks to
+the terminal version through the JSON interface, so it does not need anything
 but the core.
+
+```
+desktop/
+├── project.yml        # The project of XcodeGen, the project file is generated
+├── Sources/
+│   ├── App/
+│   │   ├── App/       # The entry point and the shared state of the windows
+│   │   ├── Core/      # The INI parser, the models, the runner of the tool
+│   │   └── Features/  # The sections: Applications, Editor, Backup, Settings
+│   └── Resources/     # The strings of the interface
+└── Tests/             # The unit tests and the UI tests
+```
 
 ## Extension Points
 
