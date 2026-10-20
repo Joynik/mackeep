@@ -52,9 +52,10 @@ from typing import Any
 from docopt import docopt
 
 from . import utils
-from .application import ApplicationProfile
+from .application import ApplicationProfile, Reporter
 from .appsdb import ApplicationsDatabase
 from .constants import MACKUP_APP_NAME, VERSION
+from .excludes import Matcher
 from .mackup import Mackup
 
 
@@ -81,12 +82,31 @@ class _Context:
     app_db: ApplicationsDatabase
     dry_run: bool
     verbose: bool
+    reporter: Reporter | None = None
 
 
 def _print_app_header(app_name: str, verbose: bool) -> None:
     if verbose:
         header_str = header("---")
         print(f"\n{header_str} {bold(app_name)} {header_str}")
+
+
+def _make_profile(ctx: _Context, app_name: str) -> ApplicationProfile:
+    """Create the profile of an application, with its exclusion rules."""
+    app: ApplicationProfile = ApplicationProfile(
+        ctx.mckp, ctx.app_db.get_files(app_name), ctx.dry_run, ctx.verbose,
+    )
+    app.configure(
+        exclude=Matcher(ctx.mckp.config.global_exclude).extended(
+            ctx.app_db.get_exclude(app_name),
+        ),
+        xdg_exclude=Matcher(ctx.mckp.config.global_xdg_exclude).extended(
+            ctx.app_db.get_xdg_exclude(app_name),
+        ),
+        reporter=ctx.reporter,
+        app_name=app_name,
+    )
+    return app
 
 
 def _resolve_apps(app_name: str | None, ctx: _Context) -> set[str]:
@@ -108,11 +128,13 @@ def _resolve_apps(app_name: str | None, ctx: _Context) -> set[str]:
 def _run_action(ctx: _Context, app_names: set[str], action: str) -> None:
     """Run an ApplicationProfile method over each app, in sorted order."""
     for app_name in sorted(app_names):
-        app = ApplicationProfile(
-            ctx.mckp, ctx.app_db.get_files(app_name), ctx.dry_run, ctx.verbose,
-        )
+        app = _make_profile(ctx, app_name)
         _print_app_header(app_name, ctx.verbose)
+        if ctx.reporter is not None:
+            ctx.reporter("start", {"app": app_name, "action": action})
         getattr(app, action)()
+        if ctx.reporter is not None:
+            ctx.reporter("done", {"app": app_name, "action": action})
 
 
 def _cmd_list(app_db: ApplicationsDatabase) -> None:
@@ -136,6 +158,18 @@ def _cmd_show(args: dict[str, Any], app_db: ApplicationsDatabase) -> None:
     print("Configuration files:")
     for file in app_db.get_files(requested_app_name):
         print(f" - {file}")
+
+    exclude: list[str] = app_db.get_exclude(requested_app_name)
+    if exclude:
+        print("Excluded paths:")
+        for pattern in exclude:
+            print(f" - {pattern}")
+
+    xdg_exclude: list[str] = app_db.get_xdg_exclude(requested_app_name)
+    if xdg_exclude:
+        print("Excluded XDG paths:")
+        for pattern in xdg_exclude:
+            print(f" - {pattern}")
 
 
 def _cmd_backup(args: dict[str, Any], ctx: _Context) -> None:
@@ -200,9 +234,7 @@ def _cmd_link_uninstall(args: dict[str, Any], ctx: _Context) -> None:
 
         # Restore the Mackup config before any other config, as we might
         # need it to know about custom settings
-        mackup_app = ApplicationProfile(
-            ctx.mckp, ctx.app_db.get_files(MACKUP_APP_NAME), ctx.dry_run, ctx.verbose,
-        )
+        mackup_app = _make_profile(ctx, MACKUP_APP_NAME)
         mackup_app.link_uninstall()
 
         # Delete the Mackup folder in Dropbox
@@ -236,9 +268,7 @@ def _cmd_link(args: dict[str, Any], ctx: _Context) -> None:
 
     # Restore the Mackup config before any other config, as we might
     # need it to know about custom settings
-    mackup_app = ApplicationProfile(
-        ctx.mckp, ctx.app_db.get_files(MACKUP_APP_NAME), ctx.dry_run, ctx.verbose,
-    )
+    mackup_app = _make_profile(ctx, MACKUP_APP_NAME)
     _print_app_header(MACKUP_APP_NAME, ctx.verbose)
     mackup_app.link()
 

@@ -39,6 +39,10 @@ class Config:
         # Initialize the parser
         self._parser = self._setup_parser(filename)
 
+        # Initialize the parser of the exclusion rules. The patterns are
+        # case sensitive, so their case must be preserved.
+        self._exclusion_parser = self._setup_exclusion_parser()
+
         # Do we have an old config file?
         self._warn_on_old_config()
 
@@ -56,6 +60,10 @@ class Config:
 
         # Get the list of apps to allow
         self._apps_to_sync = self._parse_apps_to_sync()
+
+        # Get the global exclusion rules, applied to every application
+        self._global_exclude = self._parse_exclusions("exclude")
+        self._global_xdg_exclude = self._parse_exclusions("xdg_exclude")
 
     @property
     def engine(self) -> str:
@@ -125,6 +133,40 @@ class Config:
         """
         return set(self._apps_to_sync)
 
+    @property
+    def config_path(self) -> str:
+        """
+        The path of the config file that is used.
+
+        Returns:
+            str
+        """
+        return str(self._config_path)
+
+    @property
+    def global_exclude(self) -> list[str]:
+        """
+        Get the global exclusion patterns, applied to every application.
+
+        The patterns are relative to the home directory.
+
+        Returns:
+            list of str
+        """
+        return list(self._global_exclude)
+
+    @property
+    def global_xdg_exclude(self) -> list[str]:
+        """
+        Get the global XDG exclusion patterns, applied to every application.
+
+        The patterns are relative to the XDG config home.
+
+        Returns:
+            list of str
+        """
+        return list(self._global_xdg_exclude)
+
     def _setup_parser(
         self, filename: str | None = None,
     ) -> configparser.ConfigParser:
@@ -142,7 +184,32 @@ class Config:
         parser = configparser.ConfigParser(
             allow_no_value=True, inline_comment_prefixes=(";", "#"),
         )
-        parser.read(self._best_config_path(filename))
+        # Keep track of the config file that is used
+        self._config_path: str = self._best_config_path(filename)
+        parser.read(self._config_path)
+
+        return parser
+
+    def _setup_exclusion_parser(self) -> configparser.ConfigParser:
+        """
+        Configure a ConfigParser instance to read the exclusion rules.
+
+        The exclusion patterns are case sensitive, so the case of the
+        patterns must be preserved.
+
+        Returns:
+            ConfigParser
+        """
+        parser = configparser.ConfigParser(
+            allow_no_value=True, inline_comment_prefixes=(";", "#"),
+        )
+        parser.optionxform = str  # type: ignore
+        try:
+            parser.read(self._config_path)
+        except configparser.Error as e:
+            raise ConfigError(
+                f"Invalid config file {self._config_path}: {e}",
+            ) from e
 
         return parser
 
@@ -337,6 +404,42 @@ class Config:
             apps_to_sync = set(self._parser.options(section_title))
 
         return apps_to_sync
+
+    def _parse_exclusions(self, section_title: str) -> list[str]:
+        """
+        Parse a global exclusion section in the config.
+
+        The patterns are listed one per line, like the other sections of the
+        config file. A pattern may also be given as a value, e.g.
+        ``*.log = some log files``.
+
+        Args:
+            section_title (str): The name of the section to read.
+
+        Returns:
+            list of str
+        """
+        patterns: list[str] = []
+        if not self._exclusion_parser.has_section(section_title):
+            return patterns
+
+        for option in self._exclusion_parser.options(section_title):
+            value: str | None = self._exclusion_parser.get(
+                section_title, option, raw=True,
+            )
+            # A pattern listed without a value is the option itself.
+            pattern: str = option if value is None else value
+            pattern = pattern.strip()
+            if not pattern:
+                continue
+            if pattern.startswith("/"):
+                raise ConfigError(
+                    f"Invalid exclusion pattern in {self._config_path}: "
+                    f"unsupported absolute path: {pattern}",
+                )
+            patterns.append(pattern)
+
+        return patterns
 
 
 class ConfigError(Exception):

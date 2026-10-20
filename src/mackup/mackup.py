@@ -9,7 +9,8 @@ The only UI for now is the command line.
 import os
 import os.path
 
-from . import appsdb, config, utils
+from . import appsdb, utils
+from .config import Config
 
 
 class Mackup:
@@ -17,9 +18,19 @@ class Mackup:
 
     def __init__(self, config_file: str | None = None) -> None:
         """Mackup Constructor."""
-        self._config: config.Config = config.Config(config_file)
+        self._config: Config = Config(config_file)
 
         self.mackup_folder: str = self._config.fullpath
+
+    @property
+    def config(self) -> Config:
+        """
+        The configuration of Mackup.
+
+        Returns:
+            config.Config
+        """
+        return self._config
 
     def check_for_usable_environment(self) -> None:
         """Check if the current env is usable and has everything's required."""
