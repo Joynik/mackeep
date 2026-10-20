@@ -485,7 +485,13 @@ Describes the configuration of Mackeep:
   "source": "custom",
   "cfg_path": "/home/user/.mackeep/vscode.cfg",
   "files": [
-    {"path": "Library/Application Support/Code/User", "exists": true, "is_dir": true}
+    {
+      "path": "Library/Application Support/Code/User",
+      "exists": true,
+      "is_dir": true,
+      "sensitive": false,
+      "sensitive_reason": null
+    }
   ],
   "xdg_files": [],
   "exclude": ["**/.DS_Store"],
@@ -496,6 +502,9 @@ Describes the configuration of Mackeep:
 The `name` is the identifier of the application, as shown by `mackeep-cli list`.
 The `source` is `builtin` for the applications of Mackeep and `custom` for
 the ones of the user.
+
+The `sensitive` tells if the path holds secrets, the `sensitive_reason` says
+why. See [the sensitive files](#the-sensitive-files).
 
 ### `mackeep-cli --json backup` and `mackeep-cli --json restore`
 
@@ -510,7 +519,9 @@ With `--dry-run`, the operations that would be done are described:
       "action": "copy",
       "src": "/home/user/Library/Application Support/Code/User",
       "dst": "/home/user/dotfiles/Mackeep/Library/Application Support/Code/User",
-      "size_bytes": 4096
+      "size_bytes": 4096,
+      "sensitive": false,
+      "sensitive_reason": null
     }
   ],
   "summary": {
@@ -524,6 +535,9 @@ With `--dry-run`, the operations that would be done are described:
 
 The `action` of an operation is one of `copy`, `skip_excluded`,
 `skip_missing`, `conflict` or `stale_in_backup`.
+
+Every operation has a `sensitive` field and a `sensitive_reason` field, they
+tell if the file holds secrets. See [the sensitive files](#the-sensitive-files).
 
 ### The detail levels of the dry-run
 
@@ -642,7 +656,13 @@ set in the config file is never replaced.
 ### The warnings
 
 When a legacy path is used, Mackeep warns about it once, in `stderr`, and
-tells how to migrate.
+tells how to migrate. The `stdout` stays clean, so the output of `--json`
+can be piped.
+
+A custom application config of Mackup is only warned about when it is
+really used: a file that is shadowed by a new one with the same name is
+not used at all, and a file that is the same as the default config of the
+application does not have to be copied.
 
 ### `mackeep-cli migrate`
 
@@ -661,6 +681,18 @@ The files are **copied**, never moved nor deleted, so the old ones stay
 where they are until you remove them. The files that already exist in
 their new location are never overwritten, they are skipped.
 
+When the storage folder of Mackup is used, the name of that folder is
+written in the new config file:
+
+```ini
+[storage]
+directory = Mackup
+```
+
+Without it, the backup would move to a new folder and the files of the old
+one would look like they were lost. A config file that already has a
+`directory` option is never changed.
+
 With `--json`, the plan and the result are written as JSON:
 
 ```json
@@ -671,16 +703,43 @@ With `--json`, the plan and the result are written as JSON:
       "action": "copy",
       "src": "/home/user/.mackup.cfg",
       "dst": "/home/user/.mackeep.cfg"
+    },
+    {
+      "action": "set_directory",
+      "src": "/home/user/.mackup.cfg",
+      "dst": "/home/user/.mackeep.cfg",
+      "directory": "Mackup"
     }
   ],
   "summary": {
     "copied": 1,
     "skipped": 0,
-    "total_actions": 1,
+    "updated": 1,
+    "total_actions": 2,
     "dry_run": false
   }
 }
 ```
+
+## The sensitive files
+
+Some of the files of Mackeep hold secrets: the private keys of SSH, the
+keys of GnuPG, the credentials of AWS, the keychain of macOS... They are
+copied in plain text to the backup, like every other file.
+
+Mackeep knows a list of such paths and tells about them:
+
+- in the JSON interface, every file has a `sensitive` field and a
+  `sensitive_reason` field, see [`--json list`](#mackeep-cli---json-list-and-mackeep-cli---json-show-application)
+  and the [dry-run](#mackeep-cli---json-backup-and-mackeep-cli---json-restore);
+- in the human-readable output, the backup warns about them once.
+
+The list of the paths is in `SENSITIVE_PATTERNS`, in
+`src/mackeep/constants.py`. The paths are relative to the home directory
+(or to the XDG config home), the keys are the patterns and the values are
+the reason why the path is sensitive.
+
+The public keys (`.pub`) are not secrets, they are never marked.
 
 ## The desktop application
 

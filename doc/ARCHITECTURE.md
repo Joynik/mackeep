@@ -341,7 +341,7 @@ The desktop version lives in `desktop/` and is written in SwiftUI. It talks to
 the terminal version through the JSON interface, so it does not need anything
 but the core.
 
-```
+```text
 desktop/
 ├── project.yml        # The project of XcodeGen, the project file is generated
 ├── Sources/
