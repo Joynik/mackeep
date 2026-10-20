@@ -18,6 +18,12 @@ MACKEEP_BACKUP_PATH: str = "Mackeep"
 # Mackeep config file
 MACKEEP_CONFIG_FILE: str = ".mackeep.cfg"
 
+# The legacy Mackup names, read for backward compatibility
+LEGACY_BACKUP_PATH: str = "Mackup"
+LEGACY_CONFIG_FILE: str = ".mackup.cfg"
+LEGACY_CUSTOM_APPS_DIR: str = ".mackup"
+LEGACY_CUSTOM_APPS_DIR_XDG: str = "mackup/applications"
+
 
 def get_version() -> str:
     """Return package version, or a safe fallback when metadata is unavailable."""

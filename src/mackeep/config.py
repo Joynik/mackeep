@@ -12,6 +12,8 @@ from .constants import (
     ENGINE_FS,
     ENGINE_GDRIVE,
     ENGINE_ICLOUD,
+    LEGACY_BACKUP_PATH,
+    LEGACY_CONFIG_FILE,
     MACKEEP_BACKUP_PATH,
     MACKEEP_CONFIG_FILE,
 )
@@ -20,6 +22,7 @@ from .utils import (
     get_dropbox_folder_location,
     get_google_drive_folder_location,
     get_icloud_folder_location,
+    legacy_warning,
 )
 
 
@@ -35,6 +38,12 @@ class Config:
                             defaults to MACKEEP_CONFIG_FILE
         """
         assert isinstance(filename, str) or filename is None
+
+        # Is the config file a legacy Mackup one?
+        self._is_legacy: bool = False
+
+        # Is the storage folder a legacy Mackup one?
+        self._using_legacy_directory: bool = False
 
         # Initialize the parser
         self._parser = self._setup_parser(filename)
@@ -144,6 +153,26 @@ class Config:
         return str(self._config_path)
 
     @property
+    def is_legacy(self) -> bool:
+        """
+        Whether the config file is a legacy Mackup one.
+
+        Returns:
+            bool
+        """
+        return self._is_legacy
+
+    @property
+    def using_legacy_directory(self) -> bool:
+        """
+        Whether the storage folder is the legacy Mackup one.
+
+        Returns:
+            bool
+        """
+        return self._using_legacy_directory
+
+    @property
     def global_exclude(self) -> list[str]:
         """
         Get the global exclusion patterns, applied to every application.
@@ -222,9 +251,11 @@ class Config:
         - ~/.mackeep.cfg
         - $MACKEEP_CONFIG
         - $XDG_CONFIG_HOME/mackeep/mackeep.cfg
-        - ~/.config/mackeep/mackeep.cfg
+        - ~/.mackup.cfg (legacy)
+        - $XDG_CONFIG_HOME/mackup/mackup.cfg (legacy)
 
-        if none of these files exist, we create ~/.mackeep.cfg
+        The first one that exists wins. If none of these files exist, we
+        create ~/.mackeep.cfg.
 
         Args:
             filename (str or None, optional): Optional override for the config
@@ -240,19 +271,31 @@ class Config:
         config_path: Path
         if not filename:
             default = Path.home() / MACKEEP_CONFIG_FILE
+            xdg_config_home = Path(
+                os.environ.get("XDG_CONFIG_HOME", "~/.config"),
+            ).expanduser()
+            legacy_paths = [
+                # 4. the legacy config file of Mackup
+                Path.home() / LEGACY_CONFIG_FILE,
+                # 5. the legacy config file in the XDG_CONFIG_HOME directory
+                xdg_config_home / "mackup" / LEGACY_CONFIG_FILE.lstrip("."),
+            ]
             search_paths = [
                 # 1. the default config file is ~/.mackeep.cfg
                 default,
                 # 2. check for the MACKEEP_CONFIG envvar
                 Path(os.environ.get("MACKEEP_CONFIG", "")).expanduser(),
                 # 3. check for a config file in the XDG_CONFIG_HOME directory
-                (
-                    Path(os.environ.get("XDG_CONFIG_HOME", "~/.config")).expanduser()
-                    / "mackeep"
-                    / MACKEEP_CONFIG_FILE.lstrip(".")
-                ),
+                xdg_config_home / "mackeep" / MACKEEP_CONFIG_FILE.lstrip("."),
+                *legacy_paths,
             ]
             config_path = next((p for p in search_paths if p.is_file()), default)
+            self._is_legacy = config_path in legacy_paths
+            if self._is_legacy:
+                legacy_warning(
+                    f"the config file {config_path} is used, copy it to "
+                    f"{default} to use the new name",
+                )
         else:
             # Support both absolute and relative paths
             config_path = Path(filename).expanduser()
@@ -368,6 +411,19 @@ class Config:
                 )
         else:
             directory = MACKEEP_BACKUP_PATH
+
+            # The legacy folder of Mackup is used when it exists and the
+            # new one does not. An explicit directory is never replaced.
+            legacy_directory: str = os.path.join(self.path, LEGACY_BACKUP_PATH)
+            if not os.path.isdir(os.path.join(self.path, directory)) and os.path.isdir(
+                legacy_directory,
+            ):
+                directory = LEGACY_BACKUP_PATH
+                self._using_legacy_directory = True
+                legacy_warning(
+                    f"the storage folder {legacy_directory} is used, set the"
+                    " 'directory' option in the config file to use another one",
+                )
 
         return str(directory)
 

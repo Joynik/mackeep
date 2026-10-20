@@ -9,6 +9,7 @@ Usage:
   mackeep [options] list
   mackeep [options] show <application>
   mackeep [options] config
+  mackeep [options] migrate
   mackeep [options] backup [<application>]
   mackeep [options] restore [<application>]
   mackeep [options] link install [<application>]
@@ -33,6 +34,7 @@ Modes of action:
  - mackeep list: display a list of all supported applications.
  - mackeep show: display the details for a supported application.
  - mackeep config: display the configuration of Mackeep.
+ - mackeep migrate: copy the legacy Mackup files to their new location.
  - mackeep backup: copy local config files in the configured remote folder.
  - mackeep restore: copy config files from the configured remote folder locally.
  - mackeep link install: moves local config files in remote folder, and links.
@@ -79,6 +81,8 @@ from .constants import (
 )
 from .excludes import Matcher, Rule
 from .mackeep import Mackeep
+from .migrate import plan as migration_plan
+from .migrate import run as run_migration
 
 # The ANSI escape codes used to color the error messages
 ANSI_CODES = re.compile(r"\033\[[0-9;]*m")
@@ -481,16 +485,19 @@ def _config_json(ctx: _Context) -> dict[str, Any]:
         "schema_version": jsonapi.SCHEMA_VERSION,
         "version": VERSION,
         "config_file": config.config_path,
+        "config_file_is_legacy": config.is_legacy,
         "custom_apps_dirs": [
             os.path.join(home, CUSTOM_APPS_DIR),
             os.path.join(xdg_config_home, CUSTOM_APPS_DIR_XDG),
         ],
+        "legacy_custom_apps_dirs": ApplicationsDatabase.get_legacy_custom_apps_dirs(),
         "storage": {
             "engine": config.engine,
             "path": config.path,
             "directory": config.directory,
             "resolved_backup_dir": config.fullpath,
             "exists": os.path.isdir(config.fullpath),
+            "using_legacy_directory": config.using_legacy_directory,
         },
         "apps_to_sync": sorted(config.apps_to_sync),
         "apps_to_ignore": sorted(config.apps_to_ignore),
@@ -529,6 +536,25 @@ def _summary(actions: list[dict[str, Any]], app_names: set[str]) -> dict[str, An
     }
 
 
+def _cmd_migrate(args: dict[str, Any], ctx: _Context) -> None:
+    """Copy the legacy Mackup files to their new location."""
+    actions: list[dict[str, str]] = migration_plan()
+    copied: int = 0
+    if not ctx.dry_run:
+        copied = run_migration(actions)
+
+    for action in actions:
+        if action["action"] == "copy":
+            print(f"Copy {action['src']}\n  to {action['dst']}")
+        else:
+            print(f"Skip {action['src']}\n  {action['dst']} already exists")
+
+    if ctx.dry_run:
+        print("\nNothing was copied, this was a dry-run.")
+    else:
+        print(f"\n{copied} file(s) copied, the old ones were kept.")
+
+
 def _cmd_config(ctx: _Context) -> None:
     """Display the configuration of Mackeep."""
     config = ctx.mckp.config
@@ -552,6 +578,24 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
     """Run a command and write its JSON answer to the given stream."""
     if args["config"]:
         jsonapi.emit(_config_json(ctx), stream)
+    elif args["migrate"]:
+        actions: list[dict[str, str]] = migration_plan()
+        copied: int = 0
+        if not ctx.dry_run:
+            copied = run_migration(actions)
+        jsonapi.emit(
+            {
+                "schema_version": jsonapi.SCHEMA_VERSION,
+                "actions": actions,
+                "summary": {
+                    "copied": copied,
+                    "skipped": len(actions) - copied,
+                    "total_actions": len(actions),
+                    "dry_run": ctx.dry_run,
+                },
+            },
+            stream,
+        )
     elif args["list"]:
         apps: list[dict[str, Any]] = [
             _app_json(ctx.app_db, app_name)
@@ -668,6 +712,7 @@ def main() -> None:
             sys.exit(1)
         raise
     finally:
+        utils.print_legacy_warnings()
         sys.stdout = stdout
 
 
@@ -789,6 +834,8 @@ def _run(args: dict[str, Any], json_mode: bool, stdout: TextIO) -> None:
         _cmd_show(args, ctx.app_db)
     elif args["config"]:
         _cmd_config(ctx)
+    elif args["migrate"]:
+        _cmd_migrate(args, ctx)
     elif args["backup"]:
         _cmd_backup(args, ctx)
     elif args["restore"]:
