@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "actions": [
+    {
+      "app": "demo",
+      "action": "skip_excluded",
+      "src": "/Users/user/appdir/cache",
+      "dst": "/Users/user/dotfiles/Mackeep/appdir/cache",
+      "reason": {
+        "pattern": "appdir/cache",
+        "section": "exclude",
+        "file": "/Users/user/.mackeep/demo.cfg"
+      }
+    },
+    {
+      "app": "demo",
+      "action": "copy",
+      "src": "/Users/user/appdir/keep.txt",
+      "dst": "/Users/user/dotfiles/Mackeep/appdir/keep.txt",
+      "size_bytes": 42
+    },
+    {
+      "app": "demo",
+      "action": "conflict",
+      "src": "/Users/user/appdir/keep.txt",
+      "dst": "/Users/user/dotfiles/Mackeep/appdir/keep.txt",
+      "size_bytes": 42,
+      "would_overwrite": true
+    }
+  ],
+  "summary": {
+    "apps": ["demo"],
+    "actions": {"skip_excluded": 1, "copy": 1, "conflict": 1},
+    "total_actions": 3,
+    "total_bytes": 42,
+    "files": 1
+  }
+}
