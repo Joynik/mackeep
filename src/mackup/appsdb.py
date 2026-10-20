@@ -28,7 +28,14 @@ class ApplicationsDatabase:
             # Needed to not lowercase the configuration_files in the ini files
             config.optionxform = str  # type: ignore
 
-            if config.read(config_file):
+            try:
+                read: bool = bool(config.read(config_file))
+            except configparser.Error as e:
+                raise ConfigError(
+                    f"Invalid application config file {config_file}: {e}",
+                ) from e
+
+            if read:
                 try:
                     self._load_app(config, config_file)
                 except configparser.Error as e:

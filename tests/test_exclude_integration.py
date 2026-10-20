@@ -6,6 +6,8 @@ from unittest.mock import patch
 import pytest
 
 from mackup import utils
+from mackup.appsdb import ApplicationsDatabase
+from mackup.config import ConfigError
 from mackup.main import main
 
 
@@ -391,3 +393,59 @@ def test_an_app_without_exclusion_is_not_impacted(home):
     backup = home / "storage" / "Mackup" / ".testdir"
     assert (backup / "keep.txt").exists()
     assert (backup / "skip.log").exists()
+
+
+def test_an_exclusion_may_be_written_as_a_value(home):
+    """An exclusion pattern may also be given as a value."""
+    write_mackup_config(home)
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".testdir\n"
+        "\n"
+        "[exclude]\n"
+        "*.log = the log files\n",
+    )
+
+    db = ApplicationsDatabase()
+    assert db.get_exclude("test-app") == ["the log files"]
+
+
+def test_an_absolute_exclusion_is_a_config_error(home):
+    """An absolute path in an exclusion section is an error."""
+    write_mackup_config(home)
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[exclude]\n"
+        "/absolute/path\n",
+    )
+
+    with pytest.raises(ConfigError) as context:
+        ApplicationsDatabase()
+
+    assert "test-app.cfg" in str(context.value)
+
+
+def test_a_duplicated_exclusion_is_a_config_error(home):
+    """A duplicated pattern in an exclusion section is an error."""
+    write_mackup_config(home)
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[exclude]\n"
+        "*.log\n"
+        "*.log\n",
+    )
+
+    with pytest.raises(ConfigError) as context:
+        ApplicationsDatabase()
+
+    assert "test-app.cfg" in str(context.value)
