@@ -26,6 +26,8 @@ mackeep-cli -h
 brew uninstall mackeep-cli
 ```
 
+The binary does not need Python: it is a standalone program.
+
 ## From the sources
 
 If you want to work on Mackeep itself, clone the repository and use

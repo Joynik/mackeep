@@ -25,11 +25,28 @@ check: lint ruff mypy ty test
 clean:
 	rm -rf src/mackeep/__pycache__
 	rm -rf src/mackeep_cli/__pycache__
+	rm -rf .build-venv
+	rm -rf build
+	rm -rf dist-bin
 	rm -rf tests/__pycache__
 	rm -rf dist/
 	rm -rf htmlcov/
 	rm -rf .coverage
 	rm -rf coverage.xml
+
+# Build the standalone binary, like the releases do. Needs a C compiler.
+binary:
+	uv build --wheel
+	uv venv .build-venv
+	uv pip install --python .build-venv/bin/python dist/*.whl nuitka
+	.build-venv/bin/python -m nuitka --standalone --onefile \
+		--output-filename=mackeep-cli \
+		--include-package=mackeep \
+		--include-package-data=mackeep \
+		--include-distribution-metadata=mackeep-cli \
+		--assume-yes-for-downloads \
+		--output-dir=dist-bin \
+		src/mackeep_cli/__main__.py
 
 # Cut a release in one command. Bumps the version, syncs the lockfile, then
 # commits, tags and pushes. The release workflow takes over from the tag push.

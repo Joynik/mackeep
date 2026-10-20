@@ -21,8 +21,19 @@ Preview a bump without changing anything with `uv version --bump <level>
 This runs the checks, bumps the version, syncs the lockfile, then commits, tags
 and pushes. The workflow takes over from the tag push:
 
-- Builds the package with `uv build`
-- Creates the GitHub release with auto-generated notes and the built artifacts
+- Builds the standalone binary with [Nuitka](https://nuitka.net), one per
+  platform (macOS and Linux)
+- Creates the GitHub release with auto-generated notes and the binaries
+
+The releases hold one package per platform:
+
+```text
+mackeep-cli-0.14.0-macos-arm64.tar.gz
+mackeep-cli-0.14.0-linux-x86_64.tar.gz
+```
+
+Each package holds the `mackeep-cli` binary, which does not need Python to
+run. The binary can also be built locally, with `make binary`.
 
 ## The versioning scheme
 

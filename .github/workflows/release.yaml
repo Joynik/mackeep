@@ -10,24 +10,57 @@ permissions:
 
 jobs:
 
-  release:
-    runs-on: ubuntu-latest
-    environment: release
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-15
+            suffix: macos-arm64
+          - os: ubuntu-24.04
+            suffix: linux-x86_64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.14"
-      - name: Build the package
+
+      - name: Build the binary
         run: |
-          uv build
-          version=$(uv version --short)
-          # One package per supported platform
-          mv "dist/mackeep_cli-$version.tar.gz" "dist/mackeep-cli-$version-macos-arm64.tar.gz"
-          cp "dist/mackeep-cli-$version-macos-arm64.tar.gz" "dist/mackeep-cli-$version-linux-x86_64.tar.gz"
-          rm -f dist/.gitignore
+          uv build --wheel
+          uv venv .build-venv
+          uv pip install --python .build-venv/bin/python dist/*.whl nuitka
+          .build-venv/bin/python -m nuitka --standalone --onefile \
+            --output-filename=mackeep-cli \
+            --include-package=mackeep \
+            --include-package-data=mackeep \
+            --include-distribution-metadata=mackeep-cli \
+            --assume-yes-for-downloads \
+            --output-dir=dist-bin \
+            src/mackeep_cli/__main__.py
+          mkdir -p dist
+          tar -czf "dist/mackeep-cli-$(uv version --short)-${{ matrix.suffix }}.tar.gz" \
+            -C dist-bin mackeep-cli
+
+      - name: Sign the binary
+        if: runner.os == 'macOS'
+        run: codesign --force --sign - dist-bin/mackeep-cli
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mackeep-cli-${{ matrix.suffix }}
+          path: dist/*.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: dist/mackeep-cli-*.tar.gz
+          files: dist/*.tar.gz
