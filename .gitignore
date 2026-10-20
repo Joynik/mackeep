@@ -18,3 +18,5 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+.rumdl_cache/
+.ruff_cache/
