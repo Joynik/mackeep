@@ -105,6 +105,10 @@ Display the list of applications supported by Mackeep.
 
 Get some help, obviously...
 
+`mackeep-cli -v`, `mackeep-cli -V` or `mackeep-cli --version`
+
+Display the version of Mackeep.
+
 ## What does it do
 
 By only tracking pure configuration files, it keeps the crap out of your

@@ -298,3 +298,25 @@ def test_the_entry_point_of_the_module_runs_the_command(home, capsys):
 
     captured = capsys.readouterr()
     assert "applications supported in Mackeep" in captured.out
+
+
+def test_the_version_is_shown_with_the_short_options(home, capsys):
+    """The version is shown with -v, -V and --version."""
+    setup(home)
+
+    for option in ("-v", "-V", "--version"):
+        run(option)
+        captured = capsys.readouterr()
+
+        assert captured.out.startswith("Mackeep "), option
+        assert captured.err == "", option
+
+
+def test_the_verbose_option_has_no_short_option(home, capsys):
+    """The verbose option is only the long one, -v shows the version."""
+    setup(home)
+
+    run("--verbose", "list")
+    captured = capsys.readouterr()
+
+    assert "applications supported in Mackeep" in captured.out

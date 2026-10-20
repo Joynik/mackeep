@@ -23,12 +23,12 @@ Options:
   --force-no                Force every question asked to be answered with "No".
   -r --root                 Allow mackeep to be run as superuser.
   -n --dry-run              Show steps without executing.
-  -v --verbose              Show additional details.
+  --verbose                 Show additional details.
   -c --config-file=<path>   Specify custom config file path.
   --json                    Output machine-readable JSON.
   --detail=<level>          Detail level of the dry-run: entries or files.
   --max-actions=<n>         Maximum number of actions of the JSON dry-run.
-  --version                 Show version.
+  -v -V --version           Show version.
 
 Modes of action:
  - mackeep-cli list: display a list of all supported applications.
@@ -710,6 +710,12 @@ def main() -> None:
             "Please run Mackeep without -OO to use the command-line interface.",
         )
     assert docstring is not None  # for type narrowing after sys.exit
+
+    # The version is shown with -v, -V and --version. docopt only knows
+    # one short option per line, so they are handled here.
+    if any(argument in ("-v", "-V", "--version") for argument in sys.argv[1:]):
+        print(f"Mackeep {VERSION}")
+        return
 
     args: dict[str, Any] = docopt(docstring, version=f"Mackeep {VERSION}")
 
