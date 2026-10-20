@@ -10,6 +10,8 @@ struct MackeepDesktopApp: App {
         WindowGroup {
             RootView()
                 .environment(environment)
+                .environment(\.locale, environment.language.resolvedLocale)
+                .preferredColorScheme(environment.appearance.colorScheme)
         }
         .defaultSize(width: 1100, height: 720)
         .windowResizability(.contentMinSize)

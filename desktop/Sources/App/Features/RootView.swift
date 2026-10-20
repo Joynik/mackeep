@@ -7,6 +7,9 @@ struct RootView: View {
     /// The section that is shown.
     @State private var selection: SidebarSection? = .applications
 
+    /// Whether the wizard of the first launch is shown.
+    @State private var showsOnboarding = false
+
     var body: some View {
         NavigationSplitView {
             List(SidebarSection.allCases, selection: $selection) { section in
@@ -25,14 +28,23 @@ struct RootView: View {
             case .backup:
                 BackupView(model: environment.backup)
             case .settings:
-                PlaceholderView(
-                    title: "section.settings.title",
-                    message: "section.settings.placeholder"
-                )
+                SettingsView(model: environment.settings)
             }
         }
         .task {
             environment.applications.load()
+        }
+        .sheet(isPresented: $showsOnboarding) {
+            OnboardingView(
+                settings: environment.settings,
+                applications: environment.applications
+            )
+        }
+        .onAppear {
+            if !environment.hasSeenOnboarding {
+                environment.hasSeenOnboarding = true
+                showsOnboarding = true
+            }
         }
     }
 

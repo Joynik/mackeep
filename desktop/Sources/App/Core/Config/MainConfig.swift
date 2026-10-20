@@ -83,6 +83,22 @@ final class MainConfig {
         }
     }
 
+    /// Set the storage of Mackeep.
+    ///
+    /// - Parameters:
+    ///   - engine: The engine of the storage.
+    ///   - path: The path of the storage, for the file system engine.
+    ///   - directory: The name of the folder of the backup.
+    func setStorage(engine: String, path: String?, directory: String?) {
+        document.setValue(engine, forKey: "engine", inSection: "storage")
+        if let path {
+            document.setValue(path, forKey: "path", inSection: "storage")
+        }
+        if let directory {
+            document.setValue(directory, forKey: "directory", inSection: "storage")
+        }
+    }
+
     /// Set the global exclusion rules.
     ///
     /// - Parameter patterns: The patterns.

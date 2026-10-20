@@ -6,7 +6,7 @@ import SwiftUI
 /// The strings are looked up in the bundle of the chosen language, so the
 /// language can be changed without restarting the application. The menus of
 /// the system do not follow the environment of SwiftUI, they are updated
-/// with the notification of `LanguageManager`.
+/// with the notification of the change of the language.
 enum L10n {
     /// The bundle of the chosen language.
     private static var currentBundle: Bundle = .main
@@ -53,27 +53,6 @@ enum L10n {
             return .main
         }
         return bundle
-    }
-}
-
-/// The manager of the language of the interface.
-@Observable
-final class LanguageManager {
-    /// The language of the interface.
-    var language: AppLanguage {
-        didSet {
-            guard language != oldValue else { return }
-            L10n.language = language
-            NotificationCenter.default.post(
-                name: .mackeepLanguageDidChange,
-                object: nil
-            )
-        }
-    }
-
-    init(language: AppLanguage = .system) {
-        self.language = language
-        L10n.language = language
     }
 }
 

@@ -6,7 +6,16 @@ import SwiftUI
 @MainActor
 final class AppEnvironment {
     /// The language of the interface.
-    var language: AppLanguage = .system
+    var language: AppLanguage = .system {
+        didSet {
+            guard language != oldValue else { return }
+            L10n.language = language
+            NotificationCenter.default.post(
+                name: .mackeepLanguageDidChange,
+                object: nil
+            )
+        }
+    }
 
     /// The appearance of the interface.
     var appearance: AppAppearance = .system
@@ -29,6 +38,14 @@ final class AppEnvironment {
     /// The model of the backup section.
     let backup: BackupModel
 
+    /// The model of the settings.
+    let settings: SettingsModel
+
+    /// Whether the wizard of the first launch was shown.
+    var hasSeenOnboarding: Bool {
+        get { UserDefaults.standard.bool(forKey: "hasSeenOnboarding") }
+        set { UserDefaults.standard.set(newValue, forKey: "hasSeenOnboarding") }
+    }
 
     /// The command line tool of Mackeep.
     private let command: MackeepCommand?
@@ -38,6 +55,7 @@ final class AppEnvironment {
         self.command = path.map { MackeepCommand(path: $0) }
         self.applications = ApplicationsModel(command: command)
         self.backup = BackupModel(command: command)
+        self.settings = SettingsModel(command: command, capabilities: nil)
 
         guard let path else { return }
         mackeepPath = path
@@ -50,6 +68,7 @@ final class AppEnvironment {
             }.value
             self?.capabilities = capabilities
             self?.mackeepVersion = capabilities.version
+            self?.settings.capabilities = capabilities
         }
     }
 
@@ -86,6 +105,11 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         case .russian: Locale(identifier: "ru")
         case .english: Locale(identifier: "en")
         }
+    }
+
+    /// The locale of the language, the locale of the system for the system.
+    var resolvedLocale: Locale {
+        locale ?? Locale.current
     }
 }
 
