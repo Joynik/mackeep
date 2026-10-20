@@ -131,9 +131,7 @@ It is covered by the 2 commands:
 > [!WARNING]
 > If you are using Mackeep on a current version of macOS, link mode will BREAK
   YOUR PREFERENCES. macOS Sonoma (macOS 14) and later don't support symlinked
-  preferences, see [issue #2035](https://github.com/lra/mackup/issues/2035) for
-  additional information. [PR #2085](<https://github.com/lra/mackup/pull/2085>)
-  added copy mode, which should be used instead.
+  preferences.
 
 Link mode is used to move your config files into the Mackeep folder,
 and link them back to their original place.
