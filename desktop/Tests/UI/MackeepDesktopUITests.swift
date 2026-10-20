@@ -36,7 +36,7 @@ final class MackeepDesktopUITests: XCTestCase {
     private func startTheApplication() throws {
         let process: Process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        process.arguments = ["-n", "-a", Self.applicationPath().path]
+        process.arguments = ["-a", Self.applicationPath().path]
         try process.run()
         process.waitUntilExit()
 
@@ -60,6 +60,13 @@ final class MackeepDesktopUITests: XCTestCase {
             if copies.isEmpty { return }
 
             usleep(200_000)
+        }
+
+        // The polite request was not enough
+        for copy: NSRunningApplication in NSRunningApplication
+            .runningApplications(withBundleIdentifier: Self.identifier)
+        {
+            copy.forceTerminate()
         }
     }
 

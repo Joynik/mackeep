@@ -13,8 +13,10 @@ settings:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "0.15.1"
     CURRENT_PROJECT_VERSION: "1"
-    # A real identity is needed to run the UI tests
-    DEVELOPMENT_TEAM: 5TY34HGCJS
+    # A real identity is needed to run the UI tests.
+    # The team of the certificate "Apple Development: kira.dev.ap@gmail.com
+    # (NZ3F5F9AR5)" is 682U8JF485, NZ3F5F9AR5 is the name of the developer.
+    DEVELOPMENT_TEAM: 682U8JF485
     CODE_SIGN_STYLE: Manual
     CODE_SIGN_IDENTITY: "Apple Development"
     ENABLE_HARDENED_RUNTIME: YES
