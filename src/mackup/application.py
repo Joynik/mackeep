@@ -167,17 +167,17 @@ class ApplicationProfile:
         payload.update(details)
         self.reporter(action, payload)
 
-    def _walk(
-        self, src: str, relative: str, filtered: bool = True,
-    ) -> Iterator[tuple[str, str, bool]]:
+    def _walk(self, src: str, relative: str) -> Iterator[tuple[str, str, bool]]:
         """
         Walk a directory, relative to the home directory.
+
+        The excluded paths are not filtered out, the caller decides what to
+        do with them.
 
         Args:
             src (str): The path of the directory to walk.
             relative (str): The path of the directory, relative to the home
                             directory.
-            filtered (bool): Whether the excluded paths are skipped.
 
         Yields:
             tuple of (str, str, bool): The path, the path relative to the home
@@ -193,14 +193,23 @@ class ApplicationProfile:
             relative_path: str = f"{relative}/{name}" if relative else name
             is_dir: bool = os.path.isdir(path)
 
-            if filtered and self.is_excluded(relative_path, is_dir):
-                # An excluded directory is not walked.
-                continue
-
             yield path, relative_path, is_dir
 
             if is_dir:
-                yield from self._walk(path, relative_path, filtered)
+                yield from self._walk(path, relative_path)
+
+    def _report_excluded(self, path: str, relative_path: str, dst: str) -> None:
+        """
+        Report an excluded path.
+
+        Args:
+            path (str): The path of the excluded file or folder.
+            relative_path (str): The path, relative to the home directory.
+            dst (str): The path the file would have been copied to.
+        """
+        self._report("skip_excluded", src=path, dst=dst)
+        if self.verbose or self.dry_run:
+            print(f"Skipping {relative_path} (excluded)")
 
     def _copy_tree(self, src: str, dst: str, relative: str) -> int:
         """
@@ -218,10 +227,19 @@ class ApplicationProfile:
         os.makedirs(dst, exist_ok=True)
         copied: int = 0
 
-        for path, _relative_path, is_dir in self._walk(src, relative):
-            destination: str = os.path.join(dst, os.path.relpath(path, src))
+        for name in sorted(os.listdir(src)):
+            path: str = os.path.join(src, name)
+            relative_path: str = f"{relative}/{name}" if relative else name
+            is_dir: bool = os.path.isdir(path)
+            destination: str = os.path.join(dst, name)
+
+            if self.is_excluded(relative_path, is_dir):
+                # An excluded directory is not walked.
+                self._report_excluded(path, relative_path, destination)
+                continue
+
             if is_dir:
-                os.makedirs(destination, exist_ok=True)
+                copied += self._copy_tree(path, destination, relative_path)
                 continue
 
             utils.copy(path, destination)
@@ -234,24 +252,60 @@ class ApplicationProfile:
 
         return copied
 
-    def _planned_size(self, src: str, relative: str) -> int:
+    def _plan_tree(
+        self, src: str, relative: str,
+    ) -> tuple[int, list[tuple[str, str]]]:
         """
-        Compute the size of the files that would be copied.
+        Compute what would be copied, without copying anything.
 
         Args:
             src (str): The path of the file or directory.
             relative (str): The path, relative to the home directory.
 
         Returns:
-            int: The number of bytes.
+            tuple: The number of bytes that would be copied and the list of
+            the excluded paths, as (path, relative path) tuples.
         """
         if not os.path.isdir(src):
-            return os.path.getsize(src) if os.path.isfile(src) else 0
+            return (os.path.getsize(src) if os.path.isfile(src) else 0), []
 
         size: int = 0
-        for path, _relative_path, is_dir in self._walk(src, relative):
-            if not is_dir:
+        excluded: list[tuple[str, str]] = []
+
+        for name in sorted(os.listdir(src)):
+            path: str = os.path.join(src, name)
+            relative_path: str = f"{relative}/{name}" if relative else name
+            is_dir: bool = os.path.isdir(path)
+
+            if self.is_excluded(relative_path, is_dir):
+                excluded.append((path, relative_path))
+                continue
+
+            if is_dir:
+                sub_size, sub_excluded = self._plan_tree(path, relative_path)
+                size += sub_size
+                excluded.extend(sub_excluded)
+            else:
                 size += os.path.getsize(path)
+
+        return size, excluded
+
+    def _plan(self, src: str, dst: str, relative: str) -> int:
+        """
+        Report what would be copied, without copying anything.
+
+        Args:
+            src (str): The path of the file or directory.
+            dst (str): The path of the destination.
+            relative (str): The path, relative to the home directory.
+
+        Returns:
+            int: The number of bytes that would be copied.
+        """
+        size, excluded = self._plan_tree(src, relative)
+        for path, relative_path in excluded:
+            destination: str = os.path.join(dst, os.path.relpath(path, src))
+            self._report_excluded(path, relative_path, destination)
         return size
 
     def _contains_excluded(self, src: str, relative: str) -> bool:
@@ -266,7 +320,7 @@ class ApplicationProfile:
         Returns:
             bool: True when the directory contains an excluded path.
         """
-        for _path, relative_path, is_dir in self._walk(src, relative, False):
+        for _path, relative_path, is_dir in self._walk(src, relative):
             if self.is_excluded(relative_path, is_dir):
                 return True
         return False
@@ -289,9 +343,7 @@ class ApplicationProfile:
         if not os.path.isdir(mackup_filepath):
             return
 
-        for path, relative_path, is_dir in self._walk(
-            mackup_filepath, relative, False,
-        ):
+        for path, relative_path, is_dir in self._walk(mackup_filepath, relative):
             if not self.is_excluded(relative_path, is_dir):
                 continue
             source: str = os.path.join(
@@ -399,7 +451,7 @@ class ApplicationProfile:
                 print(f"Backing up {filename} ...")
 
             if self.dry_run:
-                size: int = self._planned_size(home_filepath, filename)
+                size: int = self._plan(home_filepath, mackup_filepath, filename)
                 self._report(
                     "copy",
                     src=home_filepath,
@@ -443,7 +495,7 @@ class ApplicationProfile:
                         "conflict",
                         src=home_filepath,
                         dst=mackup_filepath,
-                        size_bytes=self._planned_size(home_filepath, filename),
+                        size_bytes=self._plan(home_filepath, mackup_filepath, filename),
                     )
                     continue
 
@@ -511,7 +563,7 @@ class ApplicationProfile:
                 print(f"Recovering {filename} ...")
 
             if self.dry_run:
-                size: int = self._planned_size(mackup_filepath, filename)
+                size: int = self._plan(mackup_filepath, home_filepath, filename)
                 self._report(
                     "copy",
                     src=mackup_filepath,
@@ -551,7 +603,7 @@ class ApplicationProfile:
                         "conflict",
                         src=mackup_filepath,
                         dst=home_filepath,
-                        size_bytes=self._planned_size(mackup_filepath, filename),
+                        size_bytes=self._plan(mackup_filepath, home_filepath, filename),
                     )
                     continue
 
