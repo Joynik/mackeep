@@ -715,7 +715,7 @@ def main() -> None:
     # one short option per line, so they are handled here.
     if any(argument in ("-v", "-V", "--version") for argument in sys.argv[1:]):
         print(f"Mackeep {VERSION}")
-        return
+        sys.exit(0)
 
     args: dict[str, Any] = docopt(docstring, version=f"Mackeep {VERSION}")
 
