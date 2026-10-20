@@ -8,6 +8,7 @@ check them before removing the old ones.
 import os
 import shutil
 
+from .config import Config, ConfigError
 from .constants import (
     CUSTOM_APPS_DIR,
     CUSTOM_APPS_DIR_XDG,
@@ -75,16 +76,29 @@ def plan() -> list[dict[str, str]]:
     The files that already exist in their new location are skipped, they
     are never overwritten.
 
+    When the storage folder of Mackup is used, the name of that folder is
+    written in the new config file, so the backup stays in the same place.
+
     Returns:
-        list of dict: The action ("copy" or "skip"), the source and the
-        destination of every file.
+        list of dict: The action ("copy", "skip" or "set_directory"), the
+        source and the destination of every file.
     """
     actions: list[dict[str, str]] = []
 
     for legacy, new in _config_files():
         if not os.path.isfile(legacy):
             continue
-        actions.append(_action(legacy, new))
+        action: dict[str, str] = _action(legacy, new)
+        actions.append(action)
+        if action["action"] == "copy":
+            directory: str | None = _storage_directory(legacy)
+            if directory:
+                actions.append({
+                    "action": "set_directory",
+                    "src": legacy,
+                    "dst": new,
+                    "directory": directory,
+                })
         # Only the first legacy config file is migrated.
         break
 
@@ -99,6 +113,32 @@ def plan() -> list[dict[str, str]]:
                                    os.path.join(new_dir, name)))
 
     return actions
+
+
+def _storage_directory(config_path: str) -> str | None:
+    """
+    Get the name of the storage directory to keep in the new config file.
+
+    When the storage folder of Mackup is used and the config file does not
+    set a directory, the name of the legacy folder has to be written in the
+    new config file, so the backup stays in the same folder.
+
+    Args:
+        config_path (str): The path of the legacy config file.
+
+    Returns:
+        str or None: The name of the storage directory, None when there is
+        nothing to keep.
+    """
+    try:
+        config: Config = Config(config_path)
+    except (ConfigError, SystemExit):
+        return None
+
+    if not config.using_legacy_directory:
+        return None
+
+    return config.directory
 
 
 def _action(src: str, dst: str) -> dict[str, str]:
@@ -123,6 +163,9 @@ def run(actions: list[dict[str, str]]) -> int:
     """
     Copy the files of the plan to their new location.
 
+    The name of the storage directory is written in the config files that
+    were just copied.
+
     Args:
         actions (list): The actions of the plan.
 
@@ -130,10 +173,100 @@ def run(actions: list[dict[str, str]]) -> int:
         int: The number of copied files.
     """
     copied: int = 0
+    updated: set[str] = set()
     for action in actions:
-        if action["action"] != "copy":
-            continue
-        os.makedirs(os.path.dirname(action["dst"]), exist_ok=True)
-        shutil.copy2(action["src"], action["dst"])
-        copied += 1
+        if action["action"] == "copy":
+            os.makedirs(os.path.dirname(action["dst"]), exist_ok=True)
+            shutil.copy2(action["src"], action["dst"])
+            copied += 1
+            updated.add(action["dst"])
+        elif action["action"] == "set_directory" and action["dst"] in updated:
+            _set_directory(action["dst"], action["directory"])
     return copied
+
+
+def _set_directory(path: str, directory: str) -> None:
+    """
+    Write the name of the storage directory in a config file.
+
+    The other options and the comments of the file are kept.
+
+    Args:
+        path (str): The path of the config file.
+        directory (str): The name of the storage directory.
+    """
+    with open(path, encoding="utf-8") as file:
+        lines: list[str] = file.read().splitlines()
+
+    start, end = _storage_section(lines)
+
+    # The option is already there, it is replaced
+    for index in range(start + 1, end):
+        stripped: str = lines[index].strip()
+        if "=" not in stripped:
+            continue
+        key: str = stripped.split("=", 1)[0].strip().lower()
+        if key == "directory":
+            lines[index] = f"directory = {directory}"
+            _write_lines(path, lines)
+            return
+
+    # The option is not there yet
+    if start < 0:
+        # There is no storage section in the file yet
+        if lines and lines[-1].strip():
+            lines.append("")
+        lines.append("[storage]")
+        lines.append(f"directory = {directory}")
+    else:
+        # The option is added after the last option of the section
+        position: int = end
+        while position > start + 1 and not lines[position - 1].strip():
+            position -= 1
+        lines.insert(position, f"directory = {directory}")
+
+    _write_lines(path, lines)
+
+
+def _storage_section(lines: list[str]) -> tuple[int, int]:
+    """
+    Get the bounds of the storage section of a config file.
+
+    Args:
+        lines (list): The lines of the config file.
+
+    Returns:
+        tuple: The index of the first line of the section and the index of
+        the line after its last one. Both are -1 when there is no section.
+    """
+    start: int = -1
+    end: int = -1
+    section: str = ""
+
+    for index, line in enumerate(lines):
+        stripped: str = line.strip()
+        if not (stripped.startswith("[") and stripped.endswith("]")):
+            continue
+        if section == "storage":
+            end = index
+            break
+        section = stripped[1:-1].strip().lower()
+        if section == "storage":
+            start = index
+
+    if start >= 0 and end < 0:
+        end = len(lines)
+
+    return start, end
+
+
+def _write_lines(path: str, lines: list[str]) -> None:
+    """
+    Write the lines in a config file.
+
+    Args:
+        path (str): The path of the config file.
+        lines (list): The lines of the file.
+    """
+    with open(path, "w", encoding="utf-8") as file:
+        file.write("\n".join(lines) + "\n")

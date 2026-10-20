@@ -2,10 +2,12 @@
 
 import json
 import os
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
+import mackeep
 from mackeep import utils
 from mackeep.appsdb import ApplicationsDatabase
 from mackeep.config import Config
@@ -368,3 +370,161 @@ def test_migrate_keeps_the_legacy_files_in_place(home, capsys):
     run_json(capsys, "migrate")
 
     assert os.path.isfile(home / ".mackup.cfg")
+
+
+def test_a_shadowed_legacy_app_is_not_warned_about(home, capsys):
+    """A legacy application config that is shadowed by a new one is not warned about."""
+    write_config(home, home / ".mackeep" / "test-app.cfg", APP_CONFIG)
+    write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
+
+    write_config(home, home / ".mackeep.cfg")
+    run("--json", "config")
+    captured = capsys.readouterr()
+
+    assert "legacy" not in captured.err.lower()
+
+
+def test_an_identical_legacy_app_is_not_warned_about(home, capsys):
+    """A legacy application config that is the same as the default one is not warned
+    about.
+    """
+    default: Path = Path(mackeep.__file__).parent / "applications" / "zsh.cfg"
+    path: Path = home / ".mackup" / "zsh.cfg"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(default.read_text())
+
+    write_config(home, home / ".mackeep.cfg")
+    run("--json", "config")
+    captured = capsys.readouterr()
+
+    assert "legacy" not in captured.err.lower()
+
+
+def test_a_used_legacy_app_is_warned_about(home, capsys):
+    """A legacy application config that is used is warned about."""
+    write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
+
+    write_config(home, home / ".mackeep.cfg")
+    run("--json", "config")
+    captured = capsys.readouterr()
+
+    assert "test-app.cfg" in captured.err
+
+
+def test_the_warnings_go_to_stderr(home, capsys):
+    """The warnings are written to stderr, the stdout stays clean."""
+    write_config(home, home / ".mackup.cfg")
+    write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
+
+    run("--json", "config")
+    captured = capsys.readouterr()
+
+    assert "Warning:" in captured.err
+    assert "Warning:" not in captured.out
+    assert json.loads(captured.out)["schema_version"] == 1
+
+
+def test_migrate_writes_the_storage_directory(home, capsys):
+    """The migrate command keeps the legacy storage folder in the new config."""
+    write_config(home, home / ".mackup.cfg")
+    (home / "storage" / "Mackup").mkdir(parents=True)
+
+    data, code = run_json(capsys, "migrate")
+
+    assert code == 0
+    assert data["summary"]["updated"] == 1
+
+    config: str = (home / ".mackeep.cfg").read_text()
+    assert "directory = Mackup" in config
+    # The other options are kept
+    assert "engine = file_system" in config
+
+
+def test_migrate_reports_the_storage_directory(home, capsys):
+    """The migrate command tells which storage directory is written."""
+    write_config(home, home / ".mackup.cfg")
+    (home / "storage" / "Mackup").mkdir(parents=True)
+
+    run("migrate")
+    captured = capsys.readouterr()
+
+    assert "Mackup" in captured.out
+    assert str(home / ".mackeep.cfg") in captured.out
+
+
+def test_migrate_keeps_an_explicit_storage_directory(home, capsys):
+    """An explicit directory in the legacy config is not replaced."""
+    write_config(
+        home,
+        home / ".mackup.cfg",
+        "[storage]\n"
+        "engine = file_system\n"
+        "path = {storage}\n"
+        "directory = Other\n",
+    )
+    (home / "storage" / "Mackup").mkdir(parents=True)
+
+    data, code = run_json(capsys, "migrate")
+
+    assert code == 0
+    assert data["summary"]["updated"] == 0
+    assert "directory = Other" in (home / ".mackeep.cfg").read_text()
+
+
+def test_migrate_does_not_write_the_storage_directory(home, capsys):
+    """The storage directory is not written when the new folder is used."""
+    write_config(home, home / ".mackup.cfg")
+    (home / "storage" / "Mackeep").mkdir(parents=True)
+
+    data, code = run_json(capsys, "migrate")
+
+    assert code == 0
+    assert data["summary"]["updated"] == 0
+    assert "directory" not in (home / ".mackeep.cfg").read_text()
+
+
+def test_migrate_does_not_touch_an_existing_new_config(home, capsys):
+    """The migrate command does not change a config file that already exists."""
+    write_config(home, home / ".mackup.cfg")
+    write_config(home, home / ".mackeep.cfg", MAIN_CONFIG + "# new\n")
+    (home / "storage" / "Mackup").mkdir(parents=True)
+
+    data, code = run_json(capsys, "migrate")
+
+    assert code == 0
+    assert data["summary"]["updated"] == 0
+    assert "directory = Mackup" not in (home / ".mackeep.cfg").read_text()
+
+
+def test_the_dry_run_of_migrate_writes_the_storage_directory_nothing(home, capsys):
+    """The dry-run of the migrate command writes nothing."""
+    write_config(home, home / ".mackup.cfg")
+    (home / "storage" / "Mackup").mkdir(parents=True)
+
+    data, code = run_json(capsys, "migrate", "--dry-run")
+
+    assert code == 0
+    assert data["summary"]["updated"] == 1
+    assert data["summary"]["dry_run"] is True
+    assert not (home / ".mackeep.cfg").exists()
+
+
+def test_migrate_adds_the_storage_section(home, capsys, monkeypatch):
+    """The storage section is created when the config file does not have one."""
+    monkeypatch.setattr(
+        "mackeep.config.get_dropbox_folder_location",
+        lambda: str(home / "Dropbox"),
+    )
+    write_config(home, home / ".mackup.cfg", "[applications_to_sync]\ntest-app\n")
+    (home / "Dropbox" / "Mackup").mkdir(parents=True)
+
+    data, code = run_json(capsys, "migrate")
+
+    assert code == 0
+    assert data["summary"]["updated"] == 1
+
+    config: str = (home / ".mackeep.cfg").read_text()
+    assert "[storage]" in config
+    assert "directory = Mackup" in config
+    # The other sections are kept
+    assert "[applications_to_sync]" in config

@@ -546,6 +546,11 @@ def _cmd_migrate(args: dict[str, Any], ctx: _Context) -> None:
     for action in actions:
         if action["action"] == "copy":
             print(f"Copy {action['src']}\n  to {action['dst']}")
+        elif action["action"] == "set_directory":
+            print(
+                f"Set the storage directory to {action['directory']}\n"
+                f"  in {action['dst']}",
+            )
         else:
             print(f"Skip {action['src']}\n  {action['dst']} already exists")
 
@@ -583,13 +588,20 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
         copied: int = 0
         if not ctx.dry_run:
             copied = run_migration(actions)
+        skipped: int = sum(
+            1 for action in actions if action["action"] == "skip"
+        )
+        updated: int = sum(
+            1 for action in actions if action["action"] == "set_directory"
+        )
         jsonapi.emit(
             {
                 "schema_version": jsonapi.SCHEMA_VERSION,
                 "actions": actions,
                 "summary": {
                     "copied": copied,
-                    "skipped": len(actions) - copied,
+                    "skipped": skipped,
+                    "updated": updated,
                     "total_actions": len(actions),
                     "dry_run": ctx.dry_run,
                 },

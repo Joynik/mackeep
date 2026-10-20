@@ -246,14 +246,19 @@ class ApplicationsDatabase:
                 if filename in custom_files:
                     # The first directory that holds an application wins.
                     continue
-                config_files.add(os.path.join(directory, filename))
+                path: str = os.path.join(directory, filename)
+                config_files.add(path)
                 custom_files.add(filename)
 
-            if legacy:
-                legacy_warning(
-                    f"the application configs in {directory} are used, copy"
-                    " them to the new directory to use the new name",
-                )
+                if legacy and not _is_redundant(path, filename, apps_dir):
+                    # The file is used, the user has to copy it. A file that
+                    # is shadowed by a new one is not used at all, and a file
+                    # that is the same as the one that replaces it does not
+                    # have to be copied.
+                    legacy_warning(
+                        f"the application config {path} is used, copy it to"
+                        " the new directory to use the new name",
+                    )
 
         # Add the default provided app config files, but only if those are not
         # customized, as we don't want to overwrite custom app config.
@@ -417,3 +422,40 @@ class ApplicationsDatabase:
             pretty_app_names.add(self.get_name(app_name))
 
         return pretty_app_names
+
+
+def _is_same_file(path: str, other: str) -> bool:
+    """
+    Whether two files have the same content.
+
+    Args:
+        path (str): The path of the first file.
+        other (str): The path of the second file.
+
+    Returns:
+        bool
+    """
+    try:
+        with open(path, "rb") as first, open(other, "rb") as second:
+            return first.read() == second.read()
+    except OSError:
+        return False
+
+
+def _is_redundant(path: str, filename: str, apps_dir: str) -> bool:
+    """
+    Whether a custom application config is the same as the one that replaces it.
+
+    A config file that is the same as the default config of the application
+    does not have to be copied to the new directory.
+
+    Args:
+        path (str): The path of the custom config file.
+        filename (str): The name of the config file.
+        apps_dir (str): The directory of the default config files.
+
+    Returns:
+        bool
+    """
+    default: str = os.path.join(apps_dir, filename)
+    return os.path.isfile(default) and _is_same_file(path, default)

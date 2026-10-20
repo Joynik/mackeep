@@ -25,14 +25,19 @@ CAN_RUN_AS_ROOT: bool = False
 # The legacy paths that were used during this run
 LEGACY_WARNINGS: list[str] = []
 
-
 def legacy_warning(message: str) -> None:
     """
     Remember a legacy path that was used, to warn about it once.
 
+    The same message is only remembered once, the warning is printed once
+    per run.
+
     Args:
         message (str): What was found and what to do with it.
     """
+    if message in LEGACY_WARNINGS:
+        return
+
     LEGACY_WARNINGS.append(message)
 
 
