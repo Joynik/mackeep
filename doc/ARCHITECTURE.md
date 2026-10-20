@@ -154,7 +154,13 @@ Common utility functions used throughout the codebase:
 - Error handling and user prompts
 - Storage engine detection (Dropbox, Google Drive, iCloud)
 
-### 8. JSON Interface (`jsonapi.py`)
+### 8. Migration (`migrate.py`)
+
+Builds the plan of the migration of the legacy Mackup files and copies
+them to their new location. The files are copied, never moved nor
+deleted.
+
+### 9. JSON Interface (`jsonapi.py`)
 
 Serializes the answers of the `--json` option, meant to be used by the
 graphical front-ends built on top of Mackeep.
@@ -279,7 +285,19 @@ Symlinks in home: ~/.config → ~/Dropbox/Mackeep/.config
 - **Auto-detection**: Automatically finds storage paths
 - **Flexibility**: Custom paths for any sync solution
 
-### 4. Exclusions
+### 4. Backward Compatibility
+
+- **The legacy files are read**: the config file and the custom
+  application configs of Mackup are still found, the Mackeep ones have
+  the priority
+- **The storage folder**: the legacy `Mackup` folder is used when the
+  config file does not set a directory and the new folder does not exist
+- **A migration command**: `mackeep migrate` copies the legacy files to
+  their new location, without overwriting anything
+- **One warning per run**: the legacy paths that are used are reported in
+  `stderr`
+
+### 5. Exclusions
 
 - **Gitignore-like**: The patterns follow the `.gitignore` semantics, so
   they are familiar
@@ -290,7 +308,7 @@ Symlinks in home: ~/.config → ~/Dropbox/Mackeep/.config
 - **Copy mode only**: A symlink cannot exclude anything, so the link mode
   skips the entries that are impacted by the exclusion rules
 
-### 5. XDG Support
+### 6. XDG Support
 
 - **Standards compliance**: Respects XDG Base Directory Specification
 - **Flexibility**: Handles non-standard `$XDG_CONFIG_HOME`
@@ -306,6 +324,7 @@ mackeep/
 ├── appsdb.py           # Application database
 ├── application.py      # Per-application operations
 ├── excludes.py         # Exclusion rules (gitignore-like matcher)
+├── migrate.py          # Migration of the legacy Mackup files
 ├── jsonapi.py          # Machine-readable JSON output
 ├── utils.py            # Utility functions
 ├── constants.py        # Constants and defaults

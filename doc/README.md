@@ -23,6 +23,8 @@ use the default config location of `~/.mackeep.cfg`
 - `~/.mackeep.cfg`
 - `$MACKEEP_CONFIG`
 - `$XDG_CONFIG_HOME/mackeep/mackeep.cfg` or `~/.config/mackeep/mackeep.cfg`
+- `~/.mackup.cfg` (legacy, see [Compatibility with Mackup](#compatibility-with-mackup))
+- `$XDG_CONFIG_HOME/mackup/mackup.cfg` (legacy)
 
 You can also specify a custom config file location using the `--config-file`
 command-line option:
@@ -445,18 +447,24 @@ Describes the configuration of Mackeep:
 ```json
 {
   "schema_version": 1,
-  "version": "0.11.2",
+  "version": "0.12.1",
   "config_file": "/home/user/.mackeep.cfg",
+  "config_file_is_legacy": false,
   "custom_apps_dirs": [
     "/home/user/.mackeep",
     "/home/user/.config/mackeep/applications"
+  ],
+  "legacy_custom_apps_dirs": [
+    "/home/user/.mackup",
+    "/home/user/.config/mackup/applications"
   ],
   "storage": {
     "engine": "file_system",
     "path": "/home/user/dotfiles",
     "directory": "Mackeep",
     "resolved_backup_dir": "/home/user/dotfiles/Mackeep",
-    "exists": true
+    "exists": true,
+    "using_legacy_directory": false
   },
   "apps_to_sync": ["vim"],
   "apps_to_ignore": [],
@@ -517,6 +525,61 @@ With `--dry-run`, the operations that would be done are described:
 The `action` of an operation is one of `copy`, `skip_excluded`,
 `skip_missing`, `conflict` or `stale_in_backup`.
 
+### The detail levels of the dry-run
+
+The `--detail` option tells how detailed the plan of the dry-run is:
+
+- `entries` (the default): one entry per top level path, a folder is
+  described by a single entry.
+- `files`: one entry per file, so a graphical front-end can show exactly
+  what is copied and what is skipped.
+
+```bash
+mackeep --json backup --dry-run --detail files
+```
+
+The excluded paths tell which pattern excluded them, and the section and
+the config file it comes from:
+
+```json
+{
+  "schema_version": 1,
+  "app": "vscode",
+  "action": "skip_excluded",
+  "src": "/home/user/Library/Application Support/Code/User/cache",
+  "dst": "/home/user/dotfiles/Mackeep/Library/Application Support/Code/User/cache",
+  "reason": {
+    "pattern": "Library/Application Support/Code/User/cache",
+    "section": "exclude",
+    "file": "/home/user/.mackeep/vscode.cfg"
+  }
+}
+```
+
+An excluded directory stays a single entry, as it is not walked. A file
+that already exists in the destination is reported as a `conflict`, with
+the `would_overwrite` flag, and not as a `copy`.
+
+The `--max-actions` option limits the number of actions of the plan (5000
+by default). The plan is truncated when there are more actions than the
+limit, and the summary is always computed on the whole plan:
+
+```json
+{
+  "schema_version": 1,
+  "actions": [],
+  "summary": {
+    "apps": ["vscode"],
+    "actions": {"copy": 12000},
+    "total_actions": 12000,
+    "total_bytes": 4096,
+    "files": 12000,
+    "truncated": true,
+    "limit": 5000
+  }
+}
+```
+
 Without `--dry-run`, the operations are streamed, one JSON document per
 line, so a front-end can show the progress:
 
@@ -535,5 +598,86 @@ written as a JSON document:
 {
   "schema_version": 1,
   "error": {"code": "unsupported_application", "message": "Unsupported application: nope"}
+}
+```
+
+## Compatibility with Mackup
+
+Mackeep is a fork of [Mackup](https://github.com/lra/mackup). The config
+files of Mackup are still read, so nothing has to be done to keep using
+them.
+
+### The config file
+
+The config file is looked up in the following order, the first one that
+exists wins:
+
+1. `~/.mackeep.cfg`
+2. `$MACKEEP_CONFIG`
+3. `$XDG_CONFIG_HOME/mackeep/mackeep.cfg`
+4. `~/.mackup.cfg` (legacy)
+5. `$XDG_CONFIG_HOME/mackup/mackup.cfg` (legacy)
+
+The `--config-file` option has the priority over all of them.
+
+### The custom applications
+
+The custom application configs are read from:
+
+1. `~/.mackeep/`
+2. `$XDG_CONFIG_HOME/mackeep/applications/`
+3. `~/.mackup/` (legacy)
+4. `$XDG_CONFIG_HOME/mackup/applications/` (legacy)
+
+An application of a Mackeep directory wins over the legacy one with the
+same name. The legacy one is then ignored, without any warning.
+
+### The storage folder
+
+When the config file does not set a `directory`, the `Mackeep` folder of
+the storage is used. The legacy `Mackup` folder is used instead when it
+exists and the `Mackeep` one does not. A `directory` that is explicitly
+set in the config file is never replaced.
+
+### The warnings
+
+When a legacy path is used, Mackeep warns about it once, in `stderr`, and
+tells how to migrate.
+
+### `mackeep migrate`
+
+The `migrate` command copies the legacy config file and the custom
+application configs to their new location:
+
+```bash
+# See what would be done
+mackeep migrate --dry-run
+
+# Do it
+mackeep migrate
+```
+
+The files are **copied**, never moved nor deleted, so the old ones stay
+where they are until you remove them. The files that already exist in
+their new location are never overwritten, they are skipped.
+
+With `--json`, the plan and the result are written as JSON:
+
+```json
+{
+  "schema_version": 1,
+  "actions": [
+    {
+      "action": "copy",
+      "src": "/home/user/.mackup.cfg",
+      "dst": "/home/user/.mackeep.cfg"
+    }
+  ],
+  "summary": {
+    "copied": 1,
+    "skipped": 0,
+    "total_actions": 1,
+    "dry_run": false
+  }
 }
 ```

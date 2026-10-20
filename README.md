@@ -221,10 +221,18 @@ Mackeep is a fork of [Mackup](https://github.com/lra/mackup) by
 - **A JSON interface**: the `--json` option writes a machine-readable
   answer, so a graphical front-end can be built on top of Mackeep. See
   [the documentation](doc/README.md#json-interface).
+- **A detailed dry-run**: the `--detail files` option describes the
+  backup file by file, and tells which pattern excluded each file. See
+  [the documentation](doc/README.md#the-detail-levels-of-the-dry-run).
+- **Compatibility with Mackup**: the config files of Mackup are still
+  read, and `mackeep migrate` copies them to their new location. See
+  [the documentation](doc/README.md#compatibility-with-mackup).
 
 ```bash
 mackeep --json list
 mackeep --json backup --dry-run
+mackeep --json backup --dry-run --detail files
+mackeep migrate
 ```
 
 A graphical front-end is on the way.
