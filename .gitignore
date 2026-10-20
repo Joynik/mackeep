@@ -7,6 +7,9 @@
 # Ignore Claude stuff
 /.claude/
 
+# The local rules of the agents
+/AGENTS.md
+
 # Coverage reports
 .coverage
 .coverage.*
