@@ -1,74 +1,51 @@
-# Detailed install instructions for Mackeep
+# Install
 
-There are 2 ways to run mackeep:
-
-1. Install it with Homebrew (macOS and GNU/Linux)
-2. Install it with PIP (macOS and GNU/Linux)
-
-## Install
-
-### With Homebrew
+## With Homebrew (macOS and GNU/Linux)
 
 ```bash
-# Easy
+# Install
 brew install mackeep
 
 # Now just run it
 mackeep -h
 ```
 
-### With Homebrew master branch for latest updates
-
-Want to install the latest master release instead of waiting on the homebrew
-package version?
-
-[Homebrew reference](https://docs.brew.sh/Manpage#install-options-formulacask)
+### Upgrade
 
 ```bash
-# Install master
-brew install --HEAD
-# Check if you are using the master or stale package
-brew switch mackeep <HEAD-XXXX>
-
-mackeep -h
-```
-
-### With Python's PIP
-
-```bash
-# Easy too
-pip install mackeep
-
-# Now you can run it
-mackeep -h
-```
-
-## Upgrade
-
-### Upgrade with Homebrew
-
-```bash
+# Get the latest version
 brew update
-brew upgrade
+brew upgrade mackeep
+
 mackeep -h
 ```
 
-### Upgrade with Python's PIP
-
-```bash
-pip install --upgrade mackeep
-mackeep -h
-```
-
-## Uninstall
-
-### Uninstall with Homebrew
+### Uninstall
 
 ```bash
 brew uninstall mackeep
 ```
 
-### Uninstall with Python's PIP
+## From the sources
+
+If you do not use Homebrew, you can install it from the repository:
+
+```bash
+# Install
+pip install git+https://github.com/Joynik/mackeep.git
+
+# Now just run it
+mackeep -h
+```
+
+### Upgrade
+
+```bash
+pip install --upgrade git+https://github.com/Joynik/mackeep.git
+mackeep -h
+```
+
+### Uninstall
 
 ```bash
 pip uninstall mackeep

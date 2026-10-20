@@ -1,8 +1,6 @@
 # Mackeep
 
 [![Tests](https://github.com/Joynik/mackeep/actions/workflows/test.yaml/badge.svg)](https://github.com/Joynik/mackeep/actions/workflows/test.yaml)
-[![PyPI version](https://badge.fury.io/py/mackeep.svg)](https://badge.fury.io/py/mackeep)
-[![Python Versions](https://img.shields.io/pypi/pyversions/mackeep.svg)](https://pypi.org/project/mackeep/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![mypy](https://img.shields.io/badge/mypy-checked-blue)](http://mypy-lang.org/)
 [![License](https://img.shields.io/github/license/Joynik/mackeep.svg)](https://github.com/Joynik/mackeep/blob/master/LICENSE)
@@ -31,21 +29,21 @@ Backup and keep your application settings in sync.
 
 ## Quickstart
 
-On macOS or Linux, the easiest install is [pip](https://pip.pypa.io/en/stable/):
+On macOS or Linux, install it with [Homebrew](https://brew.sh/):
 
 ```bash
 # Install Mackeep
-pip install mackeep
+brew install mackeep
 
 # Launch it and back up your files
 mackeep backup
 ```
 
-A Homebrew formula is not published yet. Once it is, you will be able to do:
+If you do not use Homebrew, you can install it from the sources:
 
 ```bash
 # Install Mackeep
-brew install mackeep
+pip install git+https://github.com/Joynik/mackeep.git
 
 # Launch it and back up your files
 mackeep backup
@@ -250,7 +248,7 @@ mackeep --json backup --dry-run
 A graphical front-end is on the way.
 
 The versioning follows the same idea: the small changes are released as
-`0.0.X` and the big ones as `0.1.0`. See the
+`0.12.X` and the big ones as `0.13.0`. See the
 [release guide](doc/release.md).
 
 ## What platforms are supported
