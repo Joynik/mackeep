@@ -73,6 +73,7 @@ Reads and parses the `.mackup.cfg` configuration file.
 - Storage path and directory name
 - Applications to sync/ignore
 - Custom directory name
+- Global exclusion rules, applied to every application
 
 ### 3. Application Database (`appsdb.py`)
 
@@ -95,6 +96,13 @@ folder/
 
 [xdg_configuration_files]
 app/config
+
+[exclude]
+folder/cache
+**/.DS_Store
+
+[xdg_exclude]
+app/cache
 ```
 
 ### 4. Application Handler (`application.py`)
@@ -109,7 +117,20 @@ Handles the operations (backup, restore, link) for individual applications.
 - XDG directory handling
 - Conflict detection
 
-### 5. Core Engine (`mackup.py`)
+### 5. Exclusion Matcher (`excludes.py`)
+
+Holds the immutable `Matcher` class that answers whether a path is excluded
+by a set of patterns.
+
+**Key Features:**
+
+- gitignore-like patterns (`*`, `?`, `**`, `!`, trailing `/`)
+- Patterns relative to a root (`$HOME` or `$XDG_CONFIG_HOME`)
+- The last matching pattern wins, so a pattern can re-include a path
+- Case sensitive matching
+- No dependency but the standard library
+
+### 6. Core Engine (`mackup.py`)
 
 Orchestrates the overall backup/restore/link operations across all
 applications.
@@ -123,7 +144,7 @@ applications.
 5. Execute operation on each application
 6. Handle errors and report status
 
-### 6. Utilities (`utils.py`)
+### 7. Utilities (`utils.py`)
 
 Common utility functions used throughout the codebase:
 
@@ -132,6 +153,17 @@ Common utility functions used throughout the codebase:
 - XDG directory detection
 - Error handling and user prompts
 - Storage engine detection (Dropbox, Google Drive, iCloud)
+
+### 8. JSON Interface (`jsonapi.py`)
+
+Serializes the answers of the `--json` option, meant to be used by the
+graphical front-ends built on top of Mackup.
+
+**Key Features:**
+
+- Every answer holds a `schema_version` field
+- Single JSON document or NDJSON stream of events
+- Errors are reported as a JSON document, with a non-zero exit code
 
 ## Data Flow
 
@@ -175,6 +207,25 @@ application.py for each app:
     - Preserves permissions and timestamps
     ↓
 Config files now in home directory
+```
+
+### Exclusion Flow
+
+```text
+User runs: mackup backup
+    ↓
+config.py loads the global [exclude] rules
+    ↓
+appsdb.py loads the [exclude] and [xdg_exclude] rules of each app
+    ↓
+application.py for each app, for each config file:
+    - Is the file excluded? (excludes.py, relative to $HOME)
+    - Is the file excluded? (excludes.py, relative to $XDG_CONFIG_HOME)
+    - If yes: skip it, the excluded folders are not walked
+    - If no: copy the file, or the folder without its excluded files
+    ↓
+The files that are already in the backup and that are now excluded are
+not deleted, they are only reported
 ```
 
 ### Link Install Flow (Legacy)
@@ -228,7 +279,18 @@ Symlinks in home: ~/.config → ~/Dropbox/Mackup/.config
 - **Auto-detection**: Automatically finds storage paths
 - **Flexibility**: Custom paths for any sync solution
 
-### 4. XDG Support
+### 4. Exclusions
+
+- **Gitignore-like**: The patterns follow the `.gitignore` semantics, so
+  they are familiar
+- **Relative to a root**: The `[exclude]` patterns are relative to `$HOME`,
+  the `[xdg_exclude]` ones to `$XDG_CONFIG_HOME`
+- **Global and per app**: The `.mackup.cfg` file may hold an `[exclude]`
+  section that applies to every application
+- **Copy mode only**: A symlink cannot exclude anything, so the link mode
+  skips the entries that are impacted by the exclusion rules
+
+### 5. XDG Support
 
 - **Standards compliance**: Respects XDG Base Directory Specification
 - **Flexibility**: Handles non-standard `$XDG_CONFIG_HOME`
@@ -243,6 +305,8 @@ mackup/
 ├── config.py           # Configuration management
 ├── appsdb.py           # Application database
 ├── application.py      # Per-application operations
+├── excludes.py         # Exclusion rules (gitignore-like matcher)
+├── jsonapi.py          # Machine-readable JSON output
 ├── utils.py            # Utility functions
 ├── constants.py        # Constants and defaults
 └── applications/       # Built-in app configs
@@ -271,6 +335,21 @@ myapp/config.yml
 ```
 
 Submit PR with the new config file.
+
+### Excluding Some Files of an Application
+
+Add an `[exclude]` section to the config file of the application:
+
+```ini
+[application]
+name = My Application
+
+[configuration_files]
+.myapp/
+
+[exclude]
+.myapp/cache
+```
 
 ### Adding a New Storage Backend
 
@@ -301,6 +380,10 @@ The codebase includes comprehensive unit tests:
 - **`tests/test_utils.py`**: Utility functions
 - **`tests/test_cli.py`**: Command-line interface
 - **`tests/test_main.py`**: Main entry point
+- **`tests/test_excludes.py`**: Exclusion matcher
+- **`tests/test_exclude_integration.py`**: Exclusions in the backup and
+  restore flows
+- **`tests/test_json.py`**: Machine-readable JSON output
 
 Tests use temporary directories and mock file systems to avoid affecting
 the actual system.
@@ -314,6 +397,8 @@ Mackup includes several safety mechanisms:
 3. **Dry-run capability**: Can preview operations (future enhancement)
 4. **Graceful degradation**: Continues with other apps if one fails
 5. **Clear error messages**: Helps users understand what went wrong
+6. **Machine-readable errors**: In the `--json` mode, the errors are
+   reported as a JSON document, with a non-zero exit code
 
 ## Performance Considerations
 
@@ -327,7 +412,8 @@ Mackup includes several safety mechanisms:
 Potential improvements to the architecture:
 
 1. **Progress indicators**: Show progress during long operations
-2. **Dry-run mode**: Preview changes without executing
+2. **Dry-run mode**: Preview changes without executing, already available
+   with `--dry-run`
 3. **Incremental sync**: Only sync changed files
 4. **Parallel processing**: Speed up operations on multi-app backups
 5. **Conflict resolution**: Better handling of file conflicts
