@@ -11,7 +11,7 @@ enum MackeepSchema {
 }
 
 /// The storage of Mackeep.
-struct MackeepStorage: Codable, Equatable {
+struct MackeepStorage: Codable, Equatable, Sendable {
     /// The engine of the storage.
     let engine: String
 
@@ -41,7 +41,7 @@ struct MackeepStorage: Codable, Equatable {
 }
 
 /// The configuration of Mackeep.
-struct MackeepConfig: Codable, Equatable {
+struct MackeepConfig: Codable, Equatable, Sendable {
     /// The version of the schema.
     let schemaVersion: Int
 
@@ -120,7 +120,7 @@ enum MackeepAppSource: String, Codable, Equatable {
 }
 
 /// An application of Mackeep.
-struct MackeepApplication: Codable, Equatable, Identifiable {
+struct MackeepApplication: Codable, Equatable, Identifiable, Sendable {
     /// The version of the schema.
     let schemaVersion: Int
 
@@ -167,7 +167,7 @@ struct MackeepApplication: Codable, Equatable, Identifiable {
 }
 
 /// The reason why a path is excluded.
-struct MackeepExclusionReason: Codable, Equatable {
+struct MackeepExclusionReason: Codable, Equatable, Sendable {
     /// The pattern that excluded the path.
     let pattern: String
 
@@ -179,7 +179,7 @@ struct MackeepExclusionReason: Codable, Equatable {
 }
 
 /// An operation of a plan.
-struct MackeepAction: Codable, Equatable, Identifiable {
+struct MackeepAction: Codable, Equatable, Identifiable, Sendable {
     /// The application of the operation.
     let app: String
 
@@ -216,7 +216,7 @@ struct MackeepAction: Codable, Equatable, Identifiable {
 }
 
 /// The summary of a plan.
-struct MackeepSummary: Codable, Equatable {
+struct MackeepSummary: Codable, Equatable, Sendable {
     /// The applications of the plan.
     let apps: [String]
 
@@ -250,7 +250,7 @@ struct MackeepSummary: Codable, Equatable {
 }
 
 /// The plan of a dry-run.
-struct MackeepPlan: Codable, Equatable {
+struct MackeepPlan: Codable, Equatable, Sendable {
     /// The version of the schema.
     let schemaVersion: Int
 
@@ -268,7 +268,7 @@ struct MackeepPlan: Codable, Equatable {
 }
 
 /// An event of a running command.
-struct MackeepEvent: Codable, Equatable {
+struct MackeepEvent: Codable, Equatable, Sendable {
     /// The version of the schema.
     let schemaVersion: Int
 
@@ -322,7 +322,7 @@ struct MackeepEvent: Codable, Equatable {
 }
 
 /// The error of a command.
-struct MackeepError: Codable, Equatable {
+struct MackeepError: Codable, Equatable, Sendable {
     /// The code of the error.
     let code: String
 

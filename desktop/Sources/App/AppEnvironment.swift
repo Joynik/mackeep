@@ -3,6 +3,7 @@ import SwiftUI
 
 /// The state of the application, shared by all its windows.
 @Observable
+@MainActor
 final class AppEnvironment {
     /// The language of the interface.
     var language: AppLanguage = .system
@@ -16,10 +17,39 @@ final class AppEnvironment {
     /// The version of the `mackeep-cli` binary, when it is known.
     var mackeepVersion: String = ""
 
+    /// What the `mackeep-cli` binary can do.
+    var capabilities: MackeepCapabilities?
+
     /// The error shown to the user, when there is one.
     var presentedError: AppError?
 
-    init() {}
+    /// The model of the list of the applications.
+    let applications: ApplicationsModel
+
+    /// The command line tool of Mackeep.
+    private let command: MackeepCommand?
+
+    init() {
+        let path: String? = MackeepDiscovery.find()
+        self.command = path.map { MackeepCommand(path: $0) }
+        self.applications = ApplicationsModel(command: command)
+
+        guard let path else { return }
+        mackeepPath = path
+
+        // The capabilities of the tool are checked out of the main thread,
+        // the window must show up right away.
+        Task { [weak self] in
+            let capabilities: MackeepCapabilities = await Task.detached {
+                MackeepCommand(path: path).capabilities()
+            }.value
+            self?.capabilities = capabilities
+            self?.mackeepVersion = capabilities.version
+        }
+    }
+
+    /// Whether the tool of Mackeep is recent enough for the application.
+    var isToolSupported: Bool { capabilities?.isSupported ?? false }
 }
 
 /// The languages of the interface.

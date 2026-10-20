@@ -1,114 +1,564 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "section.applications.placeholder" : {
-      "comment" : "Shown in the applications section, while it is empty",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The list of the applications will show up here."
+  "sourceLanguage": "en",
+  "strings": {
+    "applications.count": {
+      "comment": "The number of applications of the list",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d applications"
           }
         },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Здесь появится список приложений."
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Приложений: %d"
           }
         }
       }
     },
-    "section.applications.title" : {
-      "comment" : "The title of the applications section",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Applications"
+    "applications.detail.placeholder": {
+      "comment": "Shown when no application is selected",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select an application to see its details."
           }
         },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Приложения"
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выберите приложение, чтобы увидеть подробности."
           }
         }
       }
     },
-    "section.backup.placeholder" : {
-      "comment" : "Shown in the backup section, while it is empty",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The backup will show up here."
+    "applications.detail.title": {
+      "comment": "The title of the details of an application",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Application"
           }
         },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Здесь появится бэкап."
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Приложение"
           }
         }
       }
     },
-    "section.backup.title" : {
-      "comment" : "The title of the backup section",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Backup"
+    "applications.exclusions.empty": {
+      "comment": "Shown when an application has no exclusion rule",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This application has no exclusion rule."
           }
         },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Бэкап"
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У этого приложения нет правил исключения."
           }
         }
       }
     },
-    "section.settings.placeholder" : {
-      "comment" : "Shown in the settings section, while it is empty",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The settings will show up here."
+    "applications.exclusions.title": {
+      "comment": "The title of the exclusions of an application",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exclusions"
           }
         },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Здесь появятся настройки."
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Исключения"
           }
         }
       }
     },
-    "section.settings.title" : {
-      "comment" : "The title of the settings section",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Settings"
+    "applications.filter.label": {
+      "comment": "The label of the filter of the list of the applications",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter"
           }
         },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Настройки"
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фильтр"
+          }
+        }
+      }
+    },
+    "applications.installed.label": {
+      "comment": "The label of the mark of the applications installed on this Mac",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed on this Mac"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установлено на этом Mac"
+          }
+        }
+      }
+    },
+    "applications.paths.empty": {
+      "comment": "Shown when an application has no path",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This application has no file."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У этого приложения нет файлов."
+          }
+        }
+      }
+    },
+    "applications.paths.title": {
+      "comment": "The title of the paths of an application",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы"
+          }
+        }
+      }
+    },
+    "applications.search.placeholder": {
+      "comment": "The placeholder of the search field of the applications",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поиск"
+          }
+        }
+      }
+    },
+    "applications.size.label": {
+      "comment": "The label of the size of an application",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Size: %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Размер: %@"
+          }
+        }
+      }
+    },
+    "applications.sort.label": {
+      "comment": "The label of the order of the list of the applications",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Order"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Порядок"
+          }
+        }
+      }
+    },
+    "applications.source.builtin": {
+      "comment": "The label of the applications of the database of Mackeep",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built-in"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встроенное"
+          }
+        }
+      }
+    },
+    "applications.source.custom": {
+      "comment": "The label of the applications of the user",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Своё"
+          }
+        }
+      }
+    },
+    "applications.sync.label": {
+      "comment": "The label of the checkbox of an application",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Синхронизировать %@"
+          }
+        }
+      }
+    },
+    "error.load.title": {
+      "comment": "The title of the error when the applications cannot be loaded",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mackeep cannot be read"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось прочитать Mackeep"
+          }
+        }
+      }
+    },
+    "error.save.title": {
+      "comment": "The title of the error when a file cannot be written",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The file cannot be written"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось записать файл"
+          }
+        }
+      }
+    },
+    "filter.applications.all": {
+      "comment": "The filter of the applications: all of them",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Все"
+          }
+        }
+      }
+    },
+    "filter.applications.custom": {
+      "comment": "The filter of the applications: the ones of the user",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свои"
+          }
+        }
+      }
+    },
+    "filter.applications.excluded": {
+      "comment": "The filter of the applications: the ones that are not synced",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excluded"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Исключённые"
+          }
+        }
+      }
+    },
+    "filter.applications.installed": {
+      "comment": "The filter of the applications: the ones installed on this Mac",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установленные"
+          }
+        }
+      }
+    },
+    "filter.applications.synced": {
+      "comment": "The filter of the applications: the ones that are synced",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synced"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Синхронизируемые"
+          }
+        }
+      }
+    },
+    "section.applications.placeholder": {
+      "comment": "Shown in the applications section, while it is empty",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The list of the applications will show up here."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Здесь появится список приложений."
+          }
+        }
+      }
+    },
+    "section.applications.title": {
+      "comment": "The title of the applications section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applications"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Приложения"
+          }
+        }
+      }
+    },
+    "section.backup.placeholder": {
+      "comment": "Shown in the backup section, while it is empty",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The backup will show up here."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Здесь появится бэкап."
+          }
+        }
+      }
+    },
+    "section.backup.title": {
+      "comment": "The title of the backup section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бэкап"
+          }
+        }
+      }
+    },
+    "section.settings.placeholder": {
+      "comment": "Shown in the settings section, while it is empty",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The settings will show up here."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Здесь появятся настройки."
+          }
+        }
+      }
+    },
+    "section.settings.title": {
+      "comment": "The title of the settings section",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки"
+          }
+        }
+      }
+    },
+    "sort.applications.displayName": {
+      "comment": "The order of the applications: by name",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Название"
+          }
+        }
+      }
+    },
+    "sort.applications.name": {
+      "comment": "The order of the applications: by identifier",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Identifier"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Идентификатор"
+          }
+        }
+      }
+    },
+    "sort.applications.size": {
+      "comment": "The order of the applications: by size",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Size"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Размер"
           }
         }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

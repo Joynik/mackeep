@@ -21,10 +21,7 @@ struct RootView: View {
         } detail: {
             switch selection ?? .applications {
             case .applications:
-                PlaceholderView(
-                    title: "section.applications.title",
-                    message: "section.applications.placeholder"
-                )
+                applications
             case .backup:
                 PlaceholderView(
                     title: "section.backup.title",
@@ -35,6 +32,41 @@ struct RootView: View {
                     title: "section.settings.title",
                     message: "section.settings.placeholder"
                 )
+            }
+        }
+        .task {
+            environment.applications.load()
+        }
+    }
+
+    /// The list of the applications and their details.
+    private var applications: some View {
+        HStack(spacing: 0) {
+            ApplicationsView(model: environment.applications)
+                .frame(minWidth: 360, idealWidth: 460, maxWidth: 560)
+            Divider()
+            detail
+                .frame(minWidth: 320, maxWidth: .infinity)
+        }
+    }
+
+    /// The details of the selected application.
+    @ViewBuilder
+    private var detail: some View {
+        if let application: MackeepApplication = environment.applications.selectedApplication {
+            ApplicationDetailView(
+                application: application,
+                model: environment.applications
+            )
+        } else {
+            ContentUnavailableView {
+                Label {
+                    Text(L10n.string("applications.detail.title"))
+                } icon: {
+                    Image(systemName: "square.grid.2x2")
+                }
+            } description: {
+                Text(L10n.string("applications.detail.placeholder"))
             }
         }
     }

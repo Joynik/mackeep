@@ -27,7 +27,7 @@ enum MackeepCommandError: LocalizedError {
 ///
 /// The tool is run with an explicit environment: the applications started
 /// from the Finder do not inherit the environment of the shell.
-struct MackeepCommand {
+struct MackeepCommand: Sendable {
     /// The path of the binary.
     let path: String
 

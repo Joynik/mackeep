@@ -16,6 +16,7 @@
 # The Xcode project of the desktop application is generated
 /desktop/MackeepDesktop.xcodeproj/
 /desktop/build/
+/desktop/*.profraw
 
 # Coverage reports
 .coverage

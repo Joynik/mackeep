@@ -5,7 +5,7 @@ import Foundation
 /// The lines keep their original text, so a document can be read and written
 /// back without any loss: the comments, the order of the sections and the
 /// unknown sections are preserved.
-enum INILine: Equatable {
+enum INILine: Equatable, Sendable {
     /// An empty line, with its original text.
     case empty(String)
 
@@ -30,7 +30,7 @@ enum INILine: Equatable {
 }
 
 /// An option of an INI file.
-struct INIOption: Equatable {
+struct INIOption: Equatable, Sendable {
     /// The whitespace before the key.
     var prefix: String = ""
 
@@ -77,7 +77,7 @@ extension INILine {
 /// The document is lossless: reading a file and writing it back gives the
 /// same file. The values are read the way Python's `configparser` reads
 /// them, so Mackeep and the application agree on what a config file holds.
-struct INIDocument: Equatable {
+struct INIDocument: Equatable, Sendable {
     /// The lines of the document, in the order they appear.
     private(set) var lines: [INILine] = []
 
