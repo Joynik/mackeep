@@ -49,5 +49,7 @@ release of the matching version:
 brew install Joynik/tap/mackeep
 ```
 
-After a release, the formula has to be updated: the version, the URL and the
-checksum of the new release artifact.
+The formula is updated automatically: the
+[homebrew tap](https://github.com/Joynik/homebrew-tap) runs a workflow that
+checks the latest release, updates the version, the URL and the checksum of
+the formula, and commits the result.
