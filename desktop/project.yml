@@ -1,0 +1,102 @@
+name: MackeepDesktop
+
+options:
+  bundleIdPrefix: com.joynik
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.15.1"
+    CURRENT_PROJECT_VERSION: "1"
+    # A real identity is needed to run the UI tests
+    DEVELOPMENT_TEAM: 5TY34HGCJS
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "Apple Development"
+    ENABLE_HARDENED_RUNTIME: YES
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    GCC_TREAT_WARNINGS_AS_ERRORS: YES
+    CLANG_WARN_DOCUMENTATION_COMMENTS: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+targets:
+  MackeepDesktop:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/App
+        excludes:
+          - "**/.DS_Store"
+    info:
+      path: Sources/App/Info.plist
+      properties:
+        CFBundleName: Mackeep
+        CFBundleDisplayName: Mackeep
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSMinimumSystemVersion: "15.0"
+        NSHumanReadableCopyright: GPL-3.0-or-later, Copyright (C) 2013-2025 Laurent Raufaste
+        LSApplicationCategoryType: public.app-category.utilities
+        NSSupportsAutomaticTermination: true
+        NSSupportsSuddenTermination: true
+    entitlements:
+      path: Sources/App/Mackeep.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+        com.apple.security.cs.disable-library-validation: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.joynik.mackeep
+        PRODUCT_NAME: Mackeep
+        # The name of the Swift module, the product is named Mackeep
+        PRODUCT_MODULE_NAME: MackeepDesktop
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        COMBINE_HIDPI_IMAGES: YES
+        ENABLE_PREVIEWS: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  MackeepDesktopTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/Unit
+    dependencies:
+      - target: MackeepDesktop
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.joynik.mackeep.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Mackeep.app/Contents/MacOS/Mackeep
+        BUNDLE_LOADER: $(TEST_HOST)
+
+  MackeepDesktopUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: Tests/UI
+    dependencies:
+      - target: MackeepDesktop
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.joynik.mackeep.uitests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  MackeepDesktop:
+    build:
+      targets:
+        MackeepDesktop: all
+        MackeepDesktopTests: [test]
+        MackeepDesktopUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - MackeepDesktopTests
+        - MackeepDesktopUITests

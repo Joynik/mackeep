@@ -13,6 +13,10 @@
 # The local rules of the agents
 /AGENTS.md
 
+# The Xcode project of the desktop application is generated
+/desktop/MackeepDesktop.xcodeproj/
+/desktop/build/
+
 # Coverage reports
 .coverage
 .coverage.*
