@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - run: pip install .
-      - run: mackeep --help
+      - run: mackeep-cli --help
 
   install-on-macos:
     strategy:
@@ -35,4 +35,4 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - run: pip install .
-      - run: mackeep --help
+      - run: mackeep-cli --help

@@ -6,16 +6,16 @@ Mackeep is a fork of Mackup, written by Laurent Raufaste.
 Copyright (C) 2013-2025 Laurent Raufaste <http://glop.org/>
 
 Usage:
-  mackeep [options] list
-  mackeep [options] show <application>
-  mackeep [options] config
-  mackeep [options] migrate
-  mackeep [options] backup [<application>]
-  mackeep [options] restore [<application>]
-  mackeep [options] link install [<application>]
-  mackeep [options] link uninstall [<application>]
-  mackeep [options] link [<application>]
-  mackeep (-h | --help)
+  mackeep-cli [options] list
+  mackeep-cli [options] show <application>
+  mackeep-cli [options] config
+  mackeep-cli [options] migrate
+  mackeep-cli [options] backup [<application>]
+  mackeep-cli [options] restore [<application>]
+  mackeep-cli [options] link install [<application>]
+  mackeep-cli [options] link uninstall [<application>]
+  mackeep-cli [options] link [<application>]
+  mackeep-cli (-h | --help)
 
 Options:
   -h --help                 Show this screen.
@@ -31,18 +31,18 @@ Options:
   --version                 Show version.
 
 Modes of action:
- - mackeep list: display a list of all supported applications.
- - mackeep show: display the details for a supported application.
- - mackeep config: display the configuration of Mackeep.
- - mackeep migrate: copy the legacy Mackup files to their new location.
- - mackeep backup: copy local config files in the configured remote folder.
- - mackeep restore: copy config files from the configured remote folder locally.
- - mackeep link install: moves local config files in remote folder, and links.
- - mackeep link uninstall: removes the links and copy config files locally.
- - mackeep link: links local config files from the remote folder.
+ - mackeep-cli list: display a list of all supported applications.
+ - mackeep-cli show: display the details for a supported application.
+ - mackeep-cli config: display the configuration of Mackeep.
+ - mackeep-cli migrate: copy the legacy Mackup files to their new location.
+ - mackeep-cli backup: copy local config files in the configured remote folder.
+ - mackeep-cli restore: copy config files from the configured remote folder locally.
+ - mackeep-cli link install: moves local config files in remote folder, and links.
+ - mackeep-cli link uninstall: removes the links and copy config files locally.
+ - mackeep-cli link: links local config files from the remote folder.
 
 backup, restore, link install, link uninstall and link act on every configured
-application by default. Name a single application (e.g. `mackeep backup vim`) to
+application by default. Name a single application (e.g. `mackeep-cli backup vim`) to
 limit a command to that app, overriding the applications_to_sync and
 applications_to_ignore settings in your config.
 
@@ -69,20 +69,20 @@ from typing import Any, TextIO
 
 from docopt import docopt
 
-from . import jsonapi, utils
-from .application import ApplicationProfile, Reporter
-from .appsdb import ApplicationsDatabase
-from .config import ConfigError
-from .constants import (
+from mackeep import jsonapi, utils
+from mackeep.application import ApplicationProfile, Reporter
+from mackeep.appsdb import ApplicationsDatabase
+from mackeep.config import ConfigError
+from mackeep.constants import (
     CUSTOM_APPS_DIR,
     CUSTOM_APPS_DIR_XDG,
     MACKEEP_APP_NAME,
     VERSION,
 )
-from .excludes import Matcher, Rule
-from .mackeep import Mackeep
-from .migrate import plan as migration_plan
-from .migrate import run as run_migration
+from mackeep.excludes import Matcher, Rule
+from mackeep.mackeep import Mackeep
+from mackeep.migrate import plan as migration_plan
+from mackeep.migrate import run as run_migration
 
 # The ANSI escape codes used to color the error messages
 ANSI_CODES = re.compile(r"\033\[[0-9;]*m")

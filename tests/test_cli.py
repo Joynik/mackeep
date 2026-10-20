@@ -9,7 +9,7 @@ from unittest.mock import patch
 import pytest
 
 from mackeep import utils
-from mackeep.main import main
+from mackeep_cli.main import main
 
 
 class TestCLI(unittest.TestCase):

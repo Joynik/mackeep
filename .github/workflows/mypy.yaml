@@ -15,4 +15,4 @@ jobs:
         with:
           python-version: "3.14"
       - run: uv sync --all-extras --dev
-      - run: uv run mypy src/mackeep/
+      - run: uv run mypy src/mackeep src/mackeep_cli

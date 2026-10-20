@@ -8,7 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from mackeep import utils
-from mackeep.main import main
+from mackeep_cli.main import main
 
 # The number of directories where the custom application configs are looked up
 CUSTOM_APPS_DIRS_COUNT = 2
@@ -67,7 +67,7 @@ def write_app_config(home, body, name="test-app"):
 
 def run(*args):
     """Run the Mackeep command line with the given arguments."""
-    with patch("sys.argv", ["mackeep", *args]):
+    with patch("sys.argv", ["mackeep-cli", *args]):
         main()
 
 

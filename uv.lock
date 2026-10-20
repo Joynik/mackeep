@@ -237,8 +237,8 @@ wheels = [
 ]
 
 [[package]]
-name = "mackeep"
-version = "0.13.0"
+name = "mackeep-cli"
+version = "0.14.0"
 source = { editable = "." }
 dependencies = [
     { name = "docopt-ng" },

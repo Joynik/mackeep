@@ -12,6 +12,9 @@ APPS_DIR: str = "applications"
 # Mackeep application name
 MACKEEP_APP_NAME: str = "mackeep"
 
+# The name of the distribution of the terminal version
+DISTRIBUTION_NAME: str = "mackeep-cli"
+
 # Default Mackeep backup path where it stores its files in Dropbox
 MACKEEP_BACKUP_PATH: str = "Mackeep"
 
@@ -28,7 +31,7 @@ LEGACY_CUSTOM_APPS_DIR_XDG: str = "mackup/applications"
 def get_version() -> str:
     """Return package version, or a safe fallback when metadata is unavailable."""
     try:
-        return version(MACKEEP_APP_NAME)
+        return version(DISTRIBUTION_NAME)
     except PackageNotFoundError:
         return "unknown"
 

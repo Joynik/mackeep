@@ -1,6 +1,6 @@
 [project]
-name = "mackeep"
-version = "0.13.0"
+name = "mackeep-cli"
+version = "0.14.0"
 description = "Backup and keep your application settings in sync."
 readme = "README.md"
 dependencies = ["docopt-ng>=0.9.0"]
@@ -23,7 +23,9 @@ classifiers = [
 ]
 
 [project.scripts]
-mackeep = "mackeep.main:main"
+mackeep-cli = "mackeep_cli.main:main"
+# The alias, kept until the desktop version takes the name
+mackeep = "mackeep_cli.main:main"
 
 [project.urls]
 Repository = "https://github.com/Joynik/mackeep.git"
@@ -45,6 +47,12 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/mackeep", "src/mackeep_cli"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "doc", "README.md", "LICENSE", "Makefile"]
+
 [tool.mypy]
 python_version = "3.14"
 warn_return_any = true
@@ -61,7 +69,7 @@ strict_equality = true
 show_error_codes = true
 
 [tool.coverage.run]
-source = ["src/mackeep"]
+source = ["src/mackeep", "src/mackeep_cli"]
 branch = true
 omit = ["*/tests/*", "*/__pycache__/*", "*/.venv/*"]
 

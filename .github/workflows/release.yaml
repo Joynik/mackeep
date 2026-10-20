@@ -22,12 +22,12 @@ jobs:
         run: |
           uv build
           version=$(uv version --short)
-          mv "dist/mackeep-$version.tar.gz" "dist/mackeep-$version-macos-arm64.tar.gz"
+          mv "dist/mackeep_cli-$version.tar.gz" "dist/mackeep-cli-$version-macos-arm64.tar.gz"
           rm -f dist/.gitignore
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           files: |
-            dist/mackeep-*.tar.gz
-            dist/mackeep-*.whl
+            dist/mackeep-cli-*.tar.gz
+            dist/mackeep_cli-*.whl

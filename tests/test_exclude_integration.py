@@ -8,7 +8,7 @@ import pytest
 from mackeep import utils
 from mackeep.appsdb import ApplicationsDatabase
 from mackeep.config import ConfigError
-from mackeep.main import main
+from mackeep_cli.main import main
 
 
 @pytest.fixture
@@ -55,7 +55,7 @@ def write_app_config(home, body):
 
 def run(*args):
     """Run the Mackeep command line with the given arguments."""
-    with patch("sys.argv", ["mackeep", *args]):
+    with patch("sys.argv", ["mackeep-cli", *args]):
         main()
 
 

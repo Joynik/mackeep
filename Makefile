@@ -11,19 +11,20 @@ test:
 	uv run pytest
 
 coverage:
-	uv run pytest --cov=mackeep --cov-report=term --cov-report=html --cov-report=xml
+	uv run pytest --cov=mackeep --cov=mackeep_cli --cov-report=term --cov-report=html --cov-report=xml
 
 coverage-report:
 	uv run coverage report
 
 mypy:
-	uv run mypy src/mackeep/
+	uv run mypy src/mackeep src/mackeep_cli
 
 check: lint ruff mypy ty test
 	@echo "All checks passed!"
 
 clean:
 	rm -rf src/mackeep/__pycache__
+	rm -rf src/mackeep_cli/__pycache__
 	rm -rf tests/__pycache__
 	rm -rf dist/
 	rm -rf htmlcov/

@@ -9,7 +9,7 @@ import pytest
 from mackeep import utils
 from mackeep.appsdb import ApplicationsDatabase
 from mackeep.config import Config
-from mackeep.main import main
+from mackeep_cli.main import main
 
 # The content of a config file of an application
 APP_CONFIG = (
@@ -71,7 +71,7 @@ def write_config(home, path, content=MAIN_CONFIG):
 
 def run(*args):
     """Run the Mackeep command line with the given arguments."""
-    with patch("sys.argv", ["mackeep", *args]):
+    with patch("sys.argv", ["mackeep-cli", *args]):
         main()
 
 
