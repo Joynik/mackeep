@@ -32,14 +32,14 @@ configuration files will be synced for that application by doing the following:
 bash
 ```
 
-You can get a list of supported apps by running `mackeep list`.
+You can get a list of supported apps by running `mackeep-cli list`.
 
 1. Save the file
 2. Run the following command:
 
-`mackeep --dry-run --verbose backup`
+`mackeep-cli --dry-run --verbose backup`
 
-This command will let you see what mackeep will do behind the scenes when it
+This command will let you see what mackeep-cli will do behind the scenes when it
 backs up your application's configuration files so you can readily see what
 configuration files Mackeep will sync. Make note of these files.
 
@@ -150,11 +150,11 @@ instructions provided above. If not, do that before proceeding.
 
 Run the following command on the master machine:
 
-`mackeep backup`
+`mackeep-cli backup`
 
 On each of the other "slave" machines, run:
 
-`mackeep restore`
+`mackeep-cli restore`
 
 If you used Method 1 in Step 2 above, you are done. You may discover
 that you didn't quite merge the files exactly the way you wanted but don't

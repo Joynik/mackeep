@@ -21,9 +21,9 @@ Mackeep has two main operation modes:
 
 Copy mode is used for backing up and restoring files:
 
-- **`mackeep backup`**: Copies configuration files from your home directory
+- **`mackeep-cli backup`**: Copies configuration files from your home directory
   to the Mackeep folder
-- **`mackeep restore`**: Copies configuration files from the Mackeep folder
+- **`mackeep-cli restore`**: Copies configuration files from the Mackeep folder
   back to your home directory
 
 This is a one-time operation used when setting up a new machine or creating
@@ -34,11 +34,11 @@ an initial backup.
 Link mode creates persistent symlinks between your home directory and the
 Mackeep folder:
 
-- **`mackeep link install`**: Moves files to Mackeep folder and creates
+- **`mackeep-cli link install`**: Moves files to Mackeep folder and creates
   symlinks back to original locations
-- **`mackeep link`**: Creates symlinks from Mackeep folder to home directory
+- **`mackeep-cli link`**: Creates symlinks from Mackeep folder to home directory
   (on additional machines)
-- **`mackeep link uninstall`**: Removes symlinks and copies files back to
+- **`mackeep-cli link uninstall`**: Removes symlinks and copies files back to
   original locations
 
 ⚠️ **Warning**: Link mode is broken on macOS Sonoma (14) and later due to
@@ -46,7 +46,7 @@ changes in how macOS handles symlinked preferences. Use copy mode instead.
 
 ## Component Architecture
 
-### 1. Command Line Interface (`main.py`)
+### 1. Command Line Interface (`mackeep_cli/main.py`)
 
 Entry point for the application. Parses command-line arguments using
 `docopt` and dispatches to the appropriate operation.
@@ -176,7 +176,7 @@ graphical front-ends built on top of Mackeep.
 ### Backup Flow
 
 ```text
-User runs: mackeep backup
+User runs: mackeep-cli backup
     ↓
 main.py parses command
     ↓
@@ -197,7 +197,7 @@ Files now in: ~/Dropbox/Mackeep/ (or chosen storage)
 ### Restore Flow
 
 ```text
-User runs: mackeep restore
+User runs: mackeep-cli restore
     ↓
 main.py parses command
     ↓
@@ -218,7 +218,7 @@ Config files now in home directory
 ### Exclusion Flow
 
 ```text
-User runs: mackeep backup
+User runs: mackeep-cli backup
     ↓
 config.py loads the global [exclude] rules
     ↓
@@ -237,7 +237,7 @@ not deleted, they are only reported
 ### Link Install Flow (Legacy)
 
 ```text
-User runs: mackeep link install
+User runs: mackeep-cli link install
     ↓
 main.py parses command
     ↓
@@ -292,7 +292,7 @@ Symlinks in home: ~/.config → ~/Dropbox/Mackeep/.config
   the priority
 - **The storage folder**: the legacy `Mackup` folder is used when the
   config file does not set a directory and the new folder does not exist
-- **A migration command**: `mackeep migrate` copies the legacy files to
+- **A migration command**: `mackeep-cli migrate` copies the legacy files to
   their new location, without overwriting anything
 - **One warning per run**: the legacy paths that are used are reported in
   `stderr`
@@ -317,23 +317,29 @@ Symlinks in home: ~/.config → ~/Dropbox/Mackeep/.config
 ## File Structure
 
 ```text
-mackeep/
-├── main.py              # CLI entry point
-├── mackeep.py           # Core orchestration engine
-├── config.py           # Configuration management
-├── appsdb.py           # Application database
-├── application.py      # Per-application operations
-├── excludes.py         # Exclusion rules (gitignore-like matcher)
-├── migrate.py          # Migration of the legacy Mackup files
-├── jsonapi.py          # Machine-readable JSON output
-├── utils.py            # Utility functions
-├── constants.py        # Constants and defaults
-└── applications/       # Built-in app configs
-    ├── git.cfg
-    ├── vim.cfg
-    ├── ssh.cfg
-    └── ... (600+ more)
+src/
+├── mackeep/            # The core: the engine and the JSON interface
+│   ├── mackeep.py      # Core orchestration engine
+│   ├── config.py       # Configuration management
+│   ├── appsdb.py       # Application database
+│   ├── application.py  # Per-application operations
+│   ├── excludes.py     # Exclusion rules (gitignore-like matcher)
+│   ├── migrate.py      # Migration of the legacy Mackup files
+│   ├── jsonapi.py      # Machine-readable JSON output
+│   ├── utils.py        # Utility functions
+│   ├── constants.py    # Constants and defaults
+│   └── applications/   # Built-in app configs
+│       ├── git.cfg
+│       ├── vim.cfg
+│       ├── ssh.cfg
+│       └── ... (600+ more)
+└── mackeep_cli/        # The terminal version
+    └── main.py         # CLI entry point
 ```
+
+The desktop version will live in `src/mackeep_desktop/`. It talks to the
+terminal version through the JSON interface, so it does not need anything
+but the core.
 
 ## Extension Points
 

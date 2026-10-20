@@ -4,10 +4,10 @@
 
 ```bash
 # Install
-brew install Joynik/tap/mackeep
+brew install Joynik/tap/mackeep-cli
 
 # Now just run it
-mackeep -h
+mackeep-cli -h
 ```
 
 ### Upgrade
@@ -15,15 +15,15 @@ mackeep -h
 ```bash
 # Get the latest version
 brew update
-brew upgrade mackeep
+brew upgrade mackeep-cli
 
-mackeep -h
+mackeep-cli -h
 ```
 
 ### Uninstall
 
 ```bash
-brew uninstall mackeep
+brew uninstall mackeep-cli
 ```
 
 ## From the sources
@@ -37,7 +37,7 @@ git clone https://github.com/Joynik/mackeep.git
 cd mackeep
 
 # Install the dependencies and run it
-uv run mackeep -h
+uv run mackeep-cli -h
 ```
 
 See the [development guide](doc/develop.md) for the details.

@@ -30,7 +30,7 @@ You can also specify a custom config file location using the `--config-file`
 command-line option:
 
 ```bash
-mackeep --config-file ~/.mackeep-custom.cfg backup
+mackeep-cli --config-file ~/.mackeep-custom.cfg backup
 ```
 
 The path can be absolute or relative to your home directory. Note that the
@@ -140,10 +140,10 @@ directory = .config/mackeep
 If you ever change your mind and switch storage solutions after Mackeep is
 already setup (ex: from `dropbox` to `icloud`), complete the following steps.
 
-1. Run `mackeep uninstall` on all computers
+1. Run `mackeep-cli uninstall` on all computers
 2. Copy your Mackeep files to the new storage location
 3. Change the storage provider details in your `.mackeep.cfg` file (see above)
-4. Run `mackeep backup` on the main computer and `mackeep restore` on all others
+4. Run `mackeep-cli backup` on the main computer and `mackeep-cli restore` on all others
 
 ## Applications
 
@@ -159,7 +159,7 @@ ssh
 adium
 ```
 
-Use `mackeep list` to get a list of valid application names. Don't use fancy
+Use `mackeep-cli list` to get a list of valid application names. Don't use fancy
 names (with spaces) here.
 
 A [sample](.mackeep.cfg) of this file is available in this folder. Just copy it
@@ -181,7 +181,7 @@ ssh
 adium
 ```
 
-Use `mackeep list` to get a list of valid application names. Don't use fancy
+Use `mackeep-cli list` to get a list of valid application names. Don't use fancy
 names (with spaces) here.
 
 A [sample](.mackeep.cfg) of this file is available in this folder. Just copy it
@@ -263,10 +263,10 @@ bin
 Note that Mackeep assumes the file paths listed here are relative to your home
 directory.
 
-You can run mackeep to see if they are listed:
+You can run mackeep-cli to see if they are listed:
 
 ```bash
-$ mackeep list
+$ mackeep-cli list
 Supported applications:
 [...]
  - my-files
@@ -277,7 +277,7 @@ Supported applications:
 All good, you can now sync your newly configured files:
 
 ```bash
-mackeep backup
+mackeep-cli backup
 ```
 
 If you override an application config that is already supported by Mackeep, your
@@ -292,9 +292,9 @@ You can add and test an application by following these steps:
 - fork this project
 - create a branch _(usually containing the name of the application)_
 - add the appropriate application config file in the `mackeep/applications` folder
-- from the top-most folder _(mackeep)_ run `make develop` that replaces the
-  currently installed mackeep with the local modified one
-- simply run `mackeep backup` to test if everything is ok
+- from the top-most folder _(mackeep-cli)_ run `make develop` that replaces the
+  currently installed mackeep-cli with the local modified one
+- simply run `mackeep-cli backup` to test if everything is ok
 - if everything works as expected:
   - run `make undevelop` to revert to the official version
   - commit and push the change to your fork and then create the Pulls Request
@@ -424,7 +424,7 @@ Skipping .config/Code/User, it contains excluded files and a symlink cannot excl
 ```
 
 The files that are already in the backup and that are now excluded are not
-deleted. They are only reported, e.g. with `mackeep backup --dry-run`.
+deleted. They are only reported, e.g. with `mackeep-cli backup --dry-run`.
 
 ## JSON interface
 
@@ -432,7 +432,7 @@ Mackeep can write a machine-readable answer, so a graphical front-end can be
 built on top of it. Use the `--json` option, before the command:
 
 ```bash
-mackeep --json list
+mackeep-cli --json list
 ```
 
 Every answer holds a `schema_version` field, currently `1`. In this mode,
@@ -440,7 +440,7 @@ only JSON is written to `stdout`, the human-readable output is written to
 `stderr` and no question is asked: the `--force-no` option is implied,
 unless `--force` is given.
 
-### `mackeep --json config`
+### `mackeep-cli --json config`
 
 Describes the configuration of Mackeep:
 
@@ -472,7 +472,7 @@ Describes the configuration of Mackeep:
 }
 ```
 
-### `mackeep --json list` and `mackeep --json show <application>`
+### `mackeep-cli --json list` and `mackeep-cli --json show <application>`
 
 `list` writes an array with the description of every supported application,
 `show` writes the description of a single one:
@@ -493,11 +493,11 @@ Describes the configuration of Mackeep:
 }
 ```
 
-The `name` is the identifier of the application, as shown by `mackeep list`.
+The `name` is the identifier of the application, as shown by `mackeep-cli list`.
 The `source` is `builtin` for the applications of Mackeep and `custom` for
 the ones of the user.
 
-### `mackeep --json backup` and `mackeep --json restore`
+### `mackeep-cli --json backup` and `mackeep-cli --json restore`
 
 With `--dry-run`, the operations that would be done are described:
 
@@ -535,7 +535,7 @@ The `--detail` option tells how detailed the plan of the dry-run is:
   what is copied and what is skipped.
 
 ```bash
-mackeep --json backup --dry-run --detail files
+mackeep-cli --json backup --dry-run --detail files
 ```
 
 The excluded paths tell which pattern excluded them, and the section and
@@ -644,17 +644,17 @@ set in the config file is never replaced.
 When a legacy path is used, Mackeep warns about it once, in `stderr`, and
 tells how to migrate.
 
-### `mackeep migrate`
+### `mackeep-cli migrate`
 
 The `migrate` command copies the legacy config file and the custom
 application configs to their new location:
 
 ```bash
 # See what would be done
-mackeep migrate --dry-run
+mackeep-cli migrate --dry-run
 
 # Do it
-mackeep migrate
+mackeep-cli migrate
 ```
 
 The files are **copied**, never moved nor deleted, so the old ones stay

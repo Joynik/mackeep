@@ -46,7 +46,7 @@ release of the matching version:
 
 ```bash
 # Install
-brew install Joynik/tap/mackeep
+brew install Joynik/tap/mackeep-cli
 ```
 
 The formula is updated automatically: the

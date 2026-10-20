@@ -5,7 +5,7 @@
 pipx install uv
 
 # You can now edit files and see the impact of your changes
-uv run mackeep --version
+uv run mackeep-cli --version
 make test
 ```
 

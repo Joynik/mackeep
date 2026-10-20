@@ -16,9 +16,9 @@ Backup and keep your application settings in sync.
   - [What does it do](#what-does-it-do)
     - [Copy mode](#copy-mode)
     - [Link mode](#link-mode)
-      - [`mackeep link install`](#mackeep-link-install)
-      - [`mackeep link`](#mackeep-link)
-      - [`mackeep link uninstall`](#mackeep-link-uninstall)
+      - [`mackeep-cli link install`](#mackeep-cli-link-install)
+      - [`mackeep-cli link`](#mackeep-cli-link)
+      - [`mackeep-cli link uninstall`](#mackeep-cli-link-uninstall)
   - [Supported Storages](#supported-storages)
   - [Personalization \& configuration](#personalization--configuration)
   - [What's new in Mackeep](#whats-new-in-mackeep)
@@ -29,14 +29,15 @@ Backup and keep your application settings in sync.
 
 ## Quickstart
 
-On macOS or Linux, install it with [Homebrew](https://brew.sh/):
+On macOS or Linux, install the terminal version with
+[Homebrew](https://brew.sh/):
 
 ```bash
-# Install Mackeep
-brew install Joynik/tap/mackeep
+# Install the terminal version of Mackeep
+brew install Joynik/tap/mackeep-cli
 
 # Launch it and back up your files
-mackeep backup
+mackeep-cli backup
 ```
 
 You're all set and can back up from now on.
@@ -45,10 +46,10 @@ Next, on any new workstation, do:
 
 ```bash
 # Install Mackeep
-brew install Joynik/tap/mackeep
+brew install Joynik/tap/mackeep-cli
 
 # Launch it and restore your files
-mackeep restore
+mackeep-cli restore
 ```
 
 Done!
@@ -59,23 +60,23 @@ You can find more detailed instructions in [INSTALL.md](INSTALL.md).
 
 `backup`, `restore`, `link install`, `link uninstall` and `link` operate on all
 of your configured applications by default. To limit a command to a single
-application, add its name (the identifier shown by `mackeep list`), e.g.
-`mackeep backup vim`. Naming an application overrides the
+application, add its name (the identifier shown by `mackeep-cli list`), e.g.
+`mackeep-cli backup vim`. Naming an application overrides the
 `[applications_to_sync]` / `[applications_to_ignore]` settings in your
 `.mackeep.cfg`, so you can act on any supported app without editing your config.
 
-`mackeep backup [application]`
+`mackeep-cli backup [application]`
 
 Back up your application files. Copy your local config files into the Mackeep folder.
-Name an application to back up only that one, e.g. `mackeep backup vim`.
+Name an application to back up only that one, e.g. `mackeep-cli backup vim`.
 
-`mackeep restore [application]`
+`mackeep-cli restore [application]`
 
 Restore your application settings on a newly installed workstation.
 Copy config files from the Mackeep folder to your home folder.
-Name an application to restore only that one, e.g. `mackeep restore emacs`.
+Name an application to restore only that one, e.g. `mackeep-cli restore emacs`.
 
-`mackeep link install [application]`
+`mackeep-cli link install [application]`
 
 Move your local config files into the Mackeep folder,
 and link them to their original place.
@@ -83,24 +84,24 @@ Name an application to install only that one.
 
 $${\color{red}warning}$$ _the `link` strategy [doesn't work correctly on macOS](#link-mode)_
 
-`mackeep link [application]`
+`mackeep-cli link [application]`
 
 On another workstation, links local config files from the Mackeep folder.
 Name an application to link only that one.
 
-`mackeep link uninstall [application]`
+`mackeep-cli link uninstall [application]`
 
 Copy back any synced config file to its original place.
 Removes the links and copies config files from the Mackeep folder back into your
 home.
-Name an application (e.g. `mackeep link uninstall git`) to unlink only that one;
+Name an application (e.g. `mackeep-cli link uninstall git`) to unlink only that one;
 scoping to an application skips the global uninstall confirmation.
 
-`mackeep list`
+`mackeep-cli list`
 
 Display the list of applications supported by Mackeep.
 
-`mackeep -h`
+`mackeep-cli -h`
 
 Get some help, obviously...
 
@@ -122,8 +123,8 @@ which can be in Dropbox, iCloud, or wherever you configure it.
 
 It is covered by the 2 commands:
 
-- `mackeep backup`
-- `mackeep restore`
+- `mackeep-cli backup`
+- `mackeep-cli restore`
 
 ### Link mode
 
@@ -149,13 +150,13 @@ folder, in the `.gitconfig` file.
 
 It is covered by the 3 commands:
 
-- `mackeep link install`
-- `mackeep link`
-- `mackeep link uninstall`
+- `mackeep-cli link install`
+- `mackeep-cli link`
+- `mackeep-cli link uninstall`
 
-#### `mackeep link install`
+#### `mackeep-cli link install`
 
-If you have Dropbox, these things happen when you launch `mackeep link install`:
+If you have Dropbox, these things happen when you launch `mackeep-cli link install`:
 
 1. `cp ~/.gitconfig ~/Dropbox/Mackeep/.gitconfig`
 2. `rm ~/.gitconfig`
@@ -163,23 +164,23 @@ If you have Dropbox, these things happen when you launch `mackeep link install`:
 
 Now your `git` config is always backed up and up to date on all your workstations.
 
-#### `mackeep link`
+#### `mackeep-cli link`
 
-When you launch `mackeep link`, here's what it's really doing:
+When you launch `mackeep-cli link`, here's what it's really doing:
 
 1. `ln -s ~/Dropbox/Mackeep/.gitconfig ~/.gitconfig`
 
 That's it, you got your `git` config setup on your new workstation.
 
-`mackeep` does the same for any supported application.
+`mackeep-cli` does the same for any supported application.
 
-#### `mackeep link uninstall`
+#### `mackeep-cli link uninstall`
 
 You can revert all your files to their original state.
 
 ```bash
 # Just run this
-mackeep link uninstall
+mackeep-cli link uninstall
 ```
 
 This will remove the symlinks and copy back the files from the Mackeep folder in
@@ -187,7 +188,7 @@ Dropbox to their original places in your home. The Mackeep folder and the files
 in it stay put, so that any other computer also running Mackeep is unaffected.
 
 To revert a single application instead, name it, e.g.
-`mackeep link uninstall git`. Scoping the command to an application unlinks only
+`mackeep-cli link uninstall git`. Scoping the command to an application unlinks only
 that app — the rest of your setup and the Mackeep config itself are left in
 place, and the global uninstall confirmation is skipped.
 
@@ -225,14 +226,14 @@ Mackeep is a fork of [Mackup](https://github.com/lra/mackup) by
   backup file by file, and tells which pattern excluded each file. See
   [the documentation](doc/README.md#the-detail-levels-of-the-dry-run).
 - **Compatibility with Mackup**: the config files of Mackup are still
-  read, and `mackeep migrate` copies them to their new location. See
+  read, and `mackeep-cli migrate` copies them to their new location. See
   [the documentation](doc/README.md#compatibility-with-mackup).
 
 ```bash
-mackeep --json list
-mackeep --json backup --dry-run
-mackeep --json backup --dry-run --detail files
-mackeep migrate
+mackeep-cli --json list
+mackeep-cli --json backup --dry-run
+mackeep-cli --json backup --dry-run --detail files
+mackeep-cli migrate
 ```
 
 A graphical front-end is on the way.

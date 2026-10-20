@@ -45,7 +45,7 @@ Alternatively, see the [official uv installation guide](https://docs.astral.sh/u
 
 ```bash
 git clone https://github.com/Joynik/mackeep.git
-cd mackeep
+cd mackeep-cli
 ```
 
 2. Sync dependencies (creates a virtual environment automatically):
