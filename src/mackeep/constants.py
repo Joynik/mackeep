@@ -1,4 +1,4 @@
-"""Constants used in Mackup."""
+"""Constants used in Mackeep."""
 
 from importlib.metadata import PackageNotFoundError, version
 
@@ -9,20 +9,20 @@ PLATFORM_LINUX: str = "Linux"
 # Directory containing the application configs
 APPS_DIR: str = "applications"
 
-# Mackup application name
-MACKUP_APP_NAME: str = "mackup"
+# Mackeep application name
+MACKEEP_APP_NAME: str = "mackeep"
 
-# Default Mackup backup path where it stores its files in Dropbox
-MACKUP_BACKUP_PATH: str = "Mackup"
+# Default Mackeep backup path where it stores its files in Dropbox
+MACKEEP_BACKUP_PATH: str = "Mackeep"
 
-# Mackup config file
-MACKUP_CONFIG_FILE: str = ".mackup.cfg"
+# Mackeep config file
+MACKEEP_CONFIG_FILE: str = ".mackeep.cfg"
 
 
 def get_version() -> str:
     """Return package version, or a safe fallback when metadata is unavailable."""
     try:
-        return version(MACKUP_APP_NAME)
+        return version(MACKEEP_APP_NAME)
     except PackageNotFoundError:
         return "unknown"
 
@@ -31,10 +31,10 @@ def get_version() -> str:
 VERSION: str = get_version()
 
 # Directory that can contains user defined app configs
-CUSTOM_APPS_DIR: str = ".mackup"
+CUSTOM_APPS_DIR: str = ".mackeep"
 
 # XDG-compliant directory for user defined app configs (relative to XDG_CONFIG_HOME)
-CUSTOM_APPS_DIR_XDG: str = "mackup/applications"
+CUSTOM_APPS_DIR_XDG: str = "mackeep/applications"
 
 # Supported engines
 ENGINE_DROPBOX: str = "dropbox"
@@ -42,15 +42,15 @@ ENGINE_FS: str = "file_system"
 ENGINE_GDRIVE: str = "google_drive"
 ENGINE_ICLOUD: str = "icloud"
 
-DOCUMENTATION_URL: str = "https://github.com/lra/mackup/blob/master/doc/README.md"
+DOCUMENTATION_URL: str = "https://github.com/Joynik/mackeep/blob/master/doc/README.md"
 
-# Error message displayed when mackup can't find the storage specified
+# Error message displayed when mackeep can't find the storage specified
 # in the config (or the default one).
 ERROR_UNABLE_TO_FIND_STORAGE: str = (
     "Unable to find your {provider} =(\n"
-    f"If this is the first time you use {MACKUP_APP_NAME}, you may want "
+    f"If this is the first time you use {MACKEEP_APP_NAME}, you may want "
     "to use another provider.\n"
     "Take a look at the documentation [1] to know more about "
-    "how to configure mackup.\n\n"
+    "how to configure mackeep.\n\n"
     f"[1]: {DOCUMENTATION_URL}"
 )

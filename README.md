@@ -1,58 +1,67 @@
-# Mackup™
+# Mackeep
 
-[![Tests](https://github.com/lra/mackup/actions/workflows/test.yaml/badge.svg)](https://github.com/lra/mackup/actions/workflows/test.yaml)
-[![PyPI version](https://badge.fury.io/py/mackup.svg)](https://badge.fury.io/py/mackup)
-[![Python Versions](https://img.shields.io/pypi/pyversions/mackup.svg)](https://pypi.org/project/mackup/)
+[![Tests](https://github.com/Joynik/mackeep/actions/workflows/test.yaml/badge.svg)](https://github.com/Joynik/mackeep/actions/workflows/test.yaml)
+[![PyPI version](https://badge.fury.io/py/mackeep.svg)](https://badge.fury.io/py/mackeep)
+[![Python Versions](https://img.shields.io/pypi/pyversions/mackeep.svg)](https://pypi.org/project/mackeep/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![mypy](https://img.shields.io/badge/mypy-checked-blue)](http://mypy-lang.org/)
-[![License](https://img.shields.io/github/license/lra/mackup.svg)](https://github.com/lra/mackup/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/Joynik/mackeep.svg)](https://github.com/Joynik/mackeep/blob/master/LICENSE)
 
 Backup and keep your application settings in sync.
 
 ## Table of contents
 
-- [Mackup™](#mackup)
+- [Mackeep](#mackeep)
   - [Table of contents](#table-of-contents)
   - [Quickstart](#quickstart)
   - [Usage](#usage)
   - [What does it do](#what-does-it-do)
     - [Copy mode](#copy-mode)
     - [Link mode](#link-mode)
-      - [`mackup link install`](#mackup-link-install)
-      - [`mackup link`](#mackup-link)
-      - [`mackup link uninstall`](#mackup-link-uninstall)
+      - [`mackeep link install`](#mackeep-link-install)
+      - [`mackeep link`](#mackeep-link)
+      - [`mackeep link uninstall`](#mackeep-link-uninstall)
   - [Supported Storages](#supported-storages)
   - [Unsupported Storages](#unsupported-storages)
   - [Supported Applications](#supported-applications)
   - [Can you support application X](#can-you-support-application-x)
   - [Personalization \& configuration](#personalization--configuration)
+  - [What's new in Mackeep](#whats-new-in-mackeep)
   - [Why did you do this](#why-did-you-do-this)
   - [What platforms are supported](#what-platforms-are-supported)
   - [What's up with the weird name](#whats-up-with-the-weird-name)
   - [Architecture](#architecture)
+  - [Credits](#credits)
   - [Where can I find more information](#where-can-i-find-more-information)
 
 ## Quickstart
 
-On macOS or Linux, if you want an easy install, you can install
-[Homebrew](http://brew.sh/) and do:
+On macOS or Linux, the easiest install is [pip](https://pip.pypa.io/en/stable/):
 
 ```bash
-# Install Mackup
-brew install mackup
+# Install Mackeep
+pip install mackeep
 
 # Launch it and back up your files
-mackup backup
+mackeep backup
 ```
 
-If not running macOS or Linux, or you don't like Homebrew, you can use [pip](https://pip.pypa.io/en/stable/).
+A Homebrew formula is not published yet. Once it is, you will be able to do:
 
 ```bash
-# Install Mackup with PIP
-pip install --upgrade mackup
+# Install Mackeep
+brew install mackeep
 
 # Launch it and back up your files
-mackup backup
+mackeep backup
+```
+
+```bash
+# Install Mackeep with PIP
+pip install --upgrade mackeep
+
+# Launch it and back up your files
+mackeep backup
 ```
 
 You're all set and can back up from now on.
@@ -60,11 +69,11 @@ You're all set and can back up from now on.
 Next, on any new workstation, do:
 
 ```bash
-# Install Mackup
-brew install mackup
+# Install Mackeep
+brew install mackeep
 
 # Launch it and restore your files
-mackup restore
+mackeep restore
 ```
 
 Done!
@@ -75,48 +84,48 @@ You can find more detailed instructions in [INSTALL.md](INSTALL.md).
 
 `backup`, `restore`, `link install`, `link uninstall` and `link` operate on all
 of your configured applications by default. To limit a command to a single
-application, add its name (the identifier shown by `mackup list`), e.g.
-`mackup backup vim`. Naming an application overrides the
+application, add its name (the identifier shown by `mackeep list`), e.g.
+`mackeep backup vim`. Naming an application overrides the
 `[applications_to_sync]` / `[applications_to_ignore]` settings in your
-`.mackup.cfg`, so you can act on any supported app without editing your config.
+`.mackeep.cfg`, so you can act on any supported app without editing your config.
 
-`mackup backup [application]`
+`mackeep backup [application]`
 
-Back up your application files. Copy your local config files into the Mackup folder.
-Name an application to back up only that one, e.g. `mackup backup vim`.
+Back up your application files. Copy your local config files into the Mackeep folder.
+Name an application to back up only that one, e.g. `mackeep backup vim`.
 
-`mackup restore [application]`
+`mackeep restore [application]`
 
 Restore your application settings on a newly installed workstation.
-Copy config files from the Mackup folder to your home folder.
-Name an application to restore only that one, e.g. `mackup restore emacs`.
+Copy config files from the Mackeep folder to your home folder.
+Name an application to restore only that one, e.g. `mackeep restore emacs`.
 
-`mackup link install [application]`
+`mackeep link install [application]`
 
-Move your local config files into the Mackup folder,
+Move your local config files into the Mackeep folder,
 and link them to their original place.
 Name an application to install only that one.
 
 $${\color{red}warning}$$ _the `link` strategy [doesn't work correctly on macOS](#link-mode)_
 
-`mackup link [application]`
+`mackeep link [application]`
 
-On another workstation, links local config files from the Mackup folder.
+On another workstation, links local config files from the Mackeep folder.
 Name an application to link only that one.
 
-`mackup link uninstall [application]`
+`mackeep link uninstall [application]`
 
 Copy back any synced config file to its original place.
-Removes the links and copies config files from the Mackup folder back into your
+Removes the links and copies config files from the Mackeep folder back into your
 home.
-Name an application (e.g. `mackup link uninstall git`) to unlink only that one;
+Name an application (e.g. `mackeep link uninstall git`) to unlink only that one;
 scoping to an application skips the global uninstall confirmation.
 
-`mackup list`
+`mackeep list`
 
-Display the list of applications supported by Mackup.
+Display the list of applications supported by Mackeep.
 
-`mackup -h`
+`mackeep -h`
 
 Get some help, obviously...
 
@@ -126,31 +135,31 @@ By only tracking pure configuration files, it keeps the crap out of your
 freshly new installed workstation (no cache, temporary and locally specific
 files are transferred).
 
-Mackup makes setting up the environment easy and simple.
+Mackeep makes setting up the environment easy and simple.
 
 There are 2 modes of operations: copy mode and link mode.
 
 ### Copy mode
 
 Copy mode is used to back up and restore your files.
-The files are backed up into the configured Mackup folder,
+The files are backed up into the configured Mackeep folder,
 which can be in Dropbox, iCloud, or wherever you configure it.
 
 It is covered by the 2 commands:
 
-- `mackup backup`
-- `mackup restore`
+- `mackeep backup`
+- `mackeep restore`
 
 ### Link mode
 
 > [!WARNING]
-> If you are using Mackup on a current version of macOS, link mode will BREAK
+> If you are using Mackeep on a current version of macOS, link mode will BREAK
   YOUR PREFERENCES. macOS Sonoma (macOS 14) and later don't support symlinked
-  preferences, see [issue #2035](https://github.com/lra/mackup/issues/2035) for
-  additional information. [PR #2085](<https://github.com/lra/mackup/pull/2085>)
+  preferences, see [issue #2035](https://github.com/Joynik/mackeep/issues/2035) for
+  additional information. [PR #2085](<https://github.com/Joynik/mackeep/pull/2085>)
   added copy mode, which should be used instead.
 
-Link mode is used to move your config files into the Mackup folder,
+Link mode is used to move your config files into the Mackeep folder,
 and link them back to their original place.
 
 This mode is useful if you are using multiple workstations,
@@ -165,46 +174,46 @@ folder, in the `.gitconfig` file.
 
 It is covered by the 3 commands:
 
-- `mackup link install`
-- `mackup link`
-- `mackup link uninstall`
+- `mackeep link install`
+- `mackeep link`
+- `mackeep link uninstall`
 
-#### `mackup link install`
+#### `mackeep link install`
 
-If you have Dropbox, these things happen when you launch `mackup link install`:
+If you have Dropbox, these things happen when you launch `mackeep link install`:
 
-1. `cp ~/.gitconfig ~/Dropbox/Mackup/.gitconfig`
+1. `cp ~/.gitconfig ~/Dropbox/Mackeep/.gitconfig`
 2. `rm ~/.gitconfig`
-3. `ln -s ~/Dropbox/Mackup/.gitconfig ~/.gitconfig`
+3. `ln -s ~/Dropbox/Mackeep/.gitconfig ~/.gitconfig`
 
 Now your `git` config is always backed up and up to date on all your workstations.
 
-#### `mackup link`
+#### `mackeep link`
 
-When you launch `mackup link`, here's what it's really doing:
+When you launch `mackeep link`, here's what it's really doing:
 
-1. `ln -s ~/Dropbox/Mackup/.gitconfig ~/.gitconfig`
+1. `ln -s ~/Dropbox/Mackeep/.gitconfig ~/.gitconfig`
 
 That's it, you got your `git` config setup on your new workstation.
 
-`mackup` does the same for any supported application.
+`mackeep` does the same for any supported application.
 
-#### `mackup link uninstall`
+#### `mackeep link uninstall`
 
 You can revert all your files to their original state.
 
 ```bash
 # Just run this
-mackup link uninstall
+mackeep link uninstall
 ```
 
-This will remove the symlinks and copy back the files from the Mackup folder in
-Dropbox to their original places in your home. The Mackup folder and the files
-in it stay put, so that any other computer also running Mackup is unaffected.
+This will remove the symlinks and copy back the files from the Mackeep folder in
+Dropbox to their original places in your home. The Mackeep folder and the files
+in it stay put, so that any other computer also running Mackeep is unaffected.
 
 To revert a single application instead, name it, e.g.
-`mackup link uninstall git`. Scoping the command to an application unlinks only
-that app — the rest of your setup and the Mackup config itself are left in
+`mackeep link uninstall git`. Scoping the command to an application unlinks only
+that app — the rest of your setup and the Mackeep config itself are left in
 place, and the global uninstall confirmation is skipped.
 
 ## Supported Storages
@@ -219,7 +228,7 @@ See the [README](doc/README.md) file in the doc directory for more info.
 ## Unsupported Storages
 
 - [Box](https://www.box.com): No longer supported as it ignores dotfiles, see
-  <https://github.com/lra/mackup/issues/807>.
+  <https://github.com/Joynik/mackeep/issues/807>.
 
 ## Supported Applications
 
@@ -833,9 +842,32 @@ Have an application that shouldn't be generally supported but that you use?
 Or some personal files you want to sync, e.g. various config files in a `~/.config/`
 directory or your personal `~/.gitignore`?
 
-- Create a `~/.mackup` directory to [sync an application or any file or directory](doc#add-support-for-an-application-or-any-file-or-directory)
+- Create a `~/.mackeep` directory to [sync an application or any file or directory](doc#add-support-for-an-application-or-any-file-or-directory)
+
+## What's new in Mackeep
+
+Mackeep is a fork of [Mackup](https://github.com/lra/mackup) by
+[Laurent Raufaste](https://github.com/lra), with the following additions:
+
+- **Exclusions**: the `[exclude]` and `[xdg_exclude]` sections of the
+  application config files list the files and the patterns that must never be
+  backed up (caches, lock files, machine specific settings...). The patterns
+  follow the `.gitignore` semantics. See
+  [the documentation](doc/README.md#exclusions).
+- **A JSON interface**: the `--json` option writes a machine-readable
+  answer, so a graphical front-end can be built on top of Mackeep. See
+  [the documentation](doc/README.md#json-interface).
+
+```bash
+mackeep --json list
+mackeep --json backup --dry-run
+```
+
+A graphical front-end is on the way.
 
 ## Why did you do this
+
+This story is Laurent's, who started the project as Mackup.
 
 Yesterday, I had a talk with [Zach Zaro](http://zacharyzaro.com/), complaining
 about the pain it is to reconfigure our Macbook each time we get a new one or
@@ -863,6 +895,9 @@ configs to Dropbox (or Google Drive, or anything).
 
 And it's [GPL](http://www.gnu.org/licenses/gpl.html), of course.
 
+Mackeep is the continuation of that tool, with the exclusions, the JSON
+interface and, soon, a graphical front-end.
+
 ## What platforms are supported
 
 - macOS
@@ -870,13 +905,14 @@ And it's [GPL](http://www.gnu.org/licenses/gpl.html), of course.
 
 ## What's up with the weird name
 
-Mackup is just a portmanteau of Mac and Backup. It is simple, short, and easy to
-remember, and it corresponds with the whole idea of Mackup: the simpler – the better!
-(And I suck at naming stuff, but who doesn't.)
+Mackeep is a portmanteau of Mac and Keep. It is simple, short, and easy to
+remember, and it corresponds with the whole idea of Mackeep: the simpler – the better!
+
+It is also the successor of Mackup, the portmanteau of Mac and Backup.
 
 ## Architecture
 
-Want to understand how Mackup works internally? Check out the
+Want to understand how Mackeep works internally? Check out the
 [Architecture Guide](doc/ARCHITECTURE.md) which includes:
 
 - Visual architecture diagram
@@ -887,6 +923,13 @@ Want to understand how Mackup works internally? Check out the
 
 Perfect for contributors who want to understand the codebase or users
 curious about how their configs are managed.
+
+## Credits
+
+Mackeep is a fork of [Mackup](https://github.com/lra/mackup), written by
+[Laurent Raufaste](https://github.com/lra). It is distributed under the
+[GPL-3.0](LICENSE) license, like the original project. Thanks to all the
+[contributors](https://github.com/lra/mackup/graphs/contributors) of Mackup.
 
 ## Where can I find more information
 

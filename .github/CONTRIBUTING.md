@@ -4,16 +4,16 @@ You can:
 
 - Add or improve the support of an application (Check the [TODO][TODO] and
   [TOFIX][TOFIX] tasks and pick one)
-- Improve the Mackup codebase
+- Improve the Mackeep codebase
 - You can triage issues which may include reproducing bug reports or asking for
   vital information, such as version numbers or reproduction instructions. If
   you would like to start triaging issues, one easy way to get started is to
-  [subscribe to mackup on CodeTriage](https://www.codetriage.com/lra/mackup).
+  [subscribe to mackeep on CodeTriage](https://www.codetriage.com/Joynik/mackeep).
   [![Open Source Helpers][CODETRIAGE-IMG]][CODETRIAGE]
 
 ## Development Setup
 
-Mackup uses [uv](https://docs.astral.sh/uv/) for fast, reliable Python package management. Here's how to get started:
+Mackeep uses [uv](https://docs.astral.sh/uv/) for fast, reliable Python package management. Here's how to get started:
 
 ### Prerequisites
 
@@ -44,8 +44,8 @@ Alternatively, see the [official uv installation guide](https://docs.astral.sh/u
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/lra/mackup.git
-cd mackup
+git clone https://github.com/Joynik/mackeep.git
+cd mackeep
 ```
 
 2. Sync dependencies (creates a virtual environment automatically):
@@ -88,7 +88,7 @@ uv run pytest
 uv run pytest -v
 
 # Run type checking
-uv run mypy mackup/
+uv run mypy mackeep/
 
 # Run linting
 uv run ruff check .
@@ -107,7 +107,7 @@ Run `make check` before submitting your PR to ensure everything passes.
 
 ## Contributing Guidelines
 
-To speed up Pull Request (PR) approval and merger into Mackup, please follow
+To speed up Pull Request (PR) approval and merger into Mackeep, please follow
 these guidelines:
 
 - Keep one application supported per PR
@@ -125,8 +125,8 @@ these guidelines:
 
 Thank you for your contribution!
 
-[TODO]: https://github.com/lra/mackup/labels/TODO
-[TOFIX]: https://github.com/lra/mackup/labels/TOFIX
-[CODETRIAGE]: https://www.codetriage.com/lra/mackup
-[CODETRIAGE-IMG]: https://www.codetriage.com/lra/mackup/badges/users.svg
-[README.md]: https://github.com/lra/mackup/blob/master/README.md
+[TODO]: https://github.com/Joynik/mackeep/labels/TODO
+[TOFIX]: https://github.com/Joynik/mackeep/labels/TOFIX
+[CODETRIAGE]: https://www.codetriage.com/Joynik/mackeep
+[CODETRIAGE-IMG]: https://www.codetriage.com/Joynik/mackeep/badges/users.svg
+[README.md]: https://github.com/Joynik/mackeep/blob/master/README.md

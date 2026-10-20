@@ -1,6 +1,6 @@
 """Tests for the gitignore-like exclusion matcher."""
 
-from mackup.excludes import Matcher
+from mackeep.excludes import Matcher
 
 
 def test_empty_matcher_excludes_nothing():

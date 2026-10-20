@@ -19,7 +19,7 @@ FORCE_YES: bool = False
 # If True, the user wants to say "no" to everything.
 FORCE_NO: bool = False
 
-# Flag that control if mackup can be run as root
+# Flag that control if mackeep can be run as root
 CAN_RUN_AS_ROOT: bool = False
 
 

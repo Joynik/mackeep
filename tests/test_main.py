@@ -1,6 +1,6 @@
 import unittest
 
-from mackup import main
+from mackeep import main
 
 
 class TestMain(unittest.TestCase):

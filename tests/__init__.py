@@ -1,1 +1,1 @@
-"""Test package for Mackup."""
+"""Test package for Mackeep."""

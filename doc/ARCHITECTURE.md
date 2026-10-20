@@ -1,29 +1,29 @@
-# Mackup Architecture
+# Mackeep Architecture
 
-This document explains how Mackup works internally to help contributors
+This document explains how Mackeep works internally to help contributors
 understand the codebase.
 
 ## Visual Overview
 
-![Mackup Architecture Diagram](architecture.svg)
+![Mackeep Architecture Diagram](architecture.svg)
 
 ## Core Concepts
 
-Mackup is a tool that backs up and syncs application configuration files
+Mackeep is a tool that backs up and syncs application configuration files
 across multiple machines using a cloud storage service (Dropbox, Google Drive,
 iCloud) or any file system location.
 
 ### Operation Modes
 
-Mackup has two main operation modes:
+Mackeep has two main operation modes:
 
 #### 1. Copy Mode (Recommended)
 
 Copy mode is used for backing up and restoring files:
 
-- **`mackup backup`**: Copies configuration files from your home directory
-  to the Mackup folder
-- **`mackup restore`**: Copies configuration files from the Mackup folder
+- **`mackeep backup`**: Copies configuration files from your home directory
+  to the Mackeep folder
+- **`mackeep restore`**: Copies configuration files from the Mackeep folder
   back to your home directory
 
 This is a one-time operation used when setting up a new machine or creating
@@ -32,13 +32,13 @@ an initial backup.
 #### 2. Link Mode (Legacy - Not recommended for macOS Sonoma+)
 
 Link mode creates persistent symlinks between your home directory and the
-Mackup folder:
+Mackeep folder:
 
-- **`mackup link install`**: Moves files to Mackup folder and creates
+- **`mackeep link install`**: Moves files to Mackeep folder and creates
   symlinks back to original locations
-- **`mackup link`**: Creates symlinks from Mackup folder to home directory
+- **`mackeep link`**: Creates symlinks from Mackeep folder to home directory
   (on additional machines)
-- **`mackup link uninstall`**: Removes symlinks and copies files back to
+- **`mackeep link uninstall`**: Removes symlinks and copies files back to
   original locations
 
 ⚠️ **Warning**: Link mode is broken on macOS Sonoma (14) and later due to
@@ -59,13 +59,13 @@ Entry point for the application. Parses command-line arguments using
 
 ### 2. Configuration Manager (`config.py`)
 
-Reads and parses the `.mackup.cfg` configuration file.
+Reads and parses the `.mackeep.cfg` configuration file.
 
 **Configuration Sources (in order of precedence):**
 
-1. `~/.mackup.cfg`
-2. `$MACKUP_CONFIG` environment variable
-3. `$XDG_CONFIG_HOME/mackup/mackup.cfg` or `~/.config/mackup/mackup.cfg`
+1. `~/.mackeep.cfg`
+2. `$MACKEEP_CONFIG` environment variable
+3. `$XDG_CONFIG_HOME/mackeep/mackeep.cfg` or `~/.config/mackeep/mackeep.cfg`
 
 **Configuration Options:**
 
@@ -81,8 +81,8 @@ Manages the database of supported applications and their configuration files.
 
 **Sources:**
 
-- Built-in application configs (`mackup/applications/*.cfg`)
-- User-defined custom configs (`~/.mackup/*.cfg`)
+- Built-in application configs (`mackeep/applications/*.cfg`)
+- User-defined custom configs (`~/.mackeep/*.cfg`)
 
 **Application Config Format:**
 
@@ -130,7 +130,7 @@ by a set of patterns.
 - Case sensitive matching
 - No dependency but the standard library
 
-### 6. Core Engine (`mackup.py`)
+### 6. Core Engine (`mackeep.py`)
 
 Orchestrates the overall backup/restore/link operations across all
 applications.
@@ -157,7 +157,7 @@ Common utility functions used throughout the codebase:
 ### 8. JSON Interface (`jsonapi.py`)
 
 Serializes the answers of the `--json` option, meant to be used by the
-graphical front-ends built on top of Mackup.
+graphical front-ends built on top of Mackeep.
 
 **Key Features:**
 
@@ -170,39 +170,39 @@ graphical front-ends built on top of Mackup.
 ### Backup Flow
 
 ```text
-User runs: mackup backup
+User runs: mackeep backup
     ↓
 main.py parses command
     ↓
-config.py loads .mackup.cfg
+config.py loads .mackeep.cfg
     ↓
 appsdb.py loads application definitions
     ↓
-mackup.py iterates through applications
+mackeep.py iterates through applications
     ↓
 application.py for each app:
     - Finds config files in home directory
-    - Copies to Mackup storage folder
+    - Copies to Mackeep storage folder
     - Preserves permissions and timestamps
     ↓
-Files now in: ~/Dropbox/Mackup/ (or chosen storage)
+Files now in: ~/Dropbox/Mackeep/ (or chosen storage)
 ```
 
 ### Restore Flow
 
 ```text
-User runs: mackup restore
+User runs: mackeep restore
     ↓
 main.py parses command
     ↓
-config.py loads .mackup.cfg
+config.py loads .mackeep.cfg
     ↓
 appsdb.py loads application definitions
     ↓
-mackup.py iterates through applications
+mackeep.py iterates through applications
     ↓
 application.py for each app:
-    - Finds files in Mackup storage folder
+    - Finds files in Mackeep storage folder
     - Copies to home directory
     - Preserves permissions and timestamps
     ↓
@@ -212,7 +212,7 @@ Config files now in home directory
 ### Exclusion Flow
 
 ```text
-User runs: mackup backup
+User runs: mackeep backup
     ↓
 config.py loads the global [exclude] rules
     ↓
@@ -231,22 +231,22 @@ not deleted, they are only reported
 ### Link Install Flow (Legacy)
 
 ```text
-User runs: mackup link install
+User runs: mackeep link install
     ↓
 main.py parses command
     ↓
-config.py loads .mackup.cfg
+config.py loads .mackeep.cfg
     ↓
 appsdb.py loads application definitions
     ↓
-mackup.py iterates through applications
+mackeep.py iterates through applications
     ↓
 application.py for each app:
-    - Moves config files to Mackup storage folder
+    - Moves config files to Mackeep storage folder
     - Creates symlinks from original location to storage
     ↓
-Files in storage: ~/Dropbox/Mackup/
-Symlinks in home: ~/.config → ~/Dropbox/Mackup/.config
+Files in storage: ~/Dropbox/Mackeep/
+Symlinks in home: ~/.config → ~/Dropbox/Mackeep/.config
 ```
 
 ## Key Design Decisions
@@ -268,8 +268,8 @@ Symlinks in home: ~/.config → ~/Dropbox/Mackup/.config
 ### 2. Application Database
 
 - **Centralized definitions**: All supported apps in
-  `mackup/applications/`
-- **User extensibility**: Custom apps via `~/.mackup/*.cfg`
+  `mackeep/applications/`
+- **User extensibility**: Custom apps via `~/.mackeep/*.cfg`
 - **Simple format**: INI-style configuration files
 - **Override capability**: User configs override built-in ones
 
@@ -285,7 +285,7 @@ Symlinks in home: ~/.config → ~/Dropbox/Mackup/.config
   they are familiar
 - **Relative to a root**: The `[exclude]` patterns are relative to `$HOME`,
   the `[xdg_exclude]` ones to `$XDG_CONFIG_HOME`
-- **Global and per app**: The `.mackup.cfg` file may hold an `[exclude]`
+- **Global and per app**: The `.mackeep.cfg` file may hold an `[exclude]`
   section that applies to every application
 - **Copy mode only**: A symlink cannot exclude anything, so the link mode
   skips the entries that are impacted by the exclusion rules
@@ -299,9 +299,9 @@ Symlinks in home: ~/.config → ~/Dropbox/Mackup/.config
 ## File Structure
 
 ```text
-mackup/
+mackeep/
 ├── main.py              # CLI entry point
-├── mackup.py           # Core orchestration engine
+├── mackeep.py           # Core orchestration engine
 ├── config.py           # Configuration management
 ├── appsdb.py           # Application database
 ├── application.py      # Per-application operations
@@ -320,7 +320,7 @@ mackup/
 
 ### Adding a New Application
 
-Create `mackup/applications/myapp.cfg`:
+Create `mackeep/applications/myapp.cfg`:
 
 ```ini
 [application]
@@ -360,7 +360,7 @@ name = My Application
 
 ### Custom File Sync
 
-Users can sync any files by creating `~/.mackup/custom.cfg`:
+Users can sync any files by creating `~/.mackeep/custom.cfg`:
 
 ```ini
 [application]
@@ -390,7 +390,7 @@ the actual system.
 
 ## Error Handling
 
-Mackup includes several safety mechanisms:
+Mackeep includes several safety mechanisms:
 
 1. **Confirmation prompts**: Asks before destructive operations
 2. **Conflict detection**: Warns if files exist in both locations
@@ -422,4 +422,4 @@ Potential improvements to the architecture:
 ## Contributing
 
 See [CONTRIBUTING.md](../.github/CONTRIBUTING.md) and
-[develop.md](develop.md) for guidelines on contributing to Mackup.
+[develop.md](develop.md) for guidelines on contributing to Mackeep.

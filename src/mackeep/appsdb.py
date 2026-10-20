@@ -2,7 +2,7 @@
 The applications database.
 
 The Applications Database provides an easy to use interface to load application
-data from the Mackup Database (files).
+data from the Mackeep Database (files).
 """
 
 import configparser
@@ -166,12 +166,12 @@ class ApplicationsDatabase:
         Return the application configuration files.
 
         Return a list of configuration files describing the apps supported by
-        Mackup. The files returned are absolute full path to those files.
-        e.g. /usr/lib/mackup/applications/bash.cfg
+        Mackeep. The files returned are absolute full path to those files.
+        e.g. /usr/lib/mackeep/applications/bash.cfg
 
         Only one config file per application should be returned, custom config
         having a priority over stock config. Legacy custom apps directory
-        (~/.mackup/) takes priority over XDG location.
+        (~/.mackeep/) takes priority over XDG location.
 
         Returns:
             set of strings.
@@ -181,10 +181,10 @@ class ApplicationsDatabase:
             os.path.dirname(os.path.realpath(__file__)), APPS_DIR,
         )
 
-        # Legacy custom apps directory: ~/.mackup/
+        # Legacy custom apps directory: ~/.mackeep/
         legacy_custom_apps_dir: str = os.path.join(os.environ["HOME"], CUSTOM_APPS_DIR)
 
-        # XDG custom apps directory: $XDG_CONFIG_HOME/mackup/applications/
+        # XDG custom apps directory: $XDG_CONFIG_HOME/mackeep/applications/
         xdg_config_home: str = os.environ.get(
             "XDG_CONFIG_HOME", os.path.join(os.environ["HOME"], ".config"),
         )

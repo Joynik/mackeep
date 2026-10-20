@@ -7,11 +7,11 @@ For example, you might have some bash settings on Machine A (like useful
 command aliases) that are not on Machine B. You also have some settings on
 Machine B that you would like to move over to Machine A.
 
-The problem is that if you use Mackup to send Machine A's bash configuration
+The problem is that if you use Mackeep to send Machine A's bash configuration
 settings to Machine B, you will permanently lose any configurations on Machine
-B that you wanted to keep. Mackup obviously has no idea which features you want
+B that you wanted to keep. Mackeep obviously has no idea which features you want
 to keep and which ones you don't, so you'll have to do a bit of work to merge
-the different configuration files yourself before using Mackup.
+the different configuration files yourself before using Mackeep.
 
 ## Step 0: Read Through This Entire Guide First
 
@@ -22,9 +22,9 @@ It will probably save you some pain in the long run.
 First, pick the app you wish to keep in sync. Then determine which
 configuration files will be synced for that application by doing the following:
 
-1. [Install Mackup](./../INSTALL.md)
-2. Create a `.mackup.cfg` file in your home directory
-3. Add the following two lines to `.mackup.cfg`. Replace **bash**
+1. [Install Mackeep](./../INSTALL.md)
+2. Create a `.mackeep.cfg` file in your home directory
+3. Add the following two lines to `.mackeep.cfg`. Replace **bash**
    in the example below with the name of your application.
 
 ```text
@@ -32,22 +32,22 @@ configuration files will be synced for that application by doing the following:
 bash
 ```
 
-You can get a list of supported apps by running `mackup list`.
+You can get a list of supported apps by running `mackeep list`.
 
 1. Save the file
 2. Run the following command:
 
-`mackup --dry-run --verbose backup`
+`mackeep --dry-run --verbose backup`
 
-This command will let you see what mackup will do behind the scenes when it
+This command will let you see what mackeep will do behind the scenes when it
 backs up your application's configuration files so you can readily see what
-configuration files Mackup will sync. Make note of these files.
+configuration files Mackeep will sync. Make note of these files.
 
 ## Step 2: Prepare Your Workstations for Syncing
 
 Now that you've identified which files you have to merge, choose one of the two
 approaches below for merging the configuration files. **Method 1** has you do all
-the configuration file merges first and then pushes them out with Mackup.
+the configuration file merges first and then pushes them out with Mackeep.
 With **Method 2**, you'll push out the configuration files from one machine to the
 others and then merge in your configuration changes gradually over time.
 
@@ -142,26 +142,26 @@ cp ~/.bash_login ~/bash_backup/bash_login.bak
 
 If you have other machines you are syncing with the master, back those up, too.
 
-## Step 3: Push Out the Configuration Files with Mackup
+## Step 3: Push Out the Configuration Files with Mackeep
 
-Now you are ready to use Mackup to push out the changes. You should have Mackup
-already installed and the `.mackup.cfg` file in place according to the
+Now you are ready to use Mackeep to push out the changes. You should have Mackeep
+already installed and the `.mackeep.cfg` file in place according to the
 instructions provided above. If not, do that before proceeding.
 
 Run the following command on the master machine:
 
-`mackup backup`
+`mackeep backup`
 
 On each of the other "slave" machines, run:
 
-`mackup restore`
+`mackeep restore`
 
 If you used Method 1 in Step 2 above, you are done. You may discover
 that you didn't quite merge the files exactly the way you wanted but don't
 worry, that's why you created the configuration file backups. You can grab
 snippets from these backup configuration files and add them in to the live
 configuration files and then easily push the changes out to all your
-machines using mackup.
+machines using mackeep.
 
 If you used Method 2, you'll need to merge in new features over time. As you
 discover features you need to add, you'll need to take the appropriate snippets

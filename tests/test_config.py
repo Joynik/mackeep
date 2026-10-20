@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from mackup.config import Config, ConfigError
-from mackup.constants import (
+from mackeep.config import Config, ConfigError
+from mackeep.constants import (
     ENGINE_DROPBOX,
     ENGINE_FS,
     ENGINE_GDRIVE,
     ENGINE_ICLOUD,
-    MACKUP_CONFIG_FILE,
+    MACKEEP_CONFIG_FILE,
 )
 
 
@@ -26,10 +26,10 @@ class TestConfig(unittest.TestCase):
 
         # these may be set on some user's systems
         os.environ.pop("XDG_CONFIG_HOME", None)
-        os.environ.pop("MACKUP_CONFIG", None)
+        os.environ.pop("MACKEEP_CONFIG", None)
 
     def test_config_envvar(self):
-        os.environ["MACKUP_CONFIG"] = "~/mackup-envarcheck.cfg"
+        os.environ["MACKEEP_CONFIG"] = "~/mackeep-envarcheck.cfg"
         assert_correct_config_read("test_config_envvar")
 
     def test_config_xdg(self):
@@ -37,7 +37,7 @@ class TestConfig(unittest.TestCase):
         assert_correct_config_read("test_config_xdg")
 
     def test_config_find_correct_default(self):
-        config_path = Path.home() / MACKUP_CONFIG_FILE
+        config_path = Path.home() / MACKEEP_CONFIG_FILE
 
         try:
             # create a default config file, this must be cleaned up after the test
@@ -46,8 +46,8 @@ class TestConfig(unittest.TestCase):
             # nothing else set, should find the default file
             assert_correct_config_read("test_config_default")
 
-            # set MACKUP_CONFIG, but should still find the default file
-            os.environ["MACKUP_CONFIG"] = "~/mackup-envarcheck.cfg"
+            # set MACKEEP_CONFIG, but should still find the default file
+            os.environ["MACKEEP_CONFIG"] = "~/mackeep-envarcheck.cfg"
             assert_correct_config_read("test_config_default")
 
             # set XDG_CONFIG_HOME, but should still find the default file
@@ -65,8 +65,8 @@ class TestConfig(unittest.TestCase):
         os.environ["XDG_CONFIG_HOME"] = "~/xdg-config-home/"
         assert_correct_config_read("test_config_xdg")
 
-        # set MACKUP_CONFIG, should find the MACKUP_CONFIG file
-        os.environ["MACKUP_CONFIG"] = "~/mackup-envarcheck.cfg"
+        # set MACKEEP_CONFIG, should find the MACKEEP_CONFIG file
+        os.environ["MACKEEP_CONFIG"] = "~/mackeep-envarcheck.cfg"
         assert_correct_config_read("test_config_envvar")
 
     def test_config_no_config(self):
@@ -81,16 +81,16 @@ class TestConfig(unittest.TestCase):
         assert cfg.path == "/home/some_user/Dropbox"
 
         assert isinstance(cfg.directory, str)
-        assert cfg.directory == "Mackup"
+        assert cfg.directory == "Mackeep"
 
         assert isinstance(cfg.fullpath, str)
-        assert cfg.fullpath == "/home/some_user/Dropbox/Mackup"
+        assert cfg.fullpath == "/home/some_user/Dropbox/Mackeep"
 
         assert cfg.apps_to_ignore == set()
         assert cfg.apps_to_sync == set()
 
     def test_config_empty(self):
-        cfg = Config("mackup-empty.cfg")
+        cfg = Config("mackeep-empty.cfg")
 
         assert isinstance(cfg.engine, str)
         assert cfg.engine == ENGINE_DROPBOX
@@ -99,16 +99,16 @@ class TestConfig(unittest.TestCase):
         assert cfg.path == "/home/some_user/Dropbox"
 
         assert isinstance(cfg.directory, str)
-        assert cfg.directory == "Mackup"
+        assert cfg.directory == "Mackeep"
 
         assert isinstance(cfg.fullpath, str)
-        assert cfg.fullpath == "/home/some_user/Dropbox/Mackup"
+        assert cfg.fullpath == "/home/some_user/Dropbox/Mackeep"
 
         assert cfg.apps_to_ignore == set()
         assert cfg.apps_to_sync == set()
 
     def test_config_engine_dropbox(self):
-        cfg = Config("mackup-engine-dropbox.cfg")
+        cfg = Config("mackeep-engine-dropbox.cfg")
 
         assert isinstance(cfg.engine, str)
         assert cfg.engine == ENGINE_DROPBOX
@@ -126,7 +126,7 @@ class TestConfig(unittest.TestCase):
         assert cfg.apps_to_sync == set()
 
     def test_config_engine_filesystem_absolute(self):
-        cfg = Config("mackup-engine-file_system-absolute.cfg")
+        cfg = Config("mackeep-engine-file_system-absolute.cfg")
 
         assert isinstance(cfg.engine, str)
         assert cfg.engine == ENGINE_FS
@@ -144,7 +144,7 @@ class TestConfig(unittest.TestCase):
         assert cfg.apps_to_sync == set()
 
     def test_config_engine_filesystem(self):
-        cfg = Config("mackup-engine-file_system.cfg")
+        cfg = Config("mackeep-engine-file_system.cfg")
 
         assert isinstance(cfg.engine, str)
         assert cfg.engine == ENGINE_FS
@@ -155,18 +155,18 @@ class TestConfig(unittest.TestCase):
         )
 
         assert isinstance(cfg.directory, str)
-        assert cfg.directory == "Mackup"
+        assert cfg.directory == "Mackeep"
 
         assert isinstance(cfg.fullpath, str)
         assert cfg.fullpath == os.path.join(
-            os.environ["HOME"], "some/relative/folder", "Mackup",
+            os.environ["HOME"], "some/relative/folder", "Mackeep",
         )
 
         assert cfg.apps_to_ignore == set()
         assert cfg.apps_to_sync == {"sabnzbd", "sublime-text-3", "x11"}
 
     def test_config_engine_google_drive(self):
-        cfg = Config("mackup-engine-google_drive.cfg")
+        cfg = Config("mackeep-engine-google_drive.cfg")
 
         assert isinstance(cfg.engine, str)
         assert cfg.engine == ENGINE_GDRIVE
@@ -175,16 +175,16 @@ class TestConfig(unittest.TestCase):
         assert cfg.path == "/Users/whatever/Google Drive"
 
         assert isinstance(cfg.directory, str)
-        assert cfg.directory == "Mackup"
+        assert cfg.directory == "Mackeep"
 
         assert isinstance(cfg.fullpath, str)
-        assert cfg.fullpath.endswith("/Google Drive/Mackup")
+        assert cfg.fullpath.endswith("/Google Drive/Mackeep")
 
         assert cfg.apps_to_ignore == {"subversion", "sequel-pro", "sabnzbd"}
         assert cfg.apps_to_sync == {"sublime-text-3", "x11", "sabnzbd"}
 
     def test_config_engine_icloud(self):
-        cfg = Config("mackup-engine-icloud.cfg")
+        cfg = Config("mackeep-engine-icloud.cfg")
 
         assert isinstance(cfg.engine, str)
         assert cfg.engine == ENGINE_ICLOUD
@@ -195,24 +195,24 @@ class TestConfig(unittest.TestCase):
         )
 
         assert isinstance(cfg.directory, str)
-        assert cfg.directory == "Mackup"
+        assert cfg.directory == "Mackeep"
 
         assert isinstance(cfg.fullpath, str)
-        assert cfg.fullpath.endswith("/com~apple~CloudDocs/Mackup")
+        assert cfg.fullpath.endswith("/com~apple~CloudDocs/Mackeep")
 
         assert cfg.apps_to_ignore == {"subversion", "sequel-pro", "sabnzbd"}
         assert cfg.apps_to_sync == {"sublime-text-3", "x11", "sabnzbd"}
 
     def test_config_engine_filesystem_no_path(self):
         with pytest.raises(ConfigError):
-            Config("mackup-engine-file_system-no_path.cfg")
+            Config("mackeep-engine-file_system-no_path.cfg")
 
     def test_config_engine_unknown(self):
         with pytest.raises(ConfigError):
-            Config("mackup-engine-unknown.cfg")
+            Config("mackeep-engine-unknown.cfg")
 
     def test_config_apps_to_ignore(self):
-        cfg = Config("mackup-apps_to_ignore.cfg")
+        cfg = Config("mackeep-apps_to_ignore.cfg")
 
         assert isinstance(cfg.engine, str)
         assert cfg.engine == ENGINE_DROPBOX
@@ -221,16 +221,16 @@ class TestConfig(unittest.TestCase):
         assert cfg.path == "/home/some_user/Dropbox"
 
         assert isinstance(cfg.directory, str)
-        assert cfg.directory == "Mackup"
+        assert cfg.directory == "Mackeep"
 
         assert isinstance(cfg.fullpath, str)
-        assert cfg.fullpath == "/home/some_user/Dropbox/Mackup"
+        assert cfg.fullpath == "/home/some_user/Dropbox/Mackeep"
 
         assert cfg.apps_to_ignore == {"subversion", "sequel-pro", "sabnzbd"}
         assert cfg.apps_to_sync == set()
 
     def test_config_apps_to_sync(self):
-        cfg = Config("mackup-apps_to_sync.cfg")
+        cfg = Config("mackeep-apps_to_sync.cfg")
 
         assert isinstance(cfg.engine, str)
         assert cfg.engine == ENGINE_DROPBOX
@@ -239,16 +239,16 @@ class TestConfig(unittest.TestCase):
         assert cfg.path == "/home/some_user/Dropbox"
 
         assert isinstance(cfg.directory, str)
-        assert cfg.directory == "Mackup"
+        assert cfg.directory == "Mackeep"
 
         assert isinstance(cfg.fullpath, str)
-        assert cfg.fullpath == "/home/some_user/Dropbox/Mackup"
+        assert cfg.fullpath == "/home/some_user/Dropbox/Mackeep"
 
         assert cfg.apps_to_ignore == set()
         assert cfg.apps_to_sync == {"sabnzbd", "sublime-text-3", "x11"}
 
     def test_config_apps_to_ignore_and_sync(self):
-        cfg = Config("mackup-apps_to_ignore_and_sync.cfg")
+        cfg = Config("mackeep-apps_to_ignore_and_sync.cfg")
 
         assert isinstance(cfg.engine, str)
         assert cfg.engine == ENGINE_DROPBOX
@@ -257,14 +257,14 @@ class TestConfig(unittest.TestCase):
         assert cfg.path == "/home/some_user/Dropbox"
 
         assert isinstance(cfg.directory, str)
-        assert cfg.directory == "Mackup"
+        assert cfg.directory == "Mackeep"
 
         assert isinstance(cfg.fullpath, str)
-        assert cfg.fullpath == "/home/some_user/Dropbox/Mackup"
+        assert cfg.fullpath == "/home/some_user/Dropbox/Mackeep"
 
         assert cfg.apps_to_ignore == {"subversion", "sequel-pro", "sabnzbd"}
         assert cfg.apps_to_sync == {"sabnzbd", "sublime-text-3", "x11", "vim"}
 
     def test_config_old_config(self):
         with pytest.raises(SystemExit):
-            Config("mackup-old-config.cfg")
+            Config("mackeep-old-config.cfg")

@@ -16,17 +16,13 @@ jobs:
           - ubuntu-24.04
           - ubuntu-24.04-arm
         python-version:
-          - "3.10"
-          - "3.11"
-          - "3.12"
-          - "3.13"
           - "3.14"
     runs-on: ${{ matrix.os }}
     container: python:${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v6
       - run: pip install .
-      - run: mackup --help
+      - run: mackeep --help
 
   install-on-macos:
     strategy:
@@ -39,4 +35,4 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - run: pip install .
-      - run: mackup --help
+      - run: mackeep --help

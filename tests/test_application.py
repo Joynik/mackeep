@@ -6,16 +6,16 @@ import unittest
 from io import StringIO
 from unittest.mock import Mock, patch
 
-from mackup.application import ApplicationProfile
-from mackup.mackup import Mackup
+from mackeep.application import ApplicationProfile
+from mackeep.mackeep import Mackeep
 
 
 class TestApplicationProfile(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
-        # Create a mock Mackup instance
-        self.mock_mackup = Mock(spec=Mackup)
-        self.mock_mackup.mackup_folder = tempfile.mkdtemp()
+        # Create a mock Mackeep instance
+        self.mock_mackeep = Mock(spec=Mackeep)
+        self.mock_mackeep.mackeep_folder = tempfile.mkdtemp()
 
         # Create a temporary home directory
         self.temp_home = tempfile.mkdtemp()
@@ -29,7 +29,7 @@ class TestApplicationProfile(unittest.TestCase):
 
         # Create the ApplicationProfile instance
         self.app_profile = ApplicationProfile(
-            mackup=self.mock_mackup,
+            mackeep=self.mock_mackeep,
             files=self.test_files,
             dry_run=False,
             verbose=False,
@@ -46,11 +46,11 @@ class TestApplicationProfile(unittest.TestCase):
         # Clean up temporary directories
         if os.path.exists(self.temp_home):
             shutil.rmtree(self.temp_home)
-        if os.path.exists(self.mock_mackup.mackup_folder):
-            shutil.rmtree(self.mock_mackup.mackup_folder)
+        if os.path.exists(self.mock_mackeep.mackeep_folder):
+            shutil.rmtree(self.mock_mackeep.mackeep_folder)
 
-    def test_copy_files_to_mackup_folder_permission_error(self):
-        """Test PermissionError handling in copy_files_to_mackup_folder."""
+    def test_copy_files_to_mackeep_folder_permission_error(self):
+        """Test PermissionError handling in copy_files_to_mackeep_folder."""
         # Create a test file in the home directory
         test_file = ".testfile"
         home_filepath = os.path.join(self.temp_home, test_file)
@@ -60,7 +60,7 @@ class TestApplicationProfile(unittest.TestCase):
             f.write("test content")
 
         # Patch utils.copy to raise PermissionError
-        with patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.copy") as mock_copy:
             mock_copy.side_effect = PermissionError("Permission denied")
 
             # Capture stdout to verify the error message
@@ -68,7 +68,7 @@ class TestApplicationProfile(unittest.TestCase):
             sys.stdout = captured_output
 
             # Call the method
-            self.app_profile.copy_files_to_mackup_folder()
+            self.app_profile.copy_files_to_mackeep_folder()
 
             # Restore stdout
             sys.stdout = sys.__stdout__
@@ -86,18 +86,18 @@ class TestApplicationProfile(unittest.TestCase):
         """Application files should always be processed in sorted order."""
         unsorted_files = {"z-last", "a-first", "m-middle"}
         app_profile = ApplicationProfile(
-            mackup=self.mock_mackup,
+            mackeep=self.mock_mackeep,
             files=unsorted_files,
             dry_run=False,
             verbose=False,
         )
         assert app_profile.files == ["a-first", "m-middle", "z-last"]
 
-    def test_copy_files_to_mackup_folder_permission_error_verbose(self):
-        """Test PermissionError handling in copy_files_to_mackup_folder verbose."""
+    def test_copy_files_to_mackeep_folder_permission_error_verbose(self):
+        """Test PermissionError handling in copy_files_to_mackeep_folder verbose."""
         # Create a verbose ApplicationProfile
         app_profile_verbose = ApplicationProfile(
-            mackup=self.mock_mackup,
+            mackeep=self.mock_mackeep,
             files=self.test_files,
             dry_run=False,
             verbose=True,
@@ -112,7 +112,7 @@ class TestApplicationProfile(unittest.TestCase):
             f.write("test content")
 
         # Patch utils.copy to raise PermissionError
-        with patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.copy") as mock_copy:
             mock_copy.side_effect = PermissionError("Permission denied")
 
             # Capture stdout to verify the error message
@@ -120,7 +120,7 @@ class TestApplicationProfile(unittest.TestCase):
             sys.stdout = captured_output
 
             # Call the method
-            app_profile_verbose.copy_files_to_mackup_folder()
+            app_profile_verbose.copy_files_to_mackeep_folder()
 
             # Restore stdout
             sys.stdout = sys.__stdout__
@@ -134,18 +134,18 @@ class TestApplicationProfile(unittest.TestCase):
             assert "Error: Unable to copy file" in output
             assert "permission issue" in output
 
-    def test_copy_files_from_mackup_folder_permission_error(self):
-        """Test PermissionError handling in copy_files_from_mackup_folder."""
-        # Create a test file in the mackup directory
+    def test_copy_files_from_mackeep_folder_permission_error(self):
+        """Test PermissionError handling in copy_files_from_mackeep_folder."""
+        # Create a test file in the mackeep directory
         test_file = ".testfile"
-        mackup_filepath = os.path.join(self.mock_mackup.mackup_folder, test_file)
+        mackeep_filepath = os.path.join(self.mock_mackeep.mackeep_folder, test_file)
 
         # Create the actual file
-        with open(mackup_filepath, "w") as f:
+        with open(mackeep_filepath, "w") as f:
             f.write("test content")
 
         # Patch utils.copy to raise PermissionError
-        with patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.copy") as mock_copy:
             mock_copy.side_effect = PermissionError("Permission denied")
 
             # Capture stdout to verify the error message
@@ -153,7 +153,7 @@ class TestApplicationProfile(unittest.TestCase):
             sys.stdout = captured_output
 
             # Call the method
-            self.app_profile.copy_files_from_mackup_folder()
+            self.app_profile.copy_files_from_mackeep_folder()
 
             # Restore stdout
             sys.stdout = sys.__stdout__
@@ -165,28 +165,28 @@ class TestApplicationProfile(unittest.TestCase):
             output = captured_output.getvalue()
             assert "Error: Unable to copy file" in output
             assert "permission issue" in output
-            assert mackup_filepath in output
+            assert mackeep_filepath in output
 
-    def test_copy_files_from_mackup_folder_permission_error_verbose(self):
-        """Test PermissionError handling in copy_files_from_mackup_folder verbose."""
+    def test_copy_files_from_mackeep_folder_permission_error_verbose(self):
+        """Test PermissionError handling in copy_files_from_mackeep_folder verbose."""
         # Create a verbose ApplicationProfile
         app_profile_verbose = ApplicationProfile(
-            mackup=self.mock_mackup,
+            mackeep=self.mock_mackeep,
             files=self.test_files,
             dry_run=False,
             verbose=True,
         )
 
-        # Create a test file in the mackup directory
+        # Create a test file in the mackeep directory
         test_file = ".testfile"
-        mackup_filepath = os.path.join(self.mock_mackup.mackup_folder, test_file)
+        mackeep_filepath = os.path.join(self.mock_mackeep.mackeep_folder, test_file)
 
         # Create the actual file
-        with open(mackup_filepath, "w") as f:
+        with open(mackeep_filepath, "w") as f:
             f.write("test content")
 
         # Patch utils.copy to raise PermissionError
-        with patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.copy") as mock_copy:
             mock_copy.side_effect = PermissionError("Permission denied")
 
             # Capture stdout to verify the error message
@@ -194,7 +194,7 @@ class TestApplicationProfile(unittest.TestCase):
             sys.stdout = captured_output
 
             # Call the method
-            app_profile_verbose.copy_files_from_mackup_folder()
+            app_profile_verbose.copy_files_from_mackeep_folder()
 
             # Restore stdout
             sys.stdout = sys.__stdout__
@@ -208,8 +208,8 @@ class TestApplicationProfile(unittest.TestCase):
             assert "Error: Unable to copy file" in output
             assert "permission issue" in output
 
-    def test_copy_files_to_mackup_folder_with_directory_permission_error(self):
-        """Test PermissionError with a directory in copy_files_to_mackup_folder."""
+    def test_copy_files_to_mackeep_folder_with_directory_permission_error(self):
+        """Test PermissionError with a directory in copy_files_to_mackeep_folder."""
         # Create a test directory in the home directory
         test_dir = ".testfolder"
         home_dirpath = os.path.join(self.temp_home, test_dir)
@@ -220,7 +220,7 @@ class TestApplicationProfile(unittest.TestCase):
             f.write("test content")
 
         # Patch utils.copy to raise PermissionError
-        with patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.copy") as mock_copy:
             mock_copy.side_effect = PermissionError("Permission denied for directory")
 
             # Capture stdout to verify the error message
@@ -228,7 +228,7 @@ class TestApplicationProfile(unittest.TestCase):
             sys.stdout = captured_output
 
             # Call the method
-            self.app_profile.copy_files_to_mackup_folder()
+            self.app_profile.copy_files_to_mackeep_folder()
 
             # Restore stdout
             sys.stdout = sys.__stdout__
@@ -242,19 +242,19 @@ class TestApplicationProfile(unittest.TestCase):
             assert "permission issue" in output
             assert home_dirpath in output
 
-    def test_copy_files_from_mackup_folder_with_directory_permission_error(self):
-        """Test PermissionError with a directory in copy_files_from_mackup_folder."""
-        # Create a test directory in the mackup directory
+    def test_copy_files_from_mackeep_folder_with_directory_permission_error(self):
+        """Test PermissionError with a directory in copy_files_from_mackeep_folder."""
+        # Create a test directory in the mackeep directory
         test_dir = ".testfolder"
-        mackup_dirpath = os.path.join(self.mock_mackup.mackup_folder, test_dir)
-        os.makedirs(mackup_dirpath)
+        mackeep_dirpath = os.path.join(self.mock_mackeep.mackeep_folder, test_dir)
+        os.makedirs(mackeep_dirpath)
 
         # Create a file inside the directory
-        with open(os.path.join(mackup_dirpath, "testfile.txt"), "w") as f:
+        with open(os.path.join(mackeep_dirpath, "testfile.txt"), "w") as f:
             f.write("test content")
 
         # Patch utils.copy to raise PermissionError
-        with patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.copy") as mock_copy:
             mock_copy.side_effect = PermissionError("Permission denied for directory")
 
             # Capture stdout to verify the error message
@@ -262,7 +262,7 @@ class TestApplicationProfile(unittest.TestCase):
             sys.stdout = captured_output
 
             # Call the method
-            self.app_profile.copy_files_from_mackup_folder()
+            self.app_profile.copy_files_from_mackeep_folder()
 
             # Restore stdout
             sys.stdout = sys.__stdout__
@@ -274,13 +274,13 @@ class TestApplicationProfile(unittest.TestCase):
             output = captured_output.getvalue()
             assert "Error: Unable to copy file" in output
             assert "permission issue" in output
-            assert mackup_dirpath in output
+            assert mackeep_dirpath in output
 
-    def test_copy_files_to_mackup_folder_dry_run_no_permission_error(self):
+    def test_copy_files_to_mackeep_folder_dry_run_no_permission_error(self):
         """Test dry_run mode doesn't trigger PermissionError in backup."""
         # Create a dry_run ApplicationProfile
         app_profile_dry = ApplicationProfile(
-            mackup=self.mock_mackup,
+            mackeep=self.mock_mackeep,
             files=self.test_files,
             dry_run=True,
             verbose=False,
@@ -295,13 +295,13 @@ class TestApplicationProfile(unittest.TestCase):
             f.write("test content")
 
         # Patch utils.copy - it should NOT be called in dry_run mode
-        with patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.copy") as mock_copy:
             # Capture stdout
             captured_output = StringIO()
             sys.stdout = captured_output
 
             # Call the method
-            app_profile_dry.copy_files_to_mackup_folder()
+            app_profile_dry.copy_files_to_mackeep_folder()
 
             # Restore stdout
             sys.stdout = sys.__stdout__
@@ -313,32 +313,32 @@ class TestApplicationProfile(unittest.TestCase):
             output = captured_output.getvalue()
             assert "Backing up" in output
 
-    def test_copy_files_from_mackup_folder_dry_run_no_permission_error(self):
+    def test_copy_files_from_mackeep_folder_dry_run_no_permission_error(self):
         """Test dry_run mode doesn't trigger PermissionError in restore."""
         # Create a dry_run ApplicationProfile
         app_profile_dry = ApplicationProfile(
-            mackup=self.mock_mackup,
+            mackeep=self.mock_mackeep,
             files=self.test_files,
             dry_run=True,
             verbose=False,
         )
 
-        # Create a test file in the mackup directory
+        # Create a test file in the mackeep directory
         test_file = ".testfile"
-        mackup_filepath = os.path.join(self.mock_mackup.mackup_folder, test_file)
+        mackeep_filepath = os.path.join(self.mock_mackeep.mackeep_folder, test_file)
 
         # Create the actual file
-        with open(mackup_filepath, "w") as f:
+        with open(mackeep_filepath, "w") as f:
             f.write("test content")
 
         # Patch utils.copy - it should NOT be called in dry_run mode
-        with patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.copy") as mock_copy:
             # Capture stdout
             captured_output = StringIO()
             sys.stdout = captured_output
 
             # Call the method
-            app_profile_dry.copy_files_from_mackup_folder()
+            app_profile_dry.copy_files_from_mackeep_folder()
 
             # Restore stdout
             sys.stdout = sys.__stdout__
@@ -350,43 +350,43 @@ class TestApplicationProfile(unittest.TestCase):
             output = captured_output.getvalue()
             assert "Recovering" in output
 
-    def test_copy_files_to_mackup_folder_decline_replace_skips_copy(self):
+    def test_copy_files_to_mackeep_folder_decline_replace_skips_copy(self):
         """Test backup does not overwrite when user declines replacement."""
         test_file = ".testfile"
         home_filepath = os.path.join(self.temp_home, test_file)
-        mackup_filepath = os.path.join(self.mock_mackup.mackup_folder, test_file)
+        mackeep_filepath = os.path.join(self.mock_mackeep.mackeep_folder, test_file)
 
         with open(home_filepath, "w") as f:
             f.write("home content")
-        with open(mackup_filepath, "w") as f:
+        with open(mackeep_filepath, "w") as f:
             f.write("existing backup")
 
-        with patch("mackup.application.utils.confirm", return_value=False), \
-             patch("mackup.application.utils.delete") as mock_delete, \
-             patch("mackup.application.utils.copy") as mock_copy:
-            self.app_profile.copy_files_to_mackup_folder()
+        with patch("mackeep.application.utils.confirm", return_value=False), \
+             patch("mackeep.application.utils.delete") as mock_delete, \
+             patch("mackeep.application.utils.copy") as mock_copy:
+            self.app_profile.copy_files_to_mackeep_folder()
 
             mock_delete.assert_not_called()
             mock_copy.assert_not_called()
 
-        with open(mackup_filepath) as f:
+        with open(mackeep_filepath) as f:
             assert f.read() == "existing backup"
 
-    def test_copy_files_from_mackup_folder_decline_replace_skips_copy(self):
+    def test_copy_files_from_mackeep_folder_decline_replace_skips_copy(self):
         """Test restore does not overwrite when user declines replacement."""
         test_file = ".testfile"
         home_filepath = os.path.join(self.temp_home, test_file)
-        mackup_filepath = os.path.join(self.mock_mackup.mackup_folder, test_file)
+        mackeep_filepath = os.path.join(self.mock_mackeep.mackeep_folder, test_file)
 
         with open(home_filepath, "w") as f:
             f.write("existing home")
-        with open(mackup_filepath, "w") as f:
+        with open(mackeep_filepath, "w") as f:
             f.write("backup content")
 
-        with patch("mackup.application.utils.confirm", return_value=False), \
-             patch("mackup.application.utils.delete") as mock_delete, \
-             patch("mackup.application.utils.copy") as mock_copy:
-            self.app_profile.copy_files_from_mackup_folder()
+        with patch("mackeep.application.utils.confirm", return_value=False), \
+             patch("mackeep.application.utils.delete") as mock_delete, \
+             patch("mackeep.application.utils.copy") as mock_copy:
+            self.app_profile.copy_files_from_mackeep_folder()
 
             mock_delete.assert_not_called()
             mock_copy.assert_not_called()
@@ -394,24 +394,24 @@ class TestApplicationProfile(unittest.TestCase):
         with open(home_filepath) as f:
             assert f.read() == "existing home"
 
-    def test_link_uninstall_mackup_not_a_link(self):
+    def test_link_uninstall_mackeep_not_a_link(self):
         """Test link_uninstall skips when home file is not a symbolic link."""
-        # Create a test file in the mackup directory (regular file, not a link)
+        # Create a test file in the mackeep directory (regular file, not a link)
         test_file = ".testfile"
-        mackup_filepath = os.path.join(self.mock_mackup.mackup_folder, test_file)
+        mackeep_filepath = os.path.join(self.mock_mackeep.mackeep_folder, test_file)
         home_filepath = os.path.join(self.temp_home, test_file)
 
-        # Create the mackup file as a regular file
-        with open(mackup_filepath, "w") as f:
-            f.write("mackup content")
+        # Create the mackeep file as a regular file
+        with open(mackeep_filepath, "w") as f:
+            f.write("mackeep content")
 
         # Create the home file as a regular file (not a link)
         with open(home_filepath, "w") as f:
             f.write("home content")
 
         # Patch utils.delete and utils.copy
-        with patch("mackup.application.utils.delete") as mock_delete, \
-             patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.delete") as mock_delete, \
+             patch("mackeep.application.utils.copy") as mock_copy:
             # Capture stdout
             captured_output = StringIO()
             sys.stdout = captured_output
@@ -430,20 +430,20 @@ class TestApplicationProfile(unittest.TestCase):
             output = captured_output.getvalue()
             assert "Warning: the file in your home" in output
             assert "does not point to the original file" in output
-            assert mackup_filepath in output
+            assert mackeep_filepath in output
             assert home_filepath in output
             assert "skipping" in output
 
-    def test_link_uninstall_mackup_points_to_wrong_target(self):
+    def test_link_uninstall_mackeep_points_to_wrong_target(self):
         """Test link_uninstall skips when home link points to wrong target."""
         # Create a test file
         test_file = ".testfile"
-        mackup_filepath = os.path.join(self.mock_mackup.mackup_folder, test_file)
+        mackeep_filepath = os.path.join(self.mock_mackeep.mackeep_folder, test_file)
         home_filepath = os.path.join(self.temp_home, test_file)
 
-        # Create the mackup file
-        with open(mackup_filepath, "w") as f:
-            f.write("mackup content")
+        # Create the mackeep file
+        with open(mackeep_filepath, "w") as f:
+            f.write("mackeep content")
 
         # Create a different target file
         wrong_target = os.path.join(self.temp_home, ".wrongtarget")
@@ -454,8 +454,8 @@ class TestApplicationProfile(unittest.TestCase):
         os.symlink(wrong_target, home_filepath)
 
         # Patch utils.delete and utils.copy
-        with patch("mackup.application.utils.delete") as mock_delete, \
-             patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.delete") as mock_delete, \
+             patch("mackeep.application.utils.copy") as mock_copy:
             # Capture stdout
             captured_output = StringIO()
             sys.stdout = captured_output
@@ -474,27 +474,27 @@ class TestApplicationProfile(unittest.TestCase):
             output = captured_output.getvalue()
             assert "Warning: the file in your home" in output
             assert "does not point to the original file" in output
-            assert mackup_filepath in output
+            assert mackeep_filepath in output
             assert home_filepath in output
             assert "skipping" in output
 
-    def test_link_uninstall_mackup_points_correctly(self):
-        """Test link_uninstall proceeds when home link points to mackup file."""
+    def test_link_uninstall_mackeep_points_correctly(self):
+        """Test link_uninstall proceeds when home link points to mackeep file."""
         # Create a test file
         test_file = ".testfile"
-        mackup_filepath = os.path.join(self.mock_mackup.mackup_folder, test_file)
+        mackeep_filepath = os.path.join(self.mock_mackeep.mackeep_folder, test_file)
         home_filepath = os.path.join(self.temp_home, test_file)
 
-        # Create the mackup file first
-        with open(mackup_filepath, "w") as f:
-            f.write("mackup content")
+        # Create the mackeep file first
+        with open(mackeep_filepath, "w") as f:
+            f.write("mackeep content")
 
-        # Create the home file as a symbolic link pointing to the mackup file
-        os.symlink(mackup_filepath, home_filepath)
+        # Create the home file as a symbolic link pointing to the mackeep file
+        os.symlink(mackeep_filepath, home_filepath)
 
         # Patch utils.delete and utils.copy
-        with patch("mackup.application.utils.delete") as mock_delete, \
-             patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.delete") as mock_delete, \
+             patch("mackeep.application.utils.copy") as mock_copy:
             # Capture stdout
             captured_output = StringIO()
             sys.stdout = captured_output
@@ -507,37 +507,37 @@ class TestApplicationProfile(unittest.TestCase):
 
             # Verify that delete and copy WERE called (normal operation)
             mock_delete.assert_called_once_with(home_filepath)
-            mock_copy.assert_called_once_with(mackup_filepath, home_filepath)
+            mock_copy.assert_called_once_with(mackeep_filepath, home_filepath)
 
             # Verify that the reverting message was printed (not warning)
             output = captured_output.getvalue()
             assert "Reverting" in output
             assert "Warning" not in output
 
-    def test_copy_files_to_mackup_folder_skips_already_linked_files(self):
+    def test_copy_files_to_mackeep_folder_skips_already_linked_files(self):
         """Test that backup skips files already linked from link install."""
         # Create a test file
         test_file = ".testfile"
-        mackup_filepath = os.path.join(self.mock_mackup.mackup_folder, test_file)
+        mackeep_filepath = os.path.join(self.mock_mackeep.mackeep_folder, test_file)
         home_filepath = os.path.join(self.temp_home, test_file)
 
-        # Create the mackup file first (simulating link install)
-        with open(mackup_filepath, "w") as f:
-            f.write("mackup content")
+        # Create the mackeep file first (simulating link install)
+        with open(mackeep_filepath, "w") as f:
+            f.write("mackeep content")
 
-        # Create the home file as a symbolic link pointing to the mackup file
+        # Create the home file as a symbolic link pointing to the mackeep file
         # (simulating what link install does)
-        os.symlink(mackup_filepath, home_filepath)
+        os.symlink(mackeep_filepath, home_filepath)
 
         # Patch utils.delete and utils.copy
-        with patch("mackup.application.utils.delete") as mock_delete, \
-             patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.delete") as mock_delete, \
+             patch("mackeep.application.utils.copy") as mock_copy:
             # Capture stdout
             captured_output = StringIO()
             sys.stdout = captured_output
 
             # Call the method
-            self.app_profile.copy_files_to_mackup_folder()
+            self.app_profile.copy_files_to_mackeep_folder()
 
             # Restore stdout
             sys.stdout = sys.__stdout__
@@ -550,21 +550,21 @@ class TestApplicationProfile(unittest.TestCase):
             output = captured_output.getvalue()
             assert "Backing up" not in output
 
-        # Verify the symlink still exists and points to mackup file
+        # Verify the symlink still exists and points to mackeep file
         assert os.path.islink(home_filepath)
-        assert os.path.samefile(home_filepath, mackup_filepath)
+        assert os.path.samefile(home_filepath, mackeep_filepath)
 
-        # Verify the mackup file still exists with original content
-        assert os.path.exists(mackup_filepath)
-        with open(mackup_filepath) as f:
-            assert f.read() == "mackup content"
+        # Verify the mackeep file still exists with original content
+        assert os.path.exists(mackeep_filepath)
+        with open(mackeep_filepath) as f:
+            assert f.read() == "mackeep content"
 
 
-    def test_copy_files_to_mackup_folder_skips_already_linked_files_verbose(self):
+    def test_copy_files_to_mackeep_folder_skips_already_linked_files_verbose(self):
         """Test backup skips files already linked with verbose mode."""
         # Create a verbose ApplicationProfile
         app_profile_verbose = ApplicationProfile(
-            mackup=self.mock_mackup,
+            mackeep=self.mock_mackeep,
             files=self.test_files,
             dry_run=False,
             verbose=True,
@@ -572,26 +572,26 @@ class TestApplicationProfile(unittest.TestCase):
 
         # Create a test file
         test_file = ".testfile"
-        mackup_filepath = os.path.join(self.mock_mackup.mackup_folder, test_file)
+        mackeep_filepath = os.path.join(self.mock_mackeep.mackeep_folder, test_file)
         home_filepath = os.path.join(self.temp_home, test_file)
 
-        # Create the mackup file first (simulating link install)
-        with open(mackup_filepath, "w") as f:
-            f.write("mackup content")
+        # Create the mackeep file first (simulating link install)
+        with open(mackeep_filepath, "w") as f:
+            f.write("mackeep content")
 
-        # Create the home file as a symbolic link pointing to the mackup file
+        # Create the home file as a symbolic link pointing to the mackeep file
         # (simulating what link install does)
-        os.symlink(mackup_filepath, home_filepath)
+        os.symlink(mackeep_filepath, home_filepath)
 
         # Patch utils.delete and utils.copy
-        with patch("mackup.application.utils.delete") as mock_delete, \
-             patch("mackup.application.utils.copy") as mock_copy:
+        with patch("mackeep.application.utils.delete") as mock_delete, \
+             patch("mackeep.application.utils.copy") as mock_copy:
             # Capture stdout
             captured_output = StringIO()
             sys.stdout = captured_output
 
             # Call the method
-            app_profile_verbose.copy_files_to_mackup_folder()
+            app_profile_verbose.copy_files_to_mackeep_folder()
 
             # Restore stdout
             sys.stdout = sys.__stdout__
@@ -605,26 +605,26 @@ class TestApplicationProfile(unittest.TestCase):
             assert "Skipping" in output
             assert "already linked to" in output
             assert home_filepath in output
-            assert mackup_filepath in output
+            assert mackeep_filepath in output
 
-        # Verify the symlink still exists and points to mackup file
+        # Verify the symlink still exists and points to mackeep file
         assert os.path.islink(home_filepath)
-        assert os.path.samefile(home_filepath, mackup_filepath)
+        assert os.path.samefile(home_filepath, mackeep_filepath)
 
-        # Verify the mackup file still exists with original content
-        assert os.path.exists(mackup_filepath)
-        with open(mackup_filepath) as f:
-            assert f.read() == "mackup content"
+        # Verify the mackeep file still exists with original content
+        assert os.path.exists(mackeep_filepath)
+        with open(mackeep_filepath) as f:
+            assert f.read() == "mackeep content"
 
 
-    def test_copy_files_to_mackup_folder_backs_up_symlink_to_different_location(self):
-        """Test that backup still works for symlinks pointing elsewhere (not mackup)."""
+    def test_copy_files_to_mackeep_folder_backs_up_symlink_to_different_location(self):
+        """Test that backup works for symlinks pointing elsewhere."""
         # Create a test file
         test_file = ".testfile"
-        mackup_filepath = os.path.join(self.mock_mackup.mackup_folder, test_file)
+        mackeep_filepath = os.path.join(self.mock_mackeep.mackeep_folder, test_file)
         home_filepath = os.path.join(self.temp_home, test_file)
 
-        # Create a different target file (not in mackup folder)
+        # Create a different target file (not in mackeep folder)
         other_target = os.path.join(self.temp_home, ".otherlocation")
         with open(other_target, "w") as f:
             f.write("other content")
@@ -632,20 +632,20 @@ class TestApplicationProfile(unittest.TestCase):
         # Create the home file as a symbolic link pointing to different location
         os.symlink(other_target, home_filepath)
 
-        # Patch utils.copy (no mackup file exists, so confirm won't be called)
-        with patch("mackup.application.utils.copy") as mock_copy:
+        # Patch utils.copy (no mackeep file exists, so confirm won't be called)
+        with patch("mackeep.application.utils.copy") as mock_copy:
             # Capture stdout
             captured_output = StringIO()
             sys.stdout = captured_output
 
             # Call the method
-            self.app_profile.copy_files_to_mackup_folder()
+            self.app_profile.copy_files_to_mackeep_folder()
 
             # Restore stdout
             sys.stdout = sys.__stdout__
 
             # Verify that copy WAS called (should backup symlinks to other locations)
-            mock_copy.assert_called_once_with(home_filepath, mackup_filepath)
+            mock_copy.assert_called_once_with(home_filepath, mackeep_filepath)
 
             # Verify that the backing up message was printed
             output = captured_output.getvalue()

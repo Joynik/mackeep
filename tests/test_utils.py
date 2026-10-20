@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from mackup import utils
+from mackeep import utils
 
 
 def convert_to_octal(file_name):
@@ -17,7 +17,7 @@ def convert_to_octal(file_name):
     return oct(os.stat(file_name)[stat.ST_MODE])[-3:]
 
 
-class TestMackup(unittest.TestCase):
+class TestMackeep(unittest.TestCase):
     def test_confirm_yes(self):
         # Override the input used in utils
         with patch.object(utils, "input", return_value="Yes", create=True):
@@ -41,7 +41,7 @@ class TestMackup(unittest.TestCase):
         # Make sure the created file exists
         assert os.path.isfile(tfpath)
 
-        # Check if mackup can really delete it
+        # Check if mackeep can really delete it
         utils.delete(tfpath)
         assert not os.path.exists(tfpath)
 
@@ -66,7 +66,7 @@ class TestMackup(unittest.TestCase):
         assert os.path.isdir(subfolder_path)
         assert os.path.isfile(subfilepath)
 
-        # Check if mackup can really delete it
+        # Check if mackeep can really delete it
         utils.delete(tfpath)
         assert not os.path.exists(tfpath)
         assert not os.path.exists(filepath)
@@ -89,7 +89,7 @@ class TestMackup(unittest.TestCase):
         assert os.path.isdir(dstpath)
         assert not os.path.exists(dstfile)
 
-        # Check if mackup can copy it
+        # Check if mackeep can copy it
         utils.copy(srcfile, dstfile)
         assert os.path.isfile(srcfile)
         assert os.path.isdir(dstpath)
@@ -117,7 +117,7 @@ class TestMackup(unittest.TestCase):
         assert os.path.isdir(dstpath)
         assert not os.path.exists(dstfile)
 
-        # Check if mackup can copy it
+        # Check if mackeep can copy it
         with pytest.raises(ValueError, match="Unsupported file"):
             utils.copy(srcfile, dstfile)
         assert not os.path.isfile(srcfile)
@@ -153,7 +153,7 @@ class TestMackup(unittest.TestCase):
         assert os.path.isdir(dstpath)
         assert not os.path.exists(dstfile)
 
-        # Check if mackup can copy it
+        # Check if mackeep can copy it
         utils.copy(srcfile, dstfile)
         assert os.path.isdir(srcpath)
         assert os.path.isfile(srcfile)
@@ -186,7 +186,7 @@ class TestMackup(unittest.TestCase):
         assert os.path.isdir(dstpath)
         assert not os.path.exists(dstfile)
 
-        # Check if mackup can copy it
+        # Check if mackeep can copy it
         utils.copy(srcpath, dstfile)
         assert os.path.isdir(srcpath)
         assert os.path.isfile(srcfile)
@@ -227,7 +227,7 @@ class TestMackup(unittest.TestCase):
         assert os.path.isdir(dst_subfolder)
         assert not os.path.exists(dst_file)
 
-        # Check if mackup can copy it
+        # Check if mackeep can copy it
         utils.copy(src_folder, dst_folder)
         assert os.path.isdir(src_folder)
         assert os.path.isdir(src_subfolder)
@@ -256,7 +256,7 @@ class TestMackup(unittest.TestCase):
         assert os.path.isdir(dstpath)
         assert not os.path.exists(dstfile)
 
-        # Check if mackup can link it and the link points to the correct place
+        # Check if mackeep can link it and the link points to the correct place
         utils.link(srcfile, dstfile)
         assert os.path.isfile(srcfile)
         assert os.path.isdir(dstpath)

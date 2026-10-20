@@ -5,18 +5,18 @@ from unittest.mock import patch
 
 import pytest
 
-from mackup import utils
-from mackup.appsdb import ApplicationsDatabase
-from mackup.config import ConfigError
-from mackup.main import main
+from mackeep import utils
+from mackeep.appsdb import ApplicationsDatabase
+from mackeep.config import ConfigError
+from mackeep.main import main
 
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
-    """Set up a temporary home directory with a Mackup config file."""
+    """Set up a temporary home directory with a Mackeep config file."""
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / ".config"))
-    monkeypatch.delenv("MACKUP_CONFIG", raising=False)
+    monkeypatch.delenv("MACKEEP_CONFIG", raising=False)
 
     utils.FORCE_YES = True
     utils.FORCE_NO = False
@@ -29,16 +29,16 @@ def home(tmp_path, monkeypatch):
     utils.CAN_RUN_AS_ROOT = False
 
 
-def write_mackup_config(home, extra=""):
-    """Write a Mackup config file using the file system storage engine."""
+def write_mackeep_config(home, extra=""):
+    """Write a Mackeep config file using the file system storage engine."""
     storage = home / "storage"
     storage.mkdir(exist_ok=True)
-    config = home / ".mackup.cfg"
+    config = home / ".mackeep.cfg"
     config.write_text(
         "[storage]\n"
         "engine = file_system\n"
         f"path = {storage}\n"
-        "directory = Mackup\n"
+        "directory = Mackeep\n"
         "\n"
         "[applications_to_sync]\n"
         "test-app\n" + extra,
@@ -48,20 +48,20 @@ def write_mackup_config(home, extra=""):
 
 def write_app_config(home, body):
     """Write a custom application config file."""
-    apps_dir = home / ".mackup"
+    apps_dir = home / ".mackeep"
     apps_dir.mkdir(exist_ok=True)
     (apps_dir / "test-app.cfg").write_text(body)
 
 
 def run(*args):
-    """Run the Mackup command line with the given arguments."""
-    with patch("sys.argv", ["mackup", *args]):
+    """Run the Mackeep command line with the given arguments."""
+    with patch("sys.argv", ["mackeep", *args]):
         main()
 
 
 def test_backup_skips_the_excluded_files(home, capsys):
     """The excluded files of a folder are not backed up."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -81,7 +81,7 @@ def test_backup_skips_the_excluded_files(home, capsys):
 
     run("backup")
 
-    backup = home / "storage" / "Mackup" / ".testdir"
+    backup = home / "storage" / "Mackeep" / ".testdir"
     assert (backup / "keep.txt").exists()
     assert not (backup / "skip.log").exists()
     assert "skip.log" not in capsys.readouterr().out.split("Backing up")[0]
@@ -89,7 +89,7 @@ def test_backup_skips_the_excluded_files(home, capsys):
 
 def test_backup_skips_an_excluded_folder(home):
     """An excluded folder is not backed up at all."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -108,12 +108,12 @@ def test_backup_skips_an_excluded_folder(home):
 
     run("backup")
 
-    assert not (home / "storage" / "Mackup" / ".testdir").exists()
+    assert not (home / "storage" / "Mackeep" / ".testdir").exists()
 
 
 def test_backup_skips_an_excluded_file_entry(home):
     """A file entry that is excluded is not backed up."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -132,14 +132,14 @@ def test_backup_skips_an_excluded_file_entry(home):
 
     run("backup")
 
-    backup = home / "storage" / "Mackup"
+    backup = home / "storage" / "Mackeep"
     assert (backup / ".testrc").exists()
     assert not (backup / "app.log").exists()
 
 
 def test_backup_skips_an_excluded_directory_content(home):
     """The excluded directories are not walked."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -159,14 +159,14 @@ def test_backup_skips_an_excluded_directory_content(home):
 
     run("backup")
 
-    backup = home / "storage" / "Mackup" / ".testdir"
+    backup = home / "storage" / "Mackeep" / ".testdir"
     assert (backup / "keep.txt").exists()
     assert not (backup / "cache").exists()
 
 
 def test_the_global_exclude_applies_to_every_application(home):
-    """The [exclude] section of the Mackup config applies to every app."""
-    write_mackup_config(home, extra="\n[exclude]\n.testdir/.DS_Store\n")
+    """The [exclude] section of the Mackeep config applies to every app."""
+    write_mackeep_config(home, extra="\n[exclude]\n.testdir/.DS_Store\n")
     write_app_config(
         home,
         "[application]\n"
@@ -183,14 +183,14 @@ def test_the_global_exclude_applies_to_every_application(home):
 
     run("backup")
 
-    backup = home / "storage" / "Mackup" / ".testdir"
+    backup = home / "storage" / "Mackeep" / ".testdir"
     assert (backup / "keep.txt").exists()
     assert not (backup / ".DS_Store").exists()
 
 
 def test_the_xdg_exclude_applies_to_the_xdg_files(home):
     """The [xdg_exclude] section applies to the XDG config files."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -210,14 +210,14 @@ def test_the_xdg_exclude_applies_to_the_xdg_files(home):
 
     run("backup")
 
-    backup = home / "storage" / "Mackup" / ".config" / "test-app"
+    backup = home / "storage" / "Mackeep" / ".config" / "test-app"
     assert (backup / "config").exists()
     assert not (backup / "cache").exists()
 
 
 def test_restore_skips_the_excluded_files(home):
     """The excluded files of the backup are not restored."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -230,7 +230,7 @@ def test_restore_skips_the_excluded_files(home):
         ".testdir/skip.log\n",
     )
 
-    backup = home / "storage" / "Mackup" / ".testdir"
+    backup = home / "storage" / "Mackeep" / ".testdir"
     backup.mkdir(parents=True)
     (backup / "keep.txt").write_text("keep")
     (backup / "skip.log").write_text("skip")
@@ -243,7 +243,7 @@ def test_restore_skips_the_excluded_files(home):
 
 def test_restore_skips_an_excluded_entry(home):
     """An excluded entry is not restored."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -256,7 +256,7 @@ def test_restore_skips_an_excluded_entry(home):
         ".testdir\n",
     )
 
-    backup = home / "storage" / "Mackup" / ".testdir"
+    backup = home / "storage" / "Mackeep" / ".testdir"
     backup.mkdir(parents=True)
     (backup / "keep.txt").write_text("keep")
 
@@ -267,7 +267,7 @@ def test_restore_skips_an_excluded_entry(home):
 
 def test_the_dry_run_reports_the_stale_files_of_the_backup(home, capsys):
     """The files of the backup that are now excluded are reported."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -285,7 +285,7 @@ def test_the_dry_run_reports_the_stale_files_of_the_backup(home, capsys):
     (testdir / "keep.txt").write_text("keep")
 
     # A file that was backed up before the exclusion was added
-    backup = home / "storage" / "Mackup" / ".testdir"
+    backup = home / "storage" / "Mackeep" / ".testdir"
     backup.mkdir(parents=True)
     (backup / "skip.log").write_text("stale")
 
@@ -299,7 +299,7 @@ def test_the_dry_run_reports_the_stale_files_of_the_backup(home, capsys):
 
 def test_link_install_skips_a_folder_with_excluded_files(home, capsys):
     """A symlink cannot exclude anything, so the entry is skipped."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -322,12 +322,12 @@ def test_link_install_skips_a_folder_with_excluded_files(home, capsys):
     out = capsys.readouterr().out
     assert "Skipping .testdir" in out
     assert not os.path.islink(home / ".testdir")
-    assert not (home / "storage" / "Mackup" / ".testdir").exists()
+    assert not (home / "storage" / "Mackeep" / ".testdir").exists()
 
 
 def test_link_install_links_a_folder_without_exclusions(home):
     """The entries that are not impacted by the exclusions are linked."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -344,12 +344,12 @@ def test_link_install_links_a_folder_without_exclusions(home):
     run("link", "install")
 
     assert os.path.islink(home / ".testdir")
-    assert (home / "storage" / "Mackup" / ".testdir" / "keep.txt").exists()
+    assert (home / "storage" / "Mackeep" / ".testdir" / "keep.txt").exists()
 
 
 def test_link_install_skips_an_excluded_entry(home, capsys):
     """An excluded entry is not linked."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -373,7 +373,7 @@ def test_link_install_skips_an_excluded_entry(home, capsys):
 
 def test_an_app_without_exclusion_is_not_impacted(home):
     """The apps that do not use the exclusions work as before."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -390,14 +390,14 @@ def test_an_app_without_exclusion_is_not_impacted(home):
 
     run("backup")
 
-    backup = home / "storage" / "Mackup" / ".testdir"
+    backup = home / "storage" / "Mackeep" / ".testdir"
     assert (backup / "keep.txt").exists()
     assert (backup / "skip.log").exists()
 
 
 def test_an_exclusion_may_be_written_as_a_value(home):
     """An exclusion pattern may also be given as a value."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -416,7 +416,7 @@ def test_an_exclusion_may_be_written_as_a_value(home):
 
 def test_an_absolute_exclusion_is_a_config_error(home):
     """An absolute path in an exclusion section is an error."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"
@@ -434,7 +434,7 @@ def test_an_absolute_exclusion_is_a_config_error(home):
 
 def test_a_duplicated_exclusion_is_a_config_error(home):
     """A duplicated pattern in an exclusion section is an error."""
-    write_mackup_config(home)
+    write_mackeep_config(home)
     write_app_config(
         home,
         "[application]\n"

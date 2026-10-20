@@ -1,5 +1,5 @@
 [project]
-name = "mackup"
+name = "mackeep"
 version = "0.11.2"
 description = "Backup and keep your application settings in sync."
 readme = "README.md"
@@ -23,12 +23,12 @@ classifiers = [
 ]
 
 [project.scripts]
-mackup = "mackup.main:main"
+mackeep = "mackeep.main:main"
 
 [project.urls]
-Repository = "https://github.com/lra/mackup.git"
-Issues = "https://github.com/lra/mackup/issues"
-Changelog = "https://github.com/lra/mackup/releases"
+Repository = "https://github.com/Joynik/mackeep.git"
+Issues = "https://github.com/Joynik/mackeep/issues"
+Changelog = "https://github.com/Joynik/mackeep/releases"
 
 [dependency-groups]
 dev = [
@@ -61,7 +61,7 @@ strict_equality = true
 show_error_codes = true
 
 [tool.coverage.run]
-source = ["src/mackup"]
+source = ["src/mackeep"]
 branch = true
 omit = ["*/tests/*", "*/__pycache__/*", "*/.venv/*"]
 

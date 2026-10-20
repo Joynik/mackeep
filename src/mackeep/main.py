@@ -1,24 +1,26 @@
-"""Mackup.
+"""Mackeep.
 
 Keep your application settings in sync.
+
+Mackeep is a fork of Mackup, written by Laurent Raufaste.
 Copyright (C) 2013-2025 Laurent Raufaste <http://glop.org/>
 
 Usage:
-  mackup [options] list
-  mackup [options] show <application>
-  mackup [options] config
-  mackup [options] backup [<application>]
-  mackup [options] restore [<application>]
-  mackup [options] link install [<application>]
-  mackup [options] link uninstall [<application>]
-  mackup [options] link [<application>]
-  mackup (-h | --help)
+  mackeep [options] list
+  mackeep [options] show <application>
+  mackeep [options] config
+  mackeep [options] backup [<application>]
+  mackeep [options] restore [<application>]
+  mackeep [options] link install [<application>]
+  mackeep [options] link uninstall [<application>]
+  mackeep [options] link [<application>]
+  mackeep (-h | --help)
 
 Options:
   -h --help                 Show this screen.
   -f --force                Force every question asked to be answered with "Yes".
   --force-no                Force every question asked to be answered with "No".
-  -r --root                 Allow mackup to be run as superuser.
+  -r --root                 Allow mackeep to be run as superuser.
   -n --dry-run              Show steps without executing.
   -v --verbose              Show additional details.
   -c --config-file=<path>   Specify custom config file path.
@@ -26,29 +28,29 @@ Options:
   --version                 Show version.
 
 Modes of action:
- - mackup list: display a list of all supported applications.
- - mackup show: display the details for a supported application.
- - mackup config: display the configuration of Mackup.
- - mackup backup: copy local config files in the configured remote folder.
- - mackup restore: copy config files from the configured remote folder locally.
- - mackup link install: moves local config files in remote folder, and links.
- - mackup link uninstall: removes the links and copy config files locally.
- - mackup link: links local config files from the remote folder.
+ - mackeep list: display a list of all supported applications.
+ - mackeep show: display the details for a supported application.
+ - mackeep config: display the configuration of Mackeep.
+ - mackeep backup: copy local config files in the configured remote folder.
+ - mackeep restore: copy config files from the configured remote folder locally.
+ - mackeep link install: moves local config files in remote folder, and links.
+ - mackeep link uninstall: removes the links and copy config files locally.
+ - mackeep link: links local config files from the remote folder.
 
 backup, restore, link install, link uninstall and link act on every configured
-application by default. Name a single application (e.g. `mackup backup vim`) to
+application by default. Name a single application (e.g. `mackeep backup vim`) to
 limit a command to that app, overriding the applications_to_sync and
 applications_to_ignore settings in your config.
 
-By default, Mackup syncs all application data via
+By default, Mackeep syncs all application data via
 Dropbox, but may be configured to exclude applications or use a different
-backend with a .mackup.cfg file.
+backend with a .mackeep.cfg file.
 
 The --json option writes a machine-readable answer, meant to be used by
 graphical front-ends. In this mode, only JSON is written to stdout, the
 human-readable output is written to stderr and no question is asked.
 
-See https://github.com/lra/mackup/tree/master/doc for more information.
+See https://github.com/Joynik/mackeep/tree/master/doc for more information.
 
 """
 
@@ -67,11 +69,11 @@ from .config import ConfigError
 from .constants import (
     CUSTOM_APPS_DIR,
     CUSTOM_APPS_DIR_XDG,
-    MACKUP_APP_NAME,
+    MACKEEP_APP_NAME,
     VERSION,
 )
 from .excludes import Matcher
-from .mackup import Mackup
+from .mackeep import Mackeep
 
 # The ANSI escape codes used to color the error messages
 ANSI_CODES = re.compile(r"\033\[[0-9;]*m")
@@ -96,7 +98,7 @@ class _Context:
     """Shared state threaded through the command handlers."""
 
     config_file: str | None
-    mckp: Mackup
+    mckp: Mackeep
     app_db: ApplicationsDatabase
     dry_run: bool
     verbose: bool
@@ -163,7 +165,7 @@ def _cmd_list(app_db: ApplicationsDatabase) -> None:
         output += f" - {app_name}\n"
     output += "\n"
     output += (
-        f"{len(app_db.get_app_names())} applications supported in Mackup v{VERSION}"
+        f"{len(app_db.get_app_names())} applications supported in Mackeep v{VERSION}"
     )
     print(output)
 
@@ -194,13 +196,13 @@ def _cmd_show(args: dict[str, Any], app_db: ApplicationsDatabase) -> None:
 
 def _cmd_backup(args: dict[str, Any], ctx: _Context) -> None:
     # Resolve and validate the target apps before the env check, so an
-    # unknown application name fails cleanly without creating the Mackup
+    # unknown application name fails cleanly without creating the Mackeep
     # folder or prompting first.
     app_names = _resolve_apps(args["<application>"], ctx)
     ctx.mckp.check_for_usable_backup_env()
 
     # Create a backup of the files of each application
-    _run_action(ctx, app_names, "copy_files_to_mackup_folder")
+    _run_action(ctx, app_names, "copy_files_to_mackeep_folder")
 
 
 def _cmd_restore(args: dict[str, Any], ctx: _Context) -> None:
@@ -208,7 +210,7 @@ def _cmd_restore(args: dict[str, Any], ctx: _Context) -> None:
     ctx.mckp.check_for_usable_restore_env()
 
     # Recover a backup of the files of each application
-    _run_action(ctx, app_names, "copy_files_from_mackup_folder")
+    _run_action(ctx, app_names, "copy_files_from_mackeep_folder")
 
 
 def _cmd_link_install(args: dict[str, Any], ctx: _Context) -> None:
@@ -231,43 +233,43 @@ def _cmd_link_uninstall(args: dict[str, Any], ctx: _Context) -> None:
     ctx.mckp.check_for_usable_restore_env()
 
     if named_apps is not None:
-        # Unlink only the named application, leaving the rest of Mackup
-        # (and the Mackup config itself) in place. No global confirmation
+        # Unlink only the named application, leaving the rest of Mackeep
+        # (and the Mackeep config itself) in place. No global confirmation
         # is needed since the user explicitly scoped the uninstall.
         _run_action(ctx, named_apps, "link_uninstall")
 
     elif ctx.dry_run or (
         utils.confirm(
-            "You are going to uninstall Mackup.\n"
+            "You are going to uninstall Mackeep.\n"
             "Every configuration file, setting and dotfile"
-            " managed by Mackup will be unlinked and copied back"
+            " managed by Mackeep will be unlinked and copied back"
             " to their original place, in your home folder.\n"
             "Are you sure?",
         )
     ):
-        # Uninstall the apps except Mackup, which we'll uninstall last, to
+        # Uninstall the apps except Mackeep, which we'll uninstall last, to
         # keep the settings as long as possible
         app_names = ctx.mckp.get_apps_to_backup()
-        app_names.discard(MACKUP_APP_NAME)
+        app_names.discard(MACKEEP_APP_NAME)
 
         _run_action(ctx, app_names, "link_uninstall")
 
-        # Restore the Mackup config before any other config, as we might
+        # Restore the Mackeep config before any other config, as we might
         # need it to know about custom settings
-        mackup_app = _make_profile(ctx, MACKUP_APP_NAME)
-        mackup_app.link_uninstall()
+        mackeep_app = _make_profile(ctx, MACKEEP_APP_NAME)
+        mackeep_app.link_uninstall()
 
-        # Delete the Mackup folder in Dropbox
+        # Delete the Mackeep folder in Dropbox
         # Don't delete this as there might be other Macs that aren't
         # uninstalled yet
-        # delete(mckp.mackup_folder)
+        # delete(mckp.mackeep_folder)
 
         print(
             "\n"
             "All your files have been put back into place. You can now"
-            " safely uninstall Mackup.\n"
+            " safely uninstall Mackeep.\n"
             "\n"
-            "Thanks for using Mackup!",
+            "Thanks for using Mackeep!",
         )
 
 
@@ -281,26 +283,26 @@ def _cmd_link(args: dict[str, Any], ctx: _Context) -> None:
     ctx.mckp.check_for_usable_restore_env()
 
     if named_apps is not None:
-        # Link only the named application. No need to restore the Mackup
+        # Link only the named application. No need to restore the Mackeep
         # config first, as the app set is fixed and config-independent here.
         _run_action(ctx, named_apps, "link")
         return
 
-    # Restore the Mackup config before any other config, as we might
+    # Restore the Mackeep config before any other config, as we might
     # need it to know about custom settings
-    mackup_app = _make_profile(ctx, MACKUP_APP_NAME)
-    _print_app_header(MACKUP_APP_NAME, ctx.verbose)
-    mackup_app.link()
+    mackeep_app = _make_profile(ctx, MACKEEP_APP_NAME)
+    _print_app_header(MACKEEP_APP_NAME, ctx.verbose)
+    mackeep_app.link()
 
-    # Initialize again the apps db, as the Mackup config might have
+    # Initialize again the apps db, as the Mackeep config might have
     # changed it
-    ctx.mckp = Mackup(ctx.config_file)
+    ctx.mckp = Mackeep(ctx.config_file)
     ctx.app_db = ApplicationsDatabase()
 
-    # Restore the rest of the app configs, using the restored Mackup config
+    # Restore the rest of the app configs, using the restored Mackeep config
     app_names = ctx.mckp.get_apps_to_backup()
-    # Mackup has already been done
-    app_names.discard(MACKUP_APP_NAME)
+    # Mackeep has already been done
+    app_names.discard(MACKEEP_APP_NAME)
 
     _run_action(ctx, app_names, "link")
 
@@ -417,7 +419,7 @@ def _app_json(app_db: ApplicationsDatabase, app_name: str) -> dict[str, Any]:
 
 def _config_json(ctx: _Context) -> dict[str, Any]:
     """
-    Build the JSON description of the configuration of Mackup.
+    Build the JSON description of the configuration of Mackeep.
 
     Args:
         ctx (_Context): The context of the command.
@@ -480,7 +482,7 @@ def _summary(actions: list[dict[str, Any]], app_names: set[str]) -> dict[str, An
 
 
 def _cmd_config(ctx: _Context) -> None:
-    """Display the configuration of Mackup."""
+    """Display the configuration of Mackeep."""
     config = ctx.mckp.config
     print(f"Version: {VERSION}")
     print(f"Config file: {config.config_path}")
@@ -515,9 +517,9 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
         jsonapi.emit(_app_json(ctx.app_db, app_name), stream)
     elif args["backup"] or args["restore"]:
         action: str = (
-            "copy_files_to_mackup_folder"
+            "copy_files_to_mackeep_folder"
             if args["backup"]
-            else "copy_files_from_mackup_folder"
+            else "copy_files_from_mackeep_folder"
         )
         label: str = "backup" if args["backup"] else "restore"
 
@@ -583,11 +585,11 @@ def main() -> None:
         sys.exit(
             "Usage information is not available because __doc__ is None. "
             "This can happen when running Python with optimizations (python -OO). "
-            "Please run Mackup without -OO to use the command-line interface.",
+            "Please run Mackeep without -OO to use the command-line interface.",
         )
     assert docstring is not None  # for type narrowing after sys.exit
 
-    args: dict[str, Any] = docopt(docstring, version=f"Mackup {VERSION}")
+    args: dict[str, Any] = docopt(docstring, version=f"Mackeep {VERSION}")
 
     json_mode: bool = bool(args["--json"])
     stdout: TextIO = sys.stdout
@@ -629,7 +631,7 @@ def _handle_exit(exc: SystemExit, json_mode: bool, stdout: TextIO) -> None:
         message: str = _clean_error(code)
         error_code: str = _error_code(message)
     else:
-        message = f"Mackup failed with the exit code {code}"
+        message = f"Mackeep failed with the exit code {code}"
         error_code = "error"
 
     if json_mode:
@@ -654,24 +656,24 @@ def _run(args: dict[str, Any], json_mode: bool, stdout: TextIO) -> None:
     config_file: str | None = args.get("--config-file")
     ctx = _Context(
         config_file=config_file,
-        mckp=Mackup(config_file),
+        mckp=Mackeep(config_file),
         app_db=ApplicationsDatabase(),
         dry_run=args["--dry-run"],
         verbose=args["--verbose"],
     )
 
-    # If we want to answer mackup with "yes" for each question
+    # If we want to answer mackeep with "yes" for each question
     if args["--force"]:
         utils.FORCE_YES = True
 
-    # If we want to answer mackup with "no" for each question
+    # If we want to answer mackeep with "no" for each question
     if args["--force-no"]:
         utils.FORCE_NO = True
     elif json_mode:
         # No question can be asked in JSON mode
         utils.FORCE_NO = True
 
-    # Allow mackup to be run as root
+    # Allow mackeep to be run as root
     if args["--root"]:
         utils.CAN_RUN_AS_ROOT = True
 

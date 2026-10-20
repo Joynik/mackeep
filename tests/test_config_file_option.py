@@ -4,8 +4,8 @@ import unittest
 
 import pytest
 
-from mackup.config import Config
-from mackup.mackup import Mackup
+from mackeep.config import Config
+from mackeep.mackeep import Mackeep
 
 
 class TestConfigFileOption(unittest.TestCase):
@@ -15,36 +15,36 @@ class TestConfigFileOption(unittest.TestCase):
 
         # Clear environment variables that could interfere
         os.environ.pop("XDG_CONFIG_HOME", None)
-        os.environ.pop("MACKUP_CONFIG", None)
+        os.environ.pop("MACKEEP_CONFIG", None)
 
     def test_config_with_relative_path(self):
         """Test that a relative path to config file works."""
-        cfg = Config("mackup-apps_to_ignore.cfg")
+        cfg = Config("mackeep-apps_to_ignore.cfg")
 
         assert cfg.apps_to_ignore == {"subversion", "sequel-pro", "sabnzbd"}
 
     def test_config_with_absolute_path(self):
         """Test that an absolute path to config file works."""
-        abs_path = os.path.join(os.environ["HOME"], "mackup-apps_to_sync.cfg")
+        abs_path = os.path.join(os.environ["HOME"], "mackeep-apps_to_sync.cfg")
         cfg = Config(abs_path)
 
         assert cfg.apps_to_sync == {"sabnzbd", "sublime-text-3", "x11"}
 
-    def test_mackup_with_config_file(self):
-        """Test that Mackup class accepts config_file parameter."""
+    def test_mackeep_with_config_file(self):
+        """Test that Mackeep class accepts config_file parameter."""
         # This should not raise any errors
-        mckp = Mackup("mackup-empty.cfg")
+        mckp = Mackeep("mackeep-empty.cfg")
 
         # Verify that the config was properly initialized
-        assert isinstance(mckp.mackup_folder, str)
+        assert isinstance(mckp.mackeep_folder, str)
 
-    def test_mackup_without_config_file(self):
-        """Test that Mackup class works without config_file parameter."""
+    def test_mackeep_without_config_file(self):
+        """Test that Mackeep class works without config_file parameter."""
         # This should use default config file discovery
-        mckp = Mackup()
+        mckp = Mackeep()
 
         # Verify that the config was properly initialized
-        assert isinstance(mckp.mackup_folder, str)
+        assert isinstance(mckp.mackeep_folder, str)
 
     def test_config_file_does_not_exist(self):
         """Test that specifying a non-existent config file raises an error."""

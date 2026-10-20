@@ -14,7 +14,7 @@ jobs:
       - uses: snapcore/action-build@v1
         id: build
       - uses: snapcore/action-publish@v1
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' && env.SNAPCRAFT_STORE_CREDENTIALS != ''
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:

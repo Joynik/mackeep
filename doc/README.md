@@ -1,34 +1,34 @@
-# Configuration
+# Mackeep configuration
 
-> 💡 **New to Mackup?** Check out the
-> [Architecture Guide](ARCHITECTURE.md) to understand how Mackup works
+> 💡 **New to Mackeep?** Check out the
+> [Architecture Guide](ARCHITECTURE.md) to understand how Mackeep works
 > under the hood.
 
-All the configuration is done in a file named `.mackup.cfg` stored at the
+All the configuration is done in a file named `.mackeep.cfg` stored at the
 root of your home folder. This location can be overridden via environment
 variables or the `--config-file` command-line option.
 
-To configure Mackup, create a file named `.mackup.cfg` in your home
+To configure Mackeep, create a file named `.mackeep.cfg` in your home
 directory.
 
 ```bash
-vi ~/.mackup.cfg
+vi ~/.mackeep.cfg
 ```
 
 ## Configuration file location
 
-Config files are searched in the following order. If none is found, Mackup will
-use the default config location of `~/.mackup.cfg`
+Config files are searched in the following order. If none is found, Mackeep will
+use the default config location of `~/.mackeep.cfg`
 
-- `~/.mackup.cfg`
-- `$MACKUP_CONFIG`
-- `$XDG_CONFIG_HOME/mackup/mackup.cfg` or `~/.config/mackup/mackup.cfg`
+- `~/.mackeep.cfg`
+- `$MACKEEP_CONFIG`
+- `$XDG_CONFIG_HOME/mackeep/mackeep.cfg` or `~/.config/mackeep/mackeep.cfg`
 
 You can also specify a custom config file location using the `--config-file`
 command-line option:
 
 ```bash
-mackup --config-file ~/.mackup-custom.cfg backup
+mackeep --config-file ~/.mackeep-custom.cfg backup
 ```
 
 The path can be absolute or relative to your home directory. Note that the
@@ -36,13 +36,13 @@ config file must be located within your home directory for security reasons.
 
 ## Storage
 
-You can specify the storage type Mackup will use to store your configuration
+You can specify the storage type Mackeep will use to store your configuration
 files.
 
 For now, you have 4 options: `dropbox`, `google_drive`, `icloud` and `file_system`.
 
-If none is specified, Mackup will try to use the default: `dropbox`.
-With the `dropbox` storage engine, Mackup will automatically figure out your
+If none is specified, Mackeep will try to use the default: `dropbox`.
+With the `dropbox` storage engine, Mackeep will automatically figure out your
 Dropbox folder.
 
 ### Dropbox
@@ -54,7 +54,7 @@ engine = dropbox
 
 ### Google Drive
 
-If you choose the `google_drive` storage engine instead, Mackup will figure out
+If you choose the `google_drive` storage engine instead, Mackeep will figure out
 where your Google Drive is and store your configuration files in it.
 
 ```ini
@@ -64,7 +64,7 @@ engine = google_drive
 
 ### iCloud
 
-If you choose the `iCloud` storage engine, Mackup will store your
+If you choose the `iCloud` storage engine, Mackeep will store your
 configuration files in the `~/Library/Mobile\ Documents/com\~apple\~CloudDocs/`
 folder.
 
@@ -82,7 +82,7 @@ brctl monitor com.apple.CloudDocs
 ### File System
 
 If you want to specify another directory, you can use the `file_system` engine
-and Mackup won't try to detect any path for you: it will store your files where
+and Mackeep won't try to detect any path for you: it will store your files where
 you explicitly told it to, using the `path` setting.
 The `path` can be absolute (from the `/` of your drive) or relative to your
 home directory.
@@ -105,13 +105,13 @@ path = /some path/in/your/root
 
 ### Custom Directory Name
 
-You can customize the directory name in which Mackup stores your files. By
-default, if not specified, Mackup creates a `Mackup` directory in the storage
-engine you chose, e.g. `~/Dropbox/Mackup`.
+You can customize the directory name in which Mackeep stores your files. By
+default, if not specified, Mackeep creates a `Mackeep` directory in the storage
+engine you chose, e.g. `~/Dropbox/Mackeep`.
 
 ```ini
 [storage]
-directory = Mackup
+directory = Mackeep
 ```
 
 For example:
@@ -130,24 +130,24 @@ You can also select a subfolder:
 ```ini
 [storage]
 engine = icloud
-directory = .config/mackup
+directory = .config/mackeep
 ```
 
 ### Switching Storage
 
-If you ever change your mind and switch storage solutions after Mackup is
+If you ever change your mind and switch storage solutions after Mackeep is
 already setup (ex: from `dropbox` to `icloud`), complete the following steps.
 
-1. Run `mackup uninstall` on all computers
-2. Copy your Mackup files to the new storage location
-3. Change the storage provider details in your `.mackup.cfg` file (see above)
-4. Run `mackup backup` on the main computer and `mackup restore` on all others
+1. Run `mackeep uninstall` on all computers
+2. Copy your Mackeep files to the new storage location
+3. Change the storage provider details in your `.mackeep.cfg` file (see above)
+4. Run `mackeep backup` on the main computer and `mackeep restore` on all others
 
 ## Applications
 
 ### Only sync one or two applications
 
-In your home folder, create a file named `.mackup.cfg` and add the application
+In your home folder, create a file named `.mackeep.cfg` and add the application
 names to allow in the `[applications_to_sync]` section, one per line.
 
 ```ini
@@ -157,19 +157,19 @@ ssh
 adium
 ```
 
-Use `mackup list` to get a list of valid application names. Don't use fancy
+Use `mackeep list` to get a list of valid application names. Don't use fancy
 names (with spaces) here.
 
-A [sample](.mackup.cfg) of this file is available in this folder. Just copy it
+A [sample](.mackeep.cfg) of this file is available in this folder. Just copy it
 to your home folder:
 
 ```bash
-cp mackup/doc/.mackup.cfg ~/
+cp mackeep/doc/.mackeep.cfg ~/
 ```
 
 ### Don't sync an application
 
-In your home folder, create a file named `.mackup.cfg` and add the application
+In your home folder, create a file named `.mackeep.cfg` and add the application
 names to ignore in the `[applications_to_ignore]` section, one per line.
 
 ```ini
@@ -179,29 +179,29 @@ ssh
 adium
 ```
 
-Use `mackup list` to get a list of valid application names. Don't use fancy
+Use `mackeep list` to get a list of valid application names. Don't use fancy
 names (with spaces) here.
 
-A [sample](.mackup.cfg) of this file is available in this folder. Just copy it
+A [sample](.mackeep.cfg) of this file is available in this folder. Just copy it
 to your home folder:
 
 ```bash
-cp mackup/doc/.mackup.cfg ~/
+cp mackeep/doc/.mackeep.cfg ~/
 ```
 
 ### Get official support for an application
 
-Open a [new issue](https://github.com/lra/mackup/issues) and ask for it, or
-fork Mackup and open a
+Open a [new issue](https://github.com/Joynik/mackeep/issues) and ask for it, or
+fork Mackeep and open a
 [Pull Request](https://help.github.com/articles/using-pull-requests).
-The stock application configs are in the `mackup/applications` directory.
+The stock application configs are in the `mackeep/applications` directory.
 
-Remember to follow the guidelines in [CONTRIBUTING.md](https://github.com/lra/mackup/blob/master/.github/CONTRIBUTING.md)
+Remember to follow the guidelines in [CONTRIBUTING.md](https://github.com/Joynik/mackeep/blob/master/.github/CONTRIBUTING.md)
 to get your Pull Request merged faster.
 
 ### Add support for an application or (almost) any file or directory
 
-You can customize the Mackup engine and add support for unsupported
+You can customize the Mackeep engine and add support for unsupported
 applications or just custom files and directories you'd like to sync.
 
 NOTE: Files and directories to be synced should be rooted at $HOME.
@@ -210,36 +210,36 @@ Let's say that you'd like to add support for Nethack (config file:
 `.nethackrc`), for the `bin` and `.hidden` directories and for the
 `.gitignore` file you keep in your home.
 
-In your home, create a `.mackup` directory and add a config file for the
+In your home, create a `.mackeep` directory and add a config file for the
 application you'd like to support:
 
 ```bash
-mkdir ~/.mackup
-touch ~/.mackup/nethack.cfg
-touch ~/.mackup/my-files.cfg
+mkdir ~/.mackeep
+touch ~/.mackeep/nethack.cfg
+touch ~/.mackeep/my-files.cfg
 ```
 
 #### Custom applications directory location
 
 Custom application configs are searched in the following order:
 
-1. `~/.mackup/` (legacy location, takes priority)
-2. `$XDG_CONFIG_HOME/mackup/applications/` or `~/.config/mackup/applications/`
+1. `~/.mackeep/` (legacy location, takes priority)
+2. `$XDG_CONFIG_HOME/mackeep/applications/` or `~/.config/mackeep/applications/`
 
 If the same application config exists in both locations, the legacy location
-(`~/.mackup/`) takes priority.
+(`~/.mackeep/`) takes priority.
 
 For XDG-compliant setups, you can use:
 
 ```bash
-mkdir -p ~/.config/mackup/applications
-touch ~/.config/mackup/applications/nethack.cfg
+mkdir -p ~/.config/mackeep/applications
+touch ~/.config/mackeep/applications/nethack.cfg
 ```
 
 Edit those files:
 
 ```bash
-$ nano ~/.mackup/nethack.cfg
+$ nano ~/.mackeep/nethack.cfg
 [application]
 name = Nethack
 
@@ -248,7 +248,7 @@ name = Nethack
 ```
 
 ```bash
-$ nano ~/.mackup/my-files.cfg
+$ nano ~/.mackeep/my-files.cfg
 [application]
 name = My personal synced files and dirs
 
@@ -258,13 +258,13 @@ bin
 .gitignore
 ```
 
-Note that Mackup assumes the file paths listed here are relative to your home
+Note that Mackeep assumes the file paths listed here are relative to your home
 directory.
 
-You can run mackup to see if they are listed:
+You can run mackeep to see if they are listed:
 
 ```bash
-$ mackup list
+$ mackeep list
 Supported applications:
 [...]
  - my-files
@@ -275,11 +275,11 @@ Supported applications:
 All good, you can now sync your newly configured files:
 
 ```bash
-mackup backup
+mackeep backup
 ```
 
-If you override an application config that is already supported by Mackup, your
-new config for this application will replace the one provided by Mackup.
+If you override an application config that is already supported by Mackeep, your
+new config for this application will replace the one provided by Mackeep.
 
 You can find some sample configs in this directory.
 
@@ -289,10 +289,10 @@ You can add and test an application by following these steps:
 
 - fork this project
 - create a branch _(usually containing the name of the application)_
-- add the appropriate application config file in the `mackup/applications` folder
-- from the top-most folder _(mackup)_ run `make develop` that replaces the
-  currently installed mackup with the local modified one
-- simply run `mackup backup` to test if everything is ok
+- add the appropriate application config file in the `mackeep/applications` folder
+- from the top-most folder _(mackeep)_ run `make develop` that replaces the
+  currently installed mackeep with the local modified one
+- simply run `mackeep backup` to test if everything is ok
 - if everything works as expected:
   - run `make undevelop` to revert to the official version
   - commit and push the change to your fork and then create the Pulls Request
@@ -306,7 +306,7 @@ environment variable.
 
 See <https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html>
 
-Mackup supports this mechanism and provides a dedicated `xdg_configuration_files`
+Mackeep supports this mechanism and provides a dedicated `xdg_configuration_files`
 section for those applications.
 
 If any path starts with `.config`, remove the `.config` part and move the path
@@ -343,7 +343,7 @@ git/attributes
 ## Exclusions
 
 Some files of an application should never be backed up: caches, lock files,
-temporary files, machine specific settings... Mackup lets you exclude them
+temporary files, machine specific settings... Mackeep lets you exclude them
 with the `[exclude]` and `[xdg_exclude]` sections of the application config
 files.
 
@@ -399,7 +399,7 @@ Code/User/workspaceStorage
 
 ### Exclude the same files for every application
 
-The `.mackup.cfg` file may hold an `[exclude]` section too. It applies to
+The `.mackeep.cfg` file may hold an `[exclude]` section too. It applies to
 every application, which is handy to always skip the junk files:
 
 ```ini
@@ -422,15 +422,15 @@ Skipping .config/Code/User, it contains excluded files and a symlink cannot excl
 ```
 
 The files that are already in the backup and that are now excluded are not
-deleted. They are only reported, e.g. with `mackup backup --dry-run`.
+deleted. They are only reported, e.g. with `mackeep backup --dry-run`.
 
 ## JSON interface
 
-Mackup can write a machine-readable answer, so a graphical front-end can be
+Mackeep can write a machine-readable answer, so a graphical front-end can be
 built on top of it. Use the `--json` option, before the command:
 
 ```bash
-mackup --json list
+mackeep --json list
 ```
 
 Every answer holds a `schema_version` field, currently `1`. In this mode,
@@ -438,24 +438,24 @@ only JSON is written to `stdout`, the human-readable output is written to
 `stderr` and no question is asked: the `--force-no` option is implied,
 unless `--force` is given.
 
-### `mackup --json config`
+### `mackeep --json config`
 
-Describes the configuration of Mackup:
+Describes the configuration of Mackeep:
 
 ```json
 {
   "schema_version": 1,
   "version": "0.11.2",
-  "config_file": "/home/user/.mackup.cfg",
+  "config_file": "/home/user/.mackeep.cfg",
   "custom_apps_dirs": [
-    "/home/user/.mackup",
-    "/home/user/.config/mackup/applications"
+    "/home/user/.mackeep",
+    "/home/user/.config/mackeep/applications"
   ],
   "storage": {
     "engine": "file_system",
     "path": "/home/user/dotfiles",
-    "directory": "Mackup",
-    "resolved_backup_dir": "/home/user/dotfiles/Mackup",
+    "directory": "Mackeep",
+    "resolved_backup_dir": "/home/user/dotfiles/Mackeep",
     "exists": true
   },
   "apps_to_sync": ["vim"],
@@ -464,7 +464,7 @@ Describes the configuration of Mackup:
 }
 ```
 
-### `mackup --json list` and `mackup --json show <application>`
+### `mackeep --json list` and `mackeep --json show <application>`
 
 `list` writes an array with the description of every supported application,
 `show` writes the description of a single one:
@@ -475,7 +475,7 @@ Describes the configuration of Mackup:
   "name": "vscode",
   "display_name": "VS Code",
   "source": "custom",
-  "cfg_path": "/home/user/.mackup/vscode.cfg",
+  "cfg_path": "/home/user/.mackeep/vscode.cfg",
   "files": [
     {"path": "Library/Application Support/Code/User", "exists": true, "is_dir": true}
   ],
@@ -485,11 +485,11 @@ Describes the configuration of Mackup:
 }
 ```
 
-The `name` is the identifier of the application, as shown by `mackup list`.
-The `source` is `builtin` for the applications of Mackup and `custom` for
+The `name` is the identifier of the application, as shown by `mackeep list`.
+The `source` is `builtin` for the applications of Mackeep and `custom` for
 the ones of the user.
 
-### `mackup --json backup` and `mackup --json restore`
+### `mackeep --json backup` and `mackeep --json restore`
 
 With `--dry-run`, the operations that would be done are described:
 
@@ -501,7 +501,7 @@ With `--dry-run`, the operations that would be done are described:
       "app": "vscode",
       "action": "copy",
       "src": "/home/user/Library/Application Support/Code/User",
-      "dst": "/home/user/dotfiles/Mackup/Library/Application Support/Code/User",
+      "dst": "/home/user/dotfiles/Mackeep/Library/Application Support/Code/User",
       "size_bytes": 4096
     }
   ],

@@ -1,8 +1,8 @@
 """
-Machine-readable JSON output for Mackup.
+Machine-readable JSON output for Mackeep.
 
 The JSON interface is meant to be used by the graphical front-ends built on
-top of Mackup. Every answer holds a ``schema_version`` field, so a front-end
+top of Mackeep. Every answer holds a ``schema_version`` field, so a front-end
 can tell which version of the schema it is talking to.
 """
 

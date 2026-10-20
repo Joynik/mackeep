@@ -8,8 +8,8 @@ from unittest.mock import patch
 
 import pytest
 
-from mackup import utils
-from mackup.main import main
+from mackeep import utils
+from mackeep.main import main
 
 
 class TestCLI(unittest.TestCase):
@@ -18,9 +18,9 @@ class TestCLI(unittest.TestCase):
     def setUp(self):
         """Set up test environment before each test."""
         # Create temporary directories for testing
-        self.test_home = tempfile.mkdtemp(prefix="mackup_test_home_")
-        self.test_storage = tempfile.mkdtemp(prefix="mackup_test_storage_")
-        self.mackup_folder = os.path.join(self.test_storage, "Mackup")
+        self.test_home = tempfile.mkdtemp(prefix="mackeep_test_home_")
+        self.test_storage = tempfile.mkdtemp(prefix="mackeep_test_storage_")
+        self.mackeep_folder = os.path.join(self.test_storage, "Mackeep")
 
         # Store original HOME
         self.original_home = os.environ.get("HOME")
@@ -31,12 +31,12 @@ class TestCLI(unittest.TestCase):
         os.environ["XDG_CONFIG_HOME"] = os.path.join(self.test_home, ".config")
 
         # Create test config file
-        self.config_path = os.path.join(self.test_home, ".mackup.cfg")
+        self.config_path = os.path.join(self.test_home, ".mackeep.cfg")
         with open(self.config_path, "w") as f:
             f.write("[storage]\n")
             f.write("engine = file_system\n")
             f.write(f"path = {self.test_storage}\n")
-            f.write("directory = Mackup\n")
+            f.write("directory = Mackeep\n")
             f.write("\n")
             f.write("[applications_to_sync]\n")
             f.write("test-app\n")
@@ -51,7 +51,7 @@ class TestCLI(unittest.TestCase):
             f.write("test_config=value\n")
 
         # Create custom application config
-        self.custom_apps_dir = os.path.join(self.test_home, ".mackup")
+        self.custom_apps_dir = os.path.join(self.test_home, ".mackeep")
         os.makedirs(self.custom_apps_dir, exist_ok=True)
 
         self.custom_app_config = os.path.join(self.custom_apps_dir, "test-app.cfg")
@@ -92,29 +92,29 @@ class TestCLI(unittest.TestCase):
         utils.FORCE_NO = False
         utils.CAN_RUN_AS_ROOT = False
 
-    def test_backup_creates_mackup_folder(self):
-        """Test that mackup backup creates the Mackup folder if it doesn't exist."""
-        # Ensure Mackup folder doesn't exist
-        assert not os.path.exists(self.mackup_folder)
+    def test_backup_creates_mackeep_folder(self):
+        """Test that mackeep backup creates the Mackeep folder if it doesn't exist."""
+        # Ensure Mackeep folder doesn't exist
+        assert not os.path.exists(self.mackeep_folder)
 
-        # Mock sys.argv to simulate 'mackup backup'
-        with patch("sys.argv", ["mackup", "backup"]):
+        # Mock sys.argv to simulate 'mackeep backup'
+        with patch("sys.argv", ["mackeep", "backup"]):
             main()
 
-        # Check that Mackup folder was created
-        assert os.path.exists(self.mackup_folder)
+        # Check that Mackeep folder was created
+        assert os.path.exists(self.mackeep_folder)
 
     def test_backup_copies_file(self):
-        """Test that mackup backup successfully copies a file to the backup location."""
+        """Test that backup successfully copies a file to the backup."""
         # Ensure test file exists
         assert os.path.exists(self.test_file_path)
 
         # Run backup
-        with patch("sys.argv", ["mackup", "backup"]):
+        with patch("sys.argv", ["mackeep", "backup"]):
             main()
 
-        # Check that file was copied to Mackup folder
-        backed_up_file = os.path.join(self.mackup_folder, self.test_file_name)
+        # Check that file was copied to Mackeep folder
+        backed_up_file = os.path.join(self.mackeep_folder, self.test_file_name)
         assert os.path.exists(backed_up_file)
 
         # Verify content is the same
@@ -126,13 +126,13 @@ class TestCLI(unittest.TestCase):
         assert original_content == backed_up_content
 
     def test_restore_copies_file_back(self):
-        """Test that mackup restore successfully copies a file back from backup."""
+        """Test that mackeep restore successfully copies a file back from backup."""
         # First, create a backup
-        with patch("sys.argv", ["mackup", "backup"]):
+        with patch("sys.argv", ["mackeep", "backup"]):
             main()
 
         # Verify backup exists
-        backed_up_file = os.path.join(self.mackup_folder, self.test_file_name)
+        backed_up_file = os.path.join(self.mackeep_folder, self.test_file_name)
         assert os.path.exists(backed_up_file)
 
         # Remove original file
@@ -140,7 +140,7 @@ class TestCLI(unittest.TestCase):
         assert not os.path.exists(self.test_file_path)
 
         # Run restore
-        with patch("sys.argv", ["mackup", "restore"]):
+        with patch("sys.argv", ["mackeep", "restore"]):
             main()
 
         # Check that file was restored
@@ -162,11 +162,11 @@ class TestCLI(unittest.TestCase):
             assert f.read() == original_content
 
         # Step 1: Backup
-        with patch("sys.argv", ["mackup", "backup"]):
+        with patch("sys.argv", ["mackeep", "backup"]):
             main()
 
         # Verify backup was created
-        backed_up_file = os.path.join(self.mackup_folder, self.test_file_name)
+        backed_up_file = os.path.join(self.mackeep_folder, self.test_file_name)
         assert os.path.exists(backed_up_file)
 
         # Step 2: Modify original file
@@ -179,7 +179,7 @@ class TestCLI(unittest.TestCase):
             assert f.read() == modified_content
 
         # Step 3: Restore (should replace modified file with backup)
-        with patch("sys.argv", ["mackup", "restore"]):
+        with patch("sys.argv", ["mackeep", "restore"]):
             main()
 
         # Verify file was restored to original content
@@ -187,33 +187,33 @@ class TestCLI(unittest.TestCase):
             assert f.read() == original_content
 
     def test_backup_preserves_file_permissions(self):
-        """Test that mackup backup preserves file permissions."""
+        """Test that mackeep backup preserves file permissions."""
         # Set specific permissions on test file
         os.chmod(self.test_file_path, 0o600)
 
         # Run backup
-        with patch("sys.argv", ["mackup", "backup"]):
+        with patch("sys.argv", ["mackeep", "backup"]):
             main()
 
         # Check backup file permissions
-        backed_up_file = os.path.join(self.mackup_folder, self.test_file_name)
+        backed_up_file = os.path.join(self.mackeep_folder, self.test_file_name)
         assert os.path.exists(backed_up_file)
 
-        # Verify permissions are preserved (mackup sets to 0600 by default)
+        # Verify permissions are preserved (mackeep sets to 0600 by default)
         backed_up_stat = os.stat(backed_up_file)
         expected_mode = 0o600
         assert backed_up_stat.st_mode & 0o777 == expected_mode
 
     def test_restore_with_missing_backup(self):
-        """Test that mackup restore handles missing backup files gracefully."""
+        """Test that mackeep restore handles missing backup files gracefully."""
         # Ensure no backup exists
-        assert not os.path.exists(self.mackup_folder)
+        assert not os.path.exists(self.mackeep_folder)
 
-        # Create the mackup folder but don't add any files
-        os.makedirs(self.mackup_folder, exist_ok=True)
+        # Create the mackeep folder but don't add any files
+        os.makedirs(self.mackeep_folder, exist_ok=True)
 
         # Run restore (should not crash even though no backup exists)
-        with patch("sys.argv", ["mackup", "restore"]):
+        with patch("sys.argv", ["mackeep", "restore"]):
             try:
                 main()
                 # If no exception is raised, the test passes
@@ -222,7 +222,7 @@ class TestCLI(unittest.TestCase):
                 self.fail(f"Restore raised an exception with missing backup: {e}")
 
     def test_backup_with_folder(self):
-        """Test that mackup backup works with folders, not just files."""
+        """Test that mackeep backup works with folders, not just files."""
         # Create a test folder with a file inside
         test_folder_name = ".test_folder"
         test_folder_path = os.path.join(self.test_home, test_folder_name)
@@ -242,11 +242,11 @@ class TestCLI(unittest.TestCase):
             f.write(f"{test_folder_name}\n")
 
         # Run backup
-        with patch("sys.argv", ["mackup", "backup"]):
+        with patch("sys.argv", ["mackeep", "backup"]):
             main()
 
         # Check that folder was copied
-        backed_up_folder = os.path.join(self.mackup_folder, test_folder_name)
+        backed_up_folder = os.path.join(self.mackeep_folder, test_folder_name)
         assert os.path.exists(backed_up_folder)
         assert os.path.isdir(backed_up_folder)
 
@@ -259,7 +259,7 @@ class TestCLI(unittest.TestCase):
             assert f.read() == "folder_config=value\n"
 
     def test_restore_with_folder(self):
-        """Test that mackup restore works with folders."""
+        """Test that mackeep restore works with folders."""
         # Create a test folder with a file inside
         test_folder_name = ".test_folder"
         test_folder_path = os.path.join(self.test_home, test_folder_name)
@@ -279,7 +279,7 @@ class TestCLI(unittest.TestCase):
             f.write(f"{test_folder_name}\n")
 
         # Run backup first
-        with patch("sys.argv", ["mackup", "backup"]):
+        with patch("sys.argv", ["mackeep", "backup"]):
             main()
 
         # Delete the folder
@@ -287,7 +287,7 @@ class TestCLI(unittest.TestCase):
         assert not os.path.exists(test_folder_path)
 
         # Run restore
-        with patch("sys.argv", ["mackup", "restore"]):
+        with patch("sys.argv", ["mackeep", "restore"]):
             main()
 
         # Check that folder was restored
@@ -301,13 +301,13 @@ class TestCLI(unittest.TestCase):
         with open(test_file_in_folder) as f:
             assert f.read() == "folder_config=value\n"
 
-    def test_restore_fails_when_mackup_folder_missing(self):
-        """Test that mackup restore fails when Mackup folder doesn't exist."""
-        # Ensure Mackup folder doesn't exist
-        assert not os.path.exists(self.mackup_folder)
+    def test_restore_fails_when_mackeep_folder_missing(self):
+        """Test that mackeep restore fails when Mackeep folder doesn't exist."""
+        # Ensure Mackeep folder doesn't exist
+        assert not os.path.exists(self.mackeep_folder)
 
         # Run restore - should exit with error when backup folder is missing
-        with patch("sys.argv", ["mackup", "restore"]):
+        with patch("sys.argv", ["mackeep", "restore"]):
             with pytest.raises(SystemExit) as context:
                 main()
 
@@ -316,7 +316,7 @@ class TestCLI(unittest.TestCase):
 
     def test_force_and_force_no_are_mutually_exclusive(self):
         """Passing --force and --force-no together should fail fast."""
-        with patch("sys.argv", ["mackup", "--force", "--force-no", "backup"]):
+        with patch("sys.argv", ["mackeep", "--force", "--force-no", "backup"]):
             with pytest.raises(SystemExit) as context:
                 main()
 
@@ -326,25 +326,25 @@ class TestCLI(unittest.TestCase):
             )
 
     def test_backup_single_named_app(self):
-        """mackup backup <app> backs up that application's files."""
-        with patch("sys.argv", ["mackup", "backup", "test-app"]):
+        """mackeep backup <app> backs up that application's files."""
+        with patch("sys.argv", ["mackeep", "backup", "test-app"]):
             main()
 
-        backed_up_file = os.path.join(self.mackup_folder, self.test_file_name)
+        backed_up_file = os.path.join(self.mackeep_folder, self.test_file_name)
         assert os.path.exists(backed_up_file)
         with open(backed_up_file) as f:
             assert f.read() == "test_config=value\n"
 
     def test_backup_unsupported_app_exits_with_error(self):
-        """mackup backup <unknown> exits with an error and backs nothing up."""
-        with patch("sys.argv", ["mackup", "backup", "definitely-not-an-app"]):
+        """mackeep backup <unknown> exits with an error and backs nothing up."""
+        with patch("sys.argv", ["mackeep", "backup", "definitely-not-an-app"]):
             with pytest.raises(SystemExit) as context:
                 main()
             assert "Unsupported application" in str(context.value)
 
         # The unknown name must fail before the env check creates the folder.
-        assert not os.path.exists(self.mackup_folder)
-        backed_up_file = os.path.join(self.mackup_folder, self.test_file_name)
+        assert not os.path.exists(self.mackeep_folder)
+        backed_up_file = os.path.join(self.mackeep_folder, self.test_file_name)
         assert not os.path.exists(backed_up_file)
 
     def test_backup_named_app_overrides_config(self):
@@ -365,41 +365,41 @@ class TestCLI(unittest.TestCase):
 
         # Even though test-app-2 is not in [applications_to_sync], naming it
         # explicitly backs it up.
-        with patch("sys.argv", ["mackup", "backup", "test-app-2"]):
+        with patch("sys.argv", ["mackeep", "backup", "test-app-2"]):
             main()
 
-        assert os.path.exists(os.path.join(self.mackup_folder, second_file_name))
+        assert os.path.exists(os.path.join(self.mackeep_folder, second_file_name))
 
     def test_link_uninstall_single_app_skips_global_teardown(self):
         """Scoped link uninstall unlinks one app without the global teardown."""
         # Put the app under link management first.
-        with patch("sys.argv", ["mackup", "link", "install"]):
+        with patch("sys.argv", ["mackeep", "link", "install"]):
             main()
         assert os.path.islink(self.test_file_path)
 
         # Uninstall just this app.
         buffer = io.StringIO()
-        with patch("sys.argv", ["mackup", "link", "uninstall", "test-app"]):
+        with patch("sys.argv", ["mackeep", "link", "uninstall", "test-app"]):
             with contextlib.redirect_stdout(buffer):
                 main()
             # The global "all done" message must not appear for a scoped run.
-            assert "Thanks for using Mackup!" not in buffer.getvalue()
+            assert "Thanks for using Mackeep!" not in buffer.getvalue()
 
         # The file is back in place as a regular file, not a symlink.
         assert os.path.exists(self.test_file_path)
         assert not os.path.islink(self.test_file_path)
 
     def test_restore_single_named_app(self):
-        """mackup restore <app> restores that application's files."""
+        """mackeep restore <app> restores that application's files."""
         # Back up first, then remove the home file.
-        with patch("sys.argv", ["mackup", "backup", "test-app"]):
+        with patch("sys.argv", ["mackeep", "backup", "test-app"]):
             main()
-        assert os.path.exists(os.path.join(self.mackup_folder, self.test_file_name))
+        assert os.path.exists(os.path.join(self.mackeep_folder, self.test_file_name))
         os.remove(self.test_file_path)
         assert not os.path.exists(self.test_file_path)
 
         # Scoped restore.
-        with patch("sys.argv", ["mackup", "restore", "test-app"]):
+        with patch("sys.argv", ["mackeep", "restore", "test-app"]):
             main()
 
         assert os.path.exists(self.test_file_path)
@@ -407,32 +407,32 @@ class TestCLI(unittest.TestCase):
             assert f.read() == "test_config=value\n"
 
     def test_link_install_single_named_app(self):
-        """mackup link install <app> links that application's files."""
-        with patch("sys.argv", ["mackup", "link", "install", "test-app"]):
+        """mackeep link install <app> links that application's files."""
+        with patch("sys.argv", ["mackeep", "link", "install", "test-app"]):
             main()
 
-        # The home file is now a symlink into the Mackup folder.
-        mackup_file = os.path.join(self.mackup_folder, self.test_file_name)
+        # The home file is now a symlink into the Mackeep folder.
+        mackeep_file = os.path.join(self.mackeep_folder, self.test_file_name)
         assert os.path.islink(self.test_file_path)
-        assert os.path.exists(mackup_file)
-        assert os.path.samefile(self.test_file_path, mackup_file)
+        assert os.path.exists(mackeep_file)
+        assert os.path.samefile(self.test_file_path, mackeep_file)
 
     def test_link_single_named_app(self):
-        """mackup link <app> links that application's files from the storage."""
-        # Put the file in the Mackup folder, then simulate a fresh home.
-        with patch("sys.argv", ["mackup", "backup", "test-app"]):
+        """mackeep link <app> links that application's files from the storage."""
+        # Put the file in the Mackeep folder, then simulate a fresh home.
+        with patch("sys.argv", ["mackeep", "backup", "test-app"]):
             main()
         os.remove(self.test_file_path)
         assert not os.path.exists(self.test_file_path)
 
         # Scoped link.
-        with patch("sys.argv", ["mackup", "link", "test-app"]):
+        with patch("sys.argv", ["mackeep", "link", "test-app"]):
             main()
 
-        # The home file is now a symlink into the Mackup folder.
-        mackup_file = os.path.join(self.mackup_folder, self.test_file_name)
+        # The home file is now a symlink into the Mackeep folder.
+        mackeep_file = os.path.join(self.mackeep_folder, self.test_file_name)
         assert os.path.islink(self.test_file_path)
-        assert os.path.samefile(self.test_file_path, mackup_file)
+        assert os.path.samefile(self.test_file_path, mackeep_file)
 
 
 if __name__ == "__main__":

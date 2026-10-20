@@ -1,4 +1,4 @@
-"""Package used to manage the .mackup.cfg config file."""
+"""Package used to manage the .mackeep.cfg config file."""
 
 import configparser
 import os
@@ -12,8 +12,8 @@ from .constants import (
     ENGINE_FS,
     ENGINE_GDRIVE,
     ENGINE_ICLOUD,
-    MACKUP_BACKUP_PATH,
-    MACKUP_CONFIG_FILE,
+    MACKEEP_BACKUP_PATH,
+    MACKEEP_CONFIG_FILE,
 )
 from .utils import (
     error,
@@ -24,7 +24,7 @@ from .utils import (
 
 
 class Config:
-    """The Mackup Config class."""
+    """The Mackeep Config class."""
 
     def __init__(self, filename: str | None = None) -> None:
         """
@@ -32,7 +32,7 @@ class Config:
 
         Args:
             filename (str): Optional filename of the config file. If empty,
-                            defaults to MACKUP_CONFIG_FILE
+                            defaults to MACKEEP_CONFIG_FILE
         """
         assert isinstance(filename, str) or filename is None
 
@@ -49,10 +49,10 @@ class Config:
         # Get the storage engine
         self._engine = self._parse_engine()
 
-        # Get the path where the Mackup folder is
+        # Get the path where the Mackeep folder is
         self._path = self._parse_path()
 
-        # Get the directory replacing 'Mackup', if any
+        # Get the directory replacing 'Mackeep', if any
         self._directory = self._parse_directory()
 
         # Get the list of apps to ignore
@@ -80,9 +80,9 @@ class Config:
     @property
     def path(self) -> str:
         """
-        Path to the Mackup configuration files.
+        Path to the Mackeep configuration files.
 
-        The path to the directory where Mackup is gonna create and store his
+        The path to the directory where Mackeep is gonna create and store his
         directory.
 
         Returns:
@@ -93,7 +93,7 @@ class Config:
     @property
     def directory(self) -> str:
         """
-        The name of the Mackup directory, named Mackup by default.
+        The name of the Mackeep directory, named Mackeep by default.
 
         Returns:
             str
@@ -103,9 +103,9 @@ class Config:
     @property
     def fullpath(self) -> str:
         """
-        Full path to the Mackup configuration files.
+        Full path to the Mackeep configuration files.
 
-        The full path to the directory when Mackup is storing the configuration
+        The full path to the directory when Mackeep is storing the configuration
         files.
 
         Returns:
@@ -216,15 +216,15 @@ class Config:
     def _best_config_path(self, filename: str | None = None) -> str:
         """
         If no filename is provided, we try to find one in according to the following
-        order, note that we will always check the original default of `~/.mackup.cfg`
+        order, note that we will always check the original default of `~/.mackeep.cfg`
         first before checking the other options:
 
-        - ~/.mackup.cfg
-        - $MACKUP_CONFIG
-        - $XDG_CONFIG_HOME/mackup/mackup.cfg
-        - ~/.config/mackup/mackup.cfg
+        - ~/.mackeep.cfg
+        - $MACKEEP_CONFIG
+        - $XDG_CONFIG_HOME/mackeep/mackeep.cfg
+        - ~/.config/mackeep/mackeep.cfg
 
-        if none of these files exist, we create ~/.mackup.cfg
+        if none of these files exist, we create ~/.mackeep.cfg
 
         Args:
             filename (str or None, optional): Optional override for the config
@@ -239,17 +239,17 @@ class Config:
         # If we are not overriding the config filename
         config_path: Path
         if not filename:
-            default = Path.home() / MACKUP_CONFIG_FILE
+            default = Path.home() / MACKEEP_CONFIG_FILE
             search_paths = [
-                # 1. the default config file is ~/.mackup.cfg
+                # 1. the default config file is ~/.mackeep.cfg
                 default,
-                # 2. check for the MACKUP_CONFIG envvar
-                Path(os.environ.get("MACKUP_CONFIG", "")).expanduser(),
+                # 2. check for the MACKEEP_CONFIG envvar
+                Path(os.environ.get("MACKEEP_CONFIG", "")).expanduser(),
                 # 3. check for a config file in the XDG_CONFIG_HOME directory
                 (
                     Path(os.environ.get("XDG_CONFIG_HOME", "~/.config")).expanduser()
-                    / "mackup"
-                    / MACKUP_CONFIG_FILE.lstrip(".")
+                    / "mackeep"
+                    / MACKEEP_CONFIG_FILE.lstrip(".")
                 ),
             ]
             config_path = next((p for p in search_paths if p.is_file()), default)
@@ -288,12 +288,12 @@ class Config:
                     "\n"
                     "An old section (e.g. [Allowed Applications]"
                     " or [Ignored Applications] has been detected"
-                    f" in your {MACKUP_CONFIG_FILE} file.\n"
+                    f" in your {MACKEEP_CONFIG_FILE} file.\n"
                     "I'd rather do nothing than do something you"
                     " do not want me to do.\n"
                     "\n"
                     "Please read the up to date documentation on"
-                    " <https://github.com/lra/mackup> and migrate"
+                    " <https://github.com/Joynik/mackeep> and migrate"
                     " your configuration file.",
                 )
 
@@ -367,7 +367,7 @@ class Config:
                     f"{CUSTOM_APPS_DIR_XDG} cannot be used as a storage directory.",
                 )
         else:
-            directory = MACKUP_BACKUP_PATH
+            directory = MACKEEP_BACKUP_PATH
 
         return str(directory)
 

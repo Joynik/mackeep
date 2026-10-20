@@ -5,7 +5,7 @@
 pipx install uv
 
 # You can now edit files and see the impact of your changes
-uv run mackup --version
+uv run mackeep --version
 make test
 ```
 

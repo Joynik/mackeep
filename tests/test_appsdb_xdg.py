@@ -3,7 +3,7 @@
 import os
 import unittest
 
-from mackup.appsdb import ApplicationsDatabase
+from mackeep.appsdb import ApplicationsDatabase
 
 
 class TestApplicationsDatabaseXDG(unittest.TestCase):
@@ -32,7 +32,7 @@ class TestApplicationsDatabaseXDG(unittest.TestCase):
         else:
             os.environ["XDG_CONFIG_HOME"] = self._original_xdg_config_home
     def test_legacy_custom_apps_dir(self):
-        """Test that legacy ~/.mackup/ directory is found."""
+        """Test that legacy ~/.mackeep/ directory is found."""
         # Don't set XDG_CONFIG_HOME, only legacy should be found
         config_files = ApplicationsDatabase.get_config_files()
         filenames = {os.path.basename(f) for f in config_files}
@@ -63,7 +63,7 @@ class TestApplicationsDatabaseXDG(unittest.TestCase):
         assert len(priority_files) == 1
 
         # Should be from legacy directory
-        assert ".mackup" in priority_files[0]
+        assert ".mackeep" in priority_files[0]
         assert "xdg-config-home" not in priority_files[0]
 
     def test_both_directories_merged(self):
@@ -84,7 +84,7 @@ class TestApplicationsDatabaseXDG(unittest.TestCase):
         os.environ.pop("XDG_CONFIG_HOME", None)
 
         # This test just verifies the code doesn't crash
-        # In real scenario, ~/.config/mackup/applications/ would be checked
+        # In real scenario, ~/.config/mackeep/applications/ would be checked
         config_files = ApplicationsDatabase.get_config_files()
 
         # Should at least contain stock apps and legacy custom apps

@@ -1,9 +1,9 @@
 """
-Exclusion rules for Mackup.
+Exclusion rules for Mackeep.
 
 This module implements a gitignore-like matcher used by the ``[exclude]`` and
 ``[xdg_exclude]`` sections of the application config files, and by the global
-``[exclude]`` section of the Mackup config file.
+``[exclude]`` section of the Mackeep config file.
 
 The semantics are the following:
 
