@@ -2,6 +2,7 @@
 
 import json
 import os
+import shutil
 from unittest.mock import patch
 
 import pytest
@@ -11,6 +12,12 @@ from mackeep.main import main
 
 # The number of directories where the custom application configs are looked up
 CUSTOM_APPS_DIRS_COUNT = 2
+
+# The counters of the events of a backup
+ONE_FILE = 1
+NO_FILE = 0
+TWO_BYTES = 2
+FIVE_BYTES = 5
 
 
 @pytest.fixture
@@ -44,11 +51,11 @@ def home(tmp_path, monkeypatch):
     utils.CAN_RUN_AS_ROOT = False
 
 
-def write_app_config(home, body):
+def write_app_config(home, body, name="test-app"):
     """Write a custom application config file."""
     apps_dir = home / ".mackeep"
     apps_dir.mkdir(exist_ok=True)
-    (apps_dir / "test-app.cfg").write_text(body)
+    (apps_dir / f"{name}.cfg").write_text(body)
 
 
 def run(*args):
@@ -425,3 +432,113 @@ def test_the_json_show_of_a_builtin_app(home, capsys):
     assert data["source"] == "builtin"
     assert data["cfg_path"].endswith("vim.cfg")
     assert os.path.isabs(data["cfg_path"])
+
+
+def test_the_json_backup_counters_are_per_application(home, capsys):
+    """The counters of the done event are the ones of the application."""
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".first\n"
+        "\n"
+        "[exclude]\n"
+        ".first/skipped.log\n",
+    )
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App 2\n"
+        "\n"
+        "[configuration_files]\n"
+        ".second\n",
+        name="test-app-2",
+    )
+
+    # Both applications are synced
+    (home / ".mackeep.cfg").write_text(
+        (home / ".mackeep.cfg").read_text() + "test-app-2\n",
+    )
+
+    first = home / ".first"
+    first.mkdir()
+    (first / "keep.txt").write_text("12345")
+    (first / "skipped.log").write_text("nope")
+
+    second = home / ".second"
+    second.mkdir()
+    (second / "other.txt").write_text("ab")
+
+    run("--json", "--force", "backup")
+    captured = capsys.readouterr()
+
+    events = [json.loads(line) for line in captured.out.splitlines() if line]
+    done = {event["app"]: event for event in events if event["event"] == "done"}
+
+    assert done["test-app"]["files"] == ONE_FILE
+    assert done["test-app"]["bytes"] == FIVE_BYTES
+    assert done["test-app"]["skipped"] == ONE_FILE
+
+    assert done["test-app-2"]["files"] == ONE_FILE
+    assert done["test-app-2"]["bytes"] == TWO_BYTES
+    assert done["test-app-2"]["skipped"] == NO_FILE
+
+
+def test_the_json_backup_dry_run_does_not_need_the_backup_folder(home, capsys):
+    """A dry-run works before the backup folder exists, and creates nothing."""
+    shutil.rmtree(home / "storage" / "Mackeep")
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".testrc\n",
+    )
+    (home / ".testrc").write_text("config")
+
+    data, code = run_json(capsys, "backup", "--dry-run")
+
+    assert code == 0
+    assert data["schema_version"] == 1
+    assert data["actions"][0]["action"] == "copy"
+    assert not (home / "storage" / "Mackeep").exists()
+
+
+def test_the_json_restore_dry_run_does_not_need_the_backup_folder(home, capsys):
+    """A dry-run of the restore works before the backup folder exists."""
+    shutil.rmtree(home / "storage" / "Mackeep")
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".testrc\n",
+    )
+
+    data, code = run_json(capsys, "restore", "--dry-run")
+
+    assert code == 0
+    assert data["schema_version"] == 1
+    assert data["actions"][0]["action"] == "skip_missing"
+
+
+def test_the_backup_dry_run_does_not_create_the_backup_folder(home, capsys):
+    """A dry-run does not create the backup folder."""
+    shutil.rmtree(home / "storage" / "Mackeep")
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".testrc\n",
+    )
+    (home / ".testrc").write_text("config")
+
+    run("backup", "--dry-run")
+
+    assert not (home / "storage" / "Mackeep").exists()

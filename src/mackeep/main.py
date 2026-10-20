@@ -199,7 +199,11 @@ def _cmd_backup(args: dict[str, Any], ctx: _Context) -> None:
     # unknown application name fails cleanly without creating the Mackeep
     # folder or prompting first.
     app_names = _resolve_apps(args["<application>"], ctx)
-    ctx.mckp.check_for_usable_backup_env()
+    if ctx.dry_run:
+        # A dry-run does not create anything.
+        ctx.mckp.check_for_usable_environment()
+    else:
+        ctx.mckp.check_for_usable_backup_env()
 
     # Create a backup of the files of each application
     _run_action(ctx, app_names, "copy_files_to_mackeep_folder")
@@ -207,7 +211,12 @@ def _cmd_backup(args: dict[str, Any], ctx: _Context) -> None:
 
 def _cmd_restore(args: dict[str, Any], ctx: _Context) -> None:
     app_names = _resolve_apps(args["<application>"], ctx)
-    ctx.mckp.check_for_usable_restore_env()
+    if ctx.dry_run:
+        # A dry-run does not need the backup folder to exist, the missing
+        # files are reported as such.
+        ctx.mckp.check_for_usable_environment()
+    else:
+        ctx.mckp.check_for_usable_restore_env()
 
     # Recover a backup of the files of each application
     _run_action(ctx, app_names, "copy_files_from_mackeep_folder")
@@ -340,19 +349,23 @@ class _JsonReporter:
                 self.actions.append(payload)
             return
 
-        if action == "copy":
-            self.files += 1
-            self.bytes += int(payload.get("size_bytes") or 0)
-        elif action.startswith("skip"):
-            self.skipped += 1
-
         event: str = "file"
         if action == "start":
+            # The counters of the "done" event are the ones of the
+            # application, not the ones of the whole run.
+            self.files = 0
+            self.bytes = 0
+            self.skipped = 0
             event = "start"
         elif action == "done":
             event = "done"
         elif action == "error":
             event = "error"
+        elif action == "copy":
+            self.files += 1
+            self.bytes += int(payload.get("size_bytes") or 0)
+        elif action.startswith("skip"):
+            self.skipped += 1
 
         details: dict[str, Any] = dict(payload)
         if action == "done":
@@ -524,7 +537,11 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
         label: str = "backup" if args["backup"] else "restore"
 
         app_names = _resolve_apps(args["<application>"], ctx)
-        if args["backup"]:
+        if ctx.dry_run:
+            # A dry-run does not create anything and does not need the
+            # backup folder to exist.
+            ctx.mckp.check_for_usable_environment()
+        elif args["backup"]:
             ctx.mckp.check_for_usable_backup_env()
         else:
             ctx.mckp.check_for_usable_restore_env()
