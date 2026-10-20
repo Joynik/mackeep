@@ -88,6 +88,9 @@ final class ApplicationsModel {
     /// The command line tool of Mackeep.
     private let command: MackeepCommand?
 
+    /// The editors of the applications, by identifier.
+    private var editors: [String: ApplicationEditorModel] = [:]
+
     /// Create the model.
     ///
     /// - Parameter command: The command line tool of Mackeep.
@@ -191,6 +194,34 @@ final class ApplicationsModel {
                 message: "\(error)"
             )
         }
+    }
+
+    /// The model of the editor of an application.
+    ///
+    /// - Parameter appName: The identifier of the application.
+    /// - Returns: The model, nil when the application is not known.
+    func editor(for appName: String) -> ApplicationEditorModel? {
+        if let editor: ApplicationEditorModel = editors[appName] {
+            return editor
+        }
+        guard
+            let application: MackeepApplication = applications
+                .first(where: { $0.name == appName })
+        else {
+            return nil
+        }
+        let url: URL = URL(fileURLWithPath: application.cfgPath)
+        guard let document: INIDocument = try? INIFile.load(from: url) else {
+            return nil
+        }
+        let editor: ApplicationEditorModel = ApplicationEditorModel(
+            appName: appName,
+            url: url,
+            document: document,
+            mainConfig: config
+        )
+        editors[appName] = editor
+        return editor
     }
 
     /// Set the applications of the list.

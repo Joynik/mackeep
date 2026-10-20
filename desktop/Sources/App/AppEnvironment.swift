@@ -26,6 +26,7 @@ final class AppEnvironment {
     /// The model of the list of the applications.
     let applications: ApplicationsModel
 
+
     /// The command line tool of Mackeep.
     private let command: MackeepCommand?
 
@@ -50,6 +51,20 @@ final class AppEnvironment {
 
     /// Whether the tool of Mackeep is recent enough for the application.
     var isToolSupported: Bool { capabilities?.isSupported ?? false }
+
+    /// The model of the editor of an application.
+    ///
+    /// - Parameter appName: The identifier of the application.
+    /// - Returns: The model, nil when the application is not known.
+    func editor(for appName: String) -> ApplicationEditorModel? {
+        applications.editor(for: appName)
+    }
+
+    /// The directory where the config files of the user are.
+    var customAppsDirectory: URL {
+        URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent(".mackeep")
+    }
 }
 
 /// The languages of the interface.

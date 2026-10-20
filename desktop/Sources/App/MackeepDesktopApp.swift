@@ -16,5 +16,16 @@ struct MackeepDesktopApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {}
         }
+
+        // The window of the editor of an application
+        WindowGroup(for: String.self) { $appName in
+            if let appName: String,
+               let model: ApplicationEditorModel = environment.editor(for: appName)
+            {
+                ApplicationEditorView(model: model)
+                    .environment(environment)
+            }
+        }
+        .defaultSize(width: 780, height: 640)
     }
 }
