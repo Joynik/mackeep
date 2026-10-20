@@ -4,7 +4,7 @@
 
 ```bash
 # Install
-brew install mackeep
+brew install Joynik/tap/mackeep
 
 # Now just run it
 mackeep -h
@@ -28,25 +28,16 @@ brew uninstall mackeep
 
 ## From the sources
 
-If you do not use Homebrew, you can install it from the repository:
+If you want to work on Mackeep itself, clone the repository and use
+[uv](https://docs.astral.sh/uv/):
 
 ```bash
-# Install
-pip install git+https://github.com/Joynik/mackeep.git
+# Clone the repository
+git clone https://github.com/Joynik/mackeep.git
+cd mackeep
 
-# Now just run it
-mackeep -h
+# Install the dependencies and run it
+uv run mackeep -h
 ```
 
-### Upgrade
-
-```bash
-pip install --upgrade git+https://github.com/Joynik/mackeep.git
-mackeep -h
-```
-
-### Uninstall
-
-```bash
-pip uninstall mackeep
-```
+See the [development guide](doc/develop.md) for the details.

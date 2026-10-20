@@ -33,25 +33,7 @@ On macOS or Linux, install it with [Homebrew](https://brew.sh/):
 
 ```bash
 # Install Mackeep
-brew install mackeep
-
-# Launch it and back up your files
-mackeep backup
-```
-
-If you do not use Homebrew, you can install it from the sources:
-
-```bash
-# Install Mackeep
-pip install git+https://github.com/Joynik/mackeep.git
-
-# Launch it and back up your files
-mackeep backup
-```
-
-```bash
-# Install Mackeep with PIP
-pip install --upgrade mackeep
+brew install Joynik/tap/mackeep
 
 # Launch it and back up your files
 mackeep backup
@@ -63,7 +45,7 @@ Next, on any new workstation, do:
 
 ```bash
 # Install Mackeep
-brew install mackeep
+brew install Joynik/tap/mackeep
 
 # Launch it and restore your files
 mackeep restore
