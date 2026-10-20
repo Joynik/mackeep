@@ -249,6 +249,10 @@ mackeep --json backup --dry-run
 
 A graphical front-end is on the way.
 
+The versioning follows the same idea: the small changes are released as
+`0.0.X` and the big ones as `0.1.0`. See the
+[release guide](doc/release.md).
+
 ## What platforms are supported
 
 - macOS

@@ -32,8 +32,9 @@ clean:
 
 # Cut a release in one command. Bumps the version, syncs the lockfile, then
 # commits, tags and pushes. The release workflow takes over from the tag push.
-# Bump level defaults to patch: `make release BUMP=minor` / `BUMP=major`,
-# or pin a version with `make release VERSION=1.2.3`.
+# Bump level defaults to patch: 0.0.X for the small changes,
+# `make release BUMP=minor` for the big ones (0.1.0), `BUMP=major` for the
+# breaking ones (1.0.0), or pin a version with `make release VERSION=0.1.0`.
 BUMP ?= patch
 
 release: check
