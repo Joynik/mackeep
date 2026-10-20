@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - "[0-9]*.[0-9]*.[0-9]*"
+  # The release can also be started by hand, e.g. when the tag was pushed
+  # with the other tags and GitHub did not create the event.
+  workflow_dispatch:
 
 permissions:
   contents: read

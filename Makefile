@@ -62,5 +62,5 @@ release: check
 	git commit -am "Mackeep $$V" && \
 	git tag "$$V" && \
 	git push && \
-	git push --tags && \
+	git push origin "$$V" && \
 	echo "Released $$V"
