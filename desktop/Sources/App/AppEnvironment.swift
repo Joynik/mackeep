@@ -26,6 +26,9 @@ final class AppEnvironment {
     /// The model of the list of the applications.
     let applications: ApplicationsModel
 
+    /// The model of the backup section.
+    let backup: BackupModel
+
 
     /// The command line tool of Mackeep.
     private let command: MackeepCommand?
@@ -34,6 +37,7 @@ final class AppEnvironment {
         let path: String? = MackeepDiscovery.find()
         self.command = path.map { MackeepCommand(path: $0) }
         self.applications = ApplicationsModel(command: command)
+        self.backup = BackupModel(command: command)
 
         guard let path else { return }
         mackeepPath = path

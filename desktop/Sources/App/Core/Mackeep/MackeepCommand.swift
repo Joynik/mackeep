@@ -65,6 +65,9 @@ struct MackeepCommand: Sendable {
     /// inherit the environment of the shell.
     var environment: [String: String]
 
+    /// The token that can stop the command.
+    var cancellation: CommandCancellation?
+
     /// Run the tool and return what it writes on the standard output.
     ///
     /// - Parameter arguments: The arguments of the command.
@@ -121,6 +124,8 @@ struct MackeepCommand: Sendable {
         process.standardOutput = output
         process.standardError = errors
 
+        cancellation?.attach(process)
+
         do {
             try process.run()
         } catch {
@@ -146,6 +151,7 @@ struct MackeepCommand: Sendable {
 
         let errorData: Data = errors.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
+        cancellation?.forget()
         guard process.terminationStatus == 0 else {
             throw MackeepCommandError.failed(
                 path: path,

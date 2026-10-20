@@ -23,10 +23,7 @@ struct RootView: View {
             case .applications:
                 applications
             case .backup:
-                PlaceholderView(
-                    title: "section.backup.title",
-                    message: "section.backup.placeholder"
-                )
+                BackupView(model: environment.backup)
             case .settings:
                 PlaceholderView(
                     title: "section.settings.title",
