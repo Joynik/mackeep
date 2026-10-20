@@ -305,9 +305,11 @@ def test_the_version_is_shown_with_the_short_options(home, capsys):
     setup(home)
 
     for option in ("-v", "-V", "--version"):
-        run(option)
+        with pytest.raises(SystemExit) as exit_info:
+            run(option)
         captured = capsys.readouterr()
 
+        assert exit_info.value.code == 0, option
         assert captured.out.startswith("Mackeep "), option
         assert captured.err == "", option
 
