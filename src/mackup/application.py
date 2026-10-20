@@ -495,7 +495,7 @@ class ApplicationProfile:
                         "conflict",
                         src=home_filepath,
                         dst=mackup_filepath,
-                        size_bytes=self._plan(home_filepath, mackup_filepath, filename),
+                        size_bytes=self._plan_tree(home_filepath, filename)[0],
                     )
                     continue
 
@@ -603,7 +603,7 @@ class ApplicationProfile:
                         "conflict",
                         src=mackup_filepath,
                         dst=home_filepath,
-                        size_bytes=self._plan(mackup_filepath, home_filepath, filename),
+                        size_bytes=self._plan_tree(mackup_filepath, filename)[0],
                     )
                     continue
 
