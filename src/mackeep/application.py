@@ -10,7 +10,7 @@ from collections.abc import Callable, Iterator
 from typing import Any
 
 from . import utils
-from .excludes import Matcher
+from .excludes import Matcher, Pattern
 from .mackeep import Mackeep
 
 # The type of the callback used to report the operations of an application.
@@ -53,6 +53,9 @@ class ApplicationProfile:
         self.reporter: Reporter | None = None
         self.app_name: str = ""
 
+        # The detail level of the dry-run: "entries" or "files"
+        self.detail: str = "entries"
+
         # The XDG config home, relative to the home directory
         self._xdg_home: str | None = self._get_xdg_home()
 
@@ -62,6 +65,7 @@ class ApplicationProfile:
         xdg_exclude: Matcher | None = None,
         reporter: Reporter | None = None,
         app_name: str = "",
+        detail: str = "",
     ) -> None:
         """
         Set the exclusion rules and the reporter of this profile.
@@ -73,6 +77,8 @@ class ApplicationProfile:
                                    config home.
             reporter (Reporter): A callback to report the operations.
             app_name (str): The name of the application.
+            detail (str): The detail level of the dry-run, "entries" or
+                          "files".
         """
         if exclude is not None:
             self.exclude = exclude
@@ -80,6 +86,8 @@ class ApplicationProfile:
             self.xdg_exclude = xdg_exclude
         self.reporter = reporter
         self.app_name = app_name
+        if detail:
+            self.detail = detail
 
     @staticmethod
     def _get_xdg_home() -> str | None:
@@ -153,6 +161,50 @@ class ApplicationProfile:
             xdg_relative and self.xdg_exclude.is_excluded(xdg_relative, is_dir),
         )
 
+    def exclusion_reason(
+        self, home_relative: str, is_dir: bool = False,
+    ) -> dict[str, str] | None:
+        """
+        Get the reason why a path is excluded.
+
+        Args:
+            home_relative (str): The path, relative to the home directory.
+            is_dir (bool): Whether the path is a directory.
+
+        Returns:
+            dict or None: The pattern that excluded the path, the section
+            and the config file it comes from. None when the path is not
+            excluded.
+        """
+        pattern: Pattern | None = self.exclude.match(home_relative, is_dir)
+        if pattern is not None and not pattern.negated:
+            return self._reason(pattern)
+
+        xdg_relative: str | None = self._xdg_relative(home_relative)
+        if xdg_relative:
+            pattern = self.xdg_exclude.match(xdg_relative, is_dir)
+            if pattern is not None and not pattern.negated:
+                return self._reason(pattern)
+
+        return None
+
+    @staticmethod
+    def _reason(pattern: Pattern) -> dict[str, str]:
+        """
+        Build the reason of an exclusion.
+
+        Args:
+            pattern (Pattern): The pattern that excluded the path.
+
+        Returns:
+            dict
+        """
+        return {
+            "pattern": pattern.raw,
+            "section": pattern.section,
+            "file": pattern.file,
+        }
+
     def _report(self, action: str, **details: Any) -> None:
         """
         Report an operation to the reporter, if any.
@@ -198,7 +250,9 @@ class ApplicationProfile:
             if is_dir:
                 yield from self._walk(path, relative_path)
 
-    def _report_excluded(self, path: str, relative_path: str, dst: str) -> None:
+    def _report_excluded(
+        self, path: str, relative_path: str, dst: str, reason: dict[str, str],
+    ) -> None:
         """
         Report an excluded path.
 
@@ -206,8 +260,9 @@ class ApplicationProfile:
             path (str): The path of the excluded file or folder.
             relative_path (str): The path, relative to the home directory.
             dst (str): The path the file would have been copied to.
+            reason (dict): The pattern that excluded the path.
         """
-        self._report("skip_excluded", src=path, dst=dst)
+        self._report("skip_excluded", src=path, dst=dst, reason=reason)
         if self.verbose or self.dry_run:
             print(f"Skipping {relative_path} (excluded)")
 
@@ -233,9 +288,12 @@ class ApplicationProfile:
             is_dir: bool = os.path.isdir(path)
             destination: str = os.path.join(dst, name)
 
-            if self.is_excluded(relative_path, is_dir):
+            reason: dict[str, str] | None = self.exclusion_reason(
+                relative_path, is_dir,
+            )
+            if reason is not None:
                 # An excluded directory is not walked.
-                self._report_excluded(path, relative_path, destination)
+                self._report_excluded(path, relative_path, destination, reason)
                 continue
 
             if is_dir:
@@ -254,7 +312,7 @@ class ApplicationProfile:
 
     def _plan_tree(
         self, src: str, relative: str,
-    ) -> tuple[int, list[tuple[str, str]]]:
+    ) -> tuple[int, list[tuple[str, str, dict[str, str]]]]:
         """
         Compute what would be copied, without copying anything.
 
@@ -264,21 +322,24 @@ class ApplicationProfile:
 
         Returns:
             tuple: The number of bytes that would be copied and the list of
-            the excluded paths, as (path, relative path) tuples.
+            the excluded paths, as (path, relative path, reason) tuples.
         """
         if not os.path.isdir(src):
             return (os.path.getsize(src) if os.path.isfile(src) else 0), []
 
         size: int = 0
-        excluded: list[tuple[str, str]] = []
+        excluded: list[tuple[str, str, dict[str, str]]] = []
 
         for name in sorted(os.listdir(src)):
             path: str = os.path.join(src, name)
             relative_path: str = f"{relative}/{name}" if relative else name
             is_dir: bool = os.path.isdir(path)
 
-            if self.is_excluded(relative_path, is_dir):
-                excluded.append((path, relative_path))
+            reason: dict[str, str] | None = self.exclusion_reason(
+                relative_path, is_dir,
+            )
+            if reason is not None:
+                excluded.append((path, relative_path, reason))
                 continue
 
             if is_dir:
@@ -303,10 +364,87 @@ class ApplicationProfile:
             int: The number of bytes that would be copied.
         """
         size, excluded = self._plan_tree(src, relative)
-        for path, relative_path in excluded:
+        for path, relative_path, reason in excluded:
             destination: str = os.path.join(dst, os.path.relpath(path, src))
-            self._report_excluded(path, relative_path, destination)
+            self._report_excluded(path, relative_path, destination, reason)
         return size
+
+    def _plan_files(self, src: str, dst: str, relative: str) -> None:
+        """
+        Report what would be copied, one entry per file.
+
+        The excluded directories are not walked, they are reported as a
+        single entry.
+
+        Args:
+            src (str): The path of the file or directory.
+            dst (str): The path of the destination.
+            relative (str): The path, relative to the home directory.
+        """
+        if not os.path.isdir(src):
+            self._report_file(src, dst)
+            return
+
+        for name in sorted(os.listdir(src)):
+            path: str = os.path.join(src, name)
+            relative_path: str = f"{relative}/{name}" if relative else name
+            destination: str = os.path.join(dst, name)
+            is_dir: bool = os.path.isdir(path)
+
+            reason: dict[str, str] | None = self.exclusion_reason(
+                relative_path, is_dir,
+            )
+            if reason is not None:
+                # An excluded directory is not walked.
+                self._report_excluded(path, relative_path, destination, reason)
+                continue
+
+            if is_dir:
+                self._plan_files(path, destination, relative_path)
+                continue
+
+            self._report_file(path, destination)
+
+    def _report_file(self, src: str, dst: str) -> None:
+        """
+        Report a file that would be copied.
+
+        A file that already exists in the destination is reported as a
+        conflict, and not as a copy.
+
+        Args:
+            src (str): The path of the file.
+            dst (str): The path of the destination.
+        """
+        size: int = os.path.getsize(src)
+        if os.path.lexists(dst):
+            self._report(
+                "conflict",
+                src=src,
+                dst=dst,
+                size_bytes=size,
+                would_overwrite=True,
+            )
+            return
+        self._report("copy", src=src, dst=dst, size_bytes=size)
+
+    def _plan_copy(self, src: str, dst: str, relative: str) -> None:
+        """
+        Report what would be copied, without copying anything.
+
+        Args:
+            src (str): The path of the file or directory.
+            dst (str): The path of the destination.
+            relative (str): The path, relative to the home directory.
+        """
+        if self.detail == "files":
+            self._plan_files(src, dst, relative)
+            return
+
+        size: int = self._plan(src, dst, relative)
+        self._report("copy", src=src, dst=dst, size_bytes=size)
+        if os.path.lexists(dst):
+            self._report("conflict", src=src, dst=dst, size_bytes=size)
 
     def _contains_excluded(self, src: str, relative: str) -> bool:
         """
@@ -451,20 +589,7 @@ class ApplicationProfile:
                 print(f"Backing up {filename} ...")
 
             if self.dry_run:
-                size: int = self._plan(home_filepath, mackeep_filepath, filename)
-                self._report(
-                    "copy",
-                    src=home_filepath,
-                    dst=mackeep_filepath,
-                    size_bytes=size,
-                )
-                if os.path.lexists(mackeep_filepath):
-                    self._report(
-                        "conflict",
-                        src=home_filepath,
-                        dst=mackeep_filepath,
-                        size_bytes=size,
-                    )
+                self._plan_copy(home_filepath, mackeep_filepath, filename)
                 # The files of the backup that are now excluded are not
                 # deleted, they are only reported.
                 self._report_stale(filename, home_filepath, mackeep_filepath)
@@ -566,20 +691,7 @@ class ApplicationProfile:
                 print(f"Recovering {filename} ...")
 
             if self.dry_run:
-                size: int = self._plan(mackeep_filepath, home_filepath, filename)
-                self._report(
-                    "copy",
-                    src=mackeep_filepath,
-                    dst=home_filepath,
-                    size_bytes=size,
-                )
-                if os.path.lexists(home_filepath):
-                    self._report(
-                        "conflict",
-                        src=mackeep_filepath,
-                        dst=home_filepath,
-                        size_bytes=size,
-                    )
+                self._plan_copy(mackeep_filepath, home_filepath, filename)
                 continue
 
             # If exists home/file

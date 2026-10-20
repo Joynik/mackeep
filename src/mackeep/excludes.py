@@ -20,7 +20,7 @@ The semantics are the following:
 """
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -28,6 +28,15 @@ if TYPE_CHECKING:
 
 # Characters that make a path component a wildcard.
 WILDCARD_CHARS: str = "*?["
+
+
+@dataclass(frozen=True)
+class Rule:
+    """An exclusion rule, with the place it comes from."""
+
+    pattern: str
+    section: str = ""
+    file: str = ""
 
 
 @dataclass(frozen=True)
@@ -41,6 +50,8 @@ class Pattern:
     anchored: bool
     scope: str
     regex: re.Pattern[str]
+    section: str = ""
+    file: str = ""
 
     def matches(self, path: str, is_dir: bool) -> bool:
         """
@@ -201,18 +212,22 @@ class Matcher:
     ``!`` re-includes a path excluded by a previous pattern.
     """
 
-    def __init__(self, patterns: Iterable[str] = ()) -> None:
+    def __init__(self, patterns: Iterable[str | Rule] = ()) -> None:
         """
         Create a Matcher instance.
 
         Args:
-            patterns (Iterable[str]): The raw exclusion patterns.
+            patterns (Iterable[str | Rule]): The raw exclusion patterns,
+                or the rules, with the section and the file they come from.
         """
         parsed: list[Pattern] = []
-        for raw in patterns:
-            pattern: Pattern | None = parse_pattern(raw)
+        for item in patterns:
+            rule: Rule = item if isinstance(item, Rule) else Rule(item)
+            pattern: Pattern | None = parse_pattern(rule.pattern)
             if pattern is not None:
-                parsed.append(pattern)
+                parsed.append(
+                    replace(pattern, section=rule.section, file=rule.file),
+                )
 
         self._patterns: tuple[Pattern, ...] = tuple(parsed)
 
@@ -234,7 +249,7 @@ class Matcher:
         """The number of patterns of this matcher."""
         return len(self._patterns)
 
-    def extended(self, patterns: Iterable[str]) -> Matcher:
+    def extended(self, patterns: Iterable[str | Rule]) -> Matcher:
         """
         Return a new matcher with additional patterns.
 
@@ -242,12 +257,18 @@ class Matcher:
         last word when a path matches several patterns.
 
         Args:
-            patterns (Iterable[str]): The raw exclusion patterns to add.
+            patterns (Iterable[str | Rule]): The raw exclusion patterns to
+                add.
 
         Returns:
             Matcher
         """
-        return Matcher([*self.patterns, *patterns])
+        rules: list[str | Rule] = [
+            Rule(pattern.raw, pattern.section, pattern.file)
+            for pattern in self._patterns
+        ]
+        rules.extend(patterns)
+        return Matcher(rules)
 
     def is_excluded(self, rel_path: str, is_dir: bool = False) -> bool:
         """
@@ -260,9 +281,24 @@ class Matcher:
         Returns:
             bool: True when the path is excluded.
         """
+        pattern: Pattern | None = self.match(rel_path, is_dir)
+        return pattern is not None and not pattern.negated
+
+    def match(self, rel_path: str, is_dir: bool = False) -> Pattern | None:
+        """
+        Get the pattern that decides the exclusion of a path.
+
+        Args:
+            rel_path (str): The path, relative to the root of the tree.
+            is_dir (bool): Whether the path is a directory.
+
+        Returns:
+            Pattern or None: The last matching pattern, None when no pattern
+            matches the path.
+        """
         path: str = self._normalize(rel_path)
         if not path:
-            return False
+            return None
 
         components: list[str] = path.split("/")
         last: int = len(components) - 1
@@ -270,16 +306,16 @@ class Matcher:
         for index in range(len(components)):
             prefix: str = "/".join(components[: index + 1])
             prefix_is_dir: bool = index < last or is_dir
-            excluded: bool = self._evaluate(prefix, prefix_is_dir)
+            deciding: Pattern | None = self._deciding(prefix, prefix_is_dir)
             if index < last:
-                if excluded:
+                if deciding is not None and not deciding.negated:
                     # An excluded directory is not walked, so everything
                     # below it is excluded too.
-                    return True
+                    return deciding
             else:
-                return excluded
+                return deciding
 
-        return False
+        return None
 
     def applies_to(self, rel_path: str) -> bool:
         """
@@ -312,9 +348,9 @@ class Matcher:
                 return True
         return False
 
-    def _evaluate(self, path: str, is_dir: bool) -> bool:
+    def _deciding(self, path: str, is_dir: bool) -> Pattern | None:
         """
-        Evaluate all the patterns against a path.
+        Get the last pattern matching a path.
 
         The last matching pattern wins.
 
@@ -323,13 +359,13 @@ class Matcher:
             is_dir (bool): Whether the path is a directory.
 
         Returns:
-            bool: True when the path is excluded.
+            Pattern or None: The last matching pattern.
         """
-        excluded: bool = False
+        deciding: Pattern | None = None
         for pattern in self._patterns:
             if pattern.matches(path, is_dir):
-                excluded = not pattern.negated
-        return excluded
+                deciding = pattern
+        return deciding
 
     @staticmethod
     def _normalize(rel_path: str) -> str:

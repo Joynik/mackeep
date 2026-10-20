@@ -25,6 +25,8 @@ Options:
   -v --verbose              Show additional details.
   -c --config-file=<path>   Specify custom config file path.
   --json                    Output machine-readable JSON.
+  --detail=<level>          Detail level of the dry-run: entries or files.
+  --max-actions=<n>         Maximum number of actions of the JSON dry-run.
   --version                 Show version.
 
 Modes of action:
@@ -50,6 +52,9 @@ The --json option writes a machine-readable answer, meant to be used by
 graphical front-ends. In this mode, only JSON is written to stdout, the
 human-readable output is written to stderr and no question is asked.
 
+The --detail option tells how detailed the dry-run is: "entries" (the
+default) describes the top level entries, "files" describes every file.
+
 See https://github.com/Joynik/mackeep/tree/master/doc for more information.
 
 """
@@ -72,11 +77,14 @@ from .constants import (
     MACKEEP_APP_NAME,
     VERSION,
 )
-from .excludes import Matcher
+from .excludes import Matcher, Rule
 from .mackeep import Mackeep
 
 # The ANSI escape codes used to color the error messages
 ANSI_CODES = re.compile(r"\033\[[0-9;]*m")
+
+# The default maximum number of actions of the JSON dry-run
+DEFAULT_MAX_ACTIONS: int = 5000
 
 
 class ColorFormatCodes:
@@ -103,6 +111,8 @@ class _Context:
     dry_run: bool
     verbose: bool
     reporter: Reporter | None = None
+    detail: str = "entries"
+    max_actions: int = 5000
 
 
 def _print_app_header(app_name: str, verbose: bool) -> None:
@@ -116,15 +126,36 @@ def _make_profile(ctx: _Context, app_name: str) -> ApplicationProfile:
     app: ApplicationProfile = ApplicationProfile(
         ctx.mckp, ctx.app_db.get_files(app_name), ctx.dry_run, ctx.verbose,
     )
+    config_file: str = ctx.mckp.config.config_path
+    app_file: str = ctx.app_db.get_config_file(app_name)
     app.configure(
-        exclude=Matcher(ctx.mckp.config.global_exclude).extended(
-            ctx.app_db.get_exclude(app_name),
+        exclude=Matcher(
+            [
+                *[
+                    Rule(pattern, "exclude", config_file)
+                    for pattern in ctx.mckp.config.global_exclude
+                ],
+                *[
+                    Rule(pattern, "exclude", app_file)
+                    for pattern in ctx.app_db.get_exclude(app_name)
+                ],
+            ],
         ),
-        xdg_exclude=Matcher(ctx.mckp.config.global_xdg_exclude).extended(
-            ctx.app_db.get_xdg_exclude(app_name),
+        xdg_exclude=Matcher(
+            [
+                *[
+                    Rule(pattern, "xdg_exclude", config_file)
+                    for pattern in ctx.mckp.config.global_xdg_exclude
+                ],
+                *[
+                    Rule(pattern, "xdg_exclude", app_file)
+                    for pattern in ctx.app_db.get_xdg_exclude(app_name)
+                ],
+            ],
         ),
         reporter=ctx.reporter,
         app_name=app_name,
+        detail=ctx.detail,
     )
     return app
 
@@ -481,16 +512,20 @@ def _summary(actions: list[dict[str, Any]], app_names: set[str]) -> dict[str, An
     """
     counts: dict[str, int] = {}
     total_bytes: int = 0
+    files: int = 0
     for action in actions:
         name: str = str(action.get("action", "unknown"))
         counts[name] = counts.get(name, 0) + 1
         total_bytes += int(action.get("size_bytes") or 0)
+        if name == "copy":
+            files += 1
 
     return {
         "apps": sorted(app_names),
         "actions": counts,
         "total_actions": len(actions),
         "total_bytes": total_bytes,
+        "files": files,
     }
 
 
@@ -551,11 +586,19 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
         _run_action(ctx, app_names, action, label)
 
         if ctx.dry_run:
+            actions = reporter.actions
+            summary = _summary(actions, app_names)
+            if len(actions) > ctx.max_actions:
+                # The summary is computed on the whole plan, only the
+                # actions are truncated.
+                actions = actions[: ctx.max_actions]
+                summary["truncated"] = True
+                summary["limit"] = ctx.max_actions
             jsonapi.emit(
                 {
                     "schema_version": jsonapi.SCHEMA_VERSION,
-                    "actions": reporter.actions,
-                    "summary": _summary(reporter.actions, app_names),
+                    "actions": actions,
+                    "summary": summary,
                 },
                 stream,
             )
@@ -628,6 +671,44 @@ def main() -> None:
         sys.stdout = stdout
 
 
+def _detail_level(detail: str | None) -> str:
+    """
+    Get the detail level of the dry-run.
+
+    Args:
+        detail (str): The value of the --detail option.
+
+    Returns:
+        str: "entries" or "files".
+    """
+    if not detail:
+        return "entries"
+    if detail not in {"entries", "files"}:
+        sys.exit(f"Unknown detail level: {detail} (use entries or files)")
+    return detail
+
+
+def _max_actions(max_actions: str | None) -> int:
+    """
+    Get the maximum number of actions of the JSON dry-run.
+
+    Args:
+        max_actions (str): The value of the --max-actions option.
+
+    Returns:
+        int
+    """
+    if not max_actions:
+        return DEFAULT_MAX_ACTIONS
+    try:
+        limit: int = int(max_actions)
+    except ValueError:
+        sys.exit(f"Invalid number of actions: {max_actions}")
+    if limit < 1:
+        sys.exit(f"Invalid number of actions: {max_actions}")
+    return limit
+
+
 def _handle_exit(exc: SystemExit, json_mode: bool, stdout: TextIO) -> None:
     """
     Handle the exit of a command.
@@ -677,6 +758,8 @@ def _run(args: dict[str, Any], json_mode: bool, stdout: TextIO) -> None:
         app_db=ApplicationsDatabase(),
         dry_run=args["--dry-run"],
         verbose=args["--verbose"],
+        detail=_detail_level(args.get("--detail")),
+        max_actions=_max_actions(args.get("--max-actions")),
     )
 
     # If we want to answer mackeep with "yes" for each question

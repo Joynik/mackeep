@@ -19,6 +19,13 @@ NO_FILE = 0
 TWO_BYTES = 2
 FIVE_BYTES = 5
 
+# The number of files of a test tree
+FIVE_FILES = 5
+
+# The sizes of the test plans
+TWO_ACTIONS = 2
+THREE_ACTIONS = 3
+
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
@@ -542,3 +549,279 @@ def test_the_backup_dry_run_does_not_create_the_backup_folder(home, capsys):
     run("backup", "--dry-run")
 
     assert not (home / "storage" / "Mackeep").exists()
+
+
+def test_the_json_dry_run_detail_files(home, capsys):
+    """The files detail level describes every file."""
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".tree\n",
+    )
+    tree = home / ".tree"
+    (tree / "sub" / "deep").mkdir(parents=True)
+    (tree / "keep.txt").write_text("keep")
+    (tree / "sub" / "middle.txt").write_text("middle")
+    (tree / "sub" / "deep" / "leaf.txt").write_text("leaf")
+
+    data, code = run_json(capsys, "backup", "--dry-run", "--detail", "files")
+
+    assert code == 0
+    assert data["schema_version"] == 1
+
+    copied = [a for a in data["actions"] if a["action"] == "copy"]
+    assert len(copied) == THREE_ACTIONS
+    assert {os.path.basename(a["src"]) for a in copied} == {
+        "keep.txt",
+        "middle.txt",
+        "leaf.txt",
+    }
+    for action in copied:
+        assert action["size_bytes"] > 0
+        assert action["app"] == "test-app"
+
+    assert data["summary"]["files"] == THREE_ACTIONS
+    assert data["summary"]["total_actions"] == THREE_ACTIONS
+
+
+def test_the_json_dry_run_detail_files_reports_the_reason(home, capsys):
+    """The excluded files tell which pattern excluded them."""
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".tree\n"
+        "\n"
+        "[exclude]\n"
+        ".tree/*.tmp\n"
+        "**/secret.key\n",
+    )
+    tree = home / ".tree"
+    (tree / "sub").mkdir(parents=True)
+    (tree / "drop.tmp").write_text("tmp")
+    (tree / "sub" / "secret.key").write_text("key")
+    (tree / "keep.txt").write_text("keep")
+
+    data, code = run_json(capsys, "backup", "--dry-run", "--detail", "files")
+
+    assert code == 0
+    skipped = [a for a in data["actions"] if a["action"] == "skip_excluded"]
+    assert len(skipped) == TWO_ACTIONS
+
+    reasons = {os.path.basename(a["src"]): a["reason"] for a in skipped}
+    assert reasons["drop.tmp"]["pattern"] == ".tree/*.tmp"
+    assert reasons["secret.key"]["pattern"] == "**/secret.key"
+    for reason in reasons.values():
+        assert reason["section"] == "exclude"
+        assert reason["file"] == str(home / ".mackeep" / "test-app.cfg")
+
+
+def test_the_json_dry_run_detail_files_keeps_the_negated_files(home, capsys):
+    """A negated pattern gives its files back."""
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".tree\n"
+        "\n"
+        "[exclude]\n"
+        "*.tmp\n"
+        "!keep.tmp\n",
+    )
+    tree = home / ".tree"
+    tree.mkdir()
+    (tree / "keep.tmp").write_text("keep")
+    (tree / "drop.tmp").write_text("drop")
+
+    data, code = run_json(capsys, "backup", "--dry-run", "--detail", "files")
+
+    assert code == 0
+    copied = [a for a in data["actions"] if a["action"] == "copy"]
+    assert len(copied) == 1
+    assert os.path.basename(copied[0]["src"]) == "keep.tmp"
+
+    skipped = [a for a in data["actions"] if a["action"] == "skip_excluded"]
+    assert len(skipped) == 1
+    assert os.path.basename(skipped[0]["src"]) == "drop.tmp"
+
+
+def test_the_json_dry_run_detail_files_does_not_expand_the_excluded_dirs(
+    home, capsys,
+):
+    """An excluded directory is a single entry, its content is not walked."""
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".tree\n"
+        "\n"
+        "[exclude]\n"
+        ".tree/cache\n",
+    )
+    tree = home / ".tree"
+    (tree / "cache").mkdir(parents=True)
+    (tree / "cache" / "data.bin").write_text("data")
+    (tree / "keep.txt").write_text("keep")
+
+    data, code = run_json(capsys, "backup", "--dry-run", "--detail", "files")
+
+    assert code == 0
+    skipped = [a for a in data["actions"] if a["action"] == "skip_excluded"]
+    assert len(skipped) == 1
+    assert skipped[0]["src"].endswith("cache")
+    assert not any("data.bin" in a["src"] for a in data["actions"])
+
+
+def test_the_json_dry_run_detail_files_reports_the_conflicts(home, capsys):
+    """A file that already exists is a conflict, and not a copy."""
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".tree\n",
+    )
+    tree = home / ".tree"
+    tree.mkdir()
+    (tree / "keep.txt").write_text("keep")
+
+    # The file is already in the backup
+    backup = home / "storage" / "Mackeep" / ".tree"
+    backup.mkdir(parents=True)
+    (backup / "keep.txt").write_text("old")
+
+    data, code = run_json(capsys, "backup", "--dry-run", "--detail", "files")
+
+    assert code == 0
+    assert len(data["actions"]) == 1
+    action = data["actions"][0]
+    assert action["action"] == "conflict"
+    assert action["would_overwrite"] is True
+    assert action["size_bytes"] == len("keep")
+
+
+def test_the_json_dry_run_detail_files_reports_the_stale_files(home, capsys):
+    """The files of the backup that are now excluded are reported."""
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".tree\n"
+        "\n"
+        "[exclude]\n"
+        ".tree/old.log\n",
+    )
+    tree = home / ".tree"
+    tree.mkdir()
+    (tree / "keep.txt").write_text("keep")
+
+    backup = home / "storage" / "Mackeep" / ".tree"
+    backup.mkdir(parents=True)
+    (backup / "old.log").write_text("stale")
+
+    data, code = run_json(capsys, "backup", "--dry-run", "--detail", "files")
+
+    assert code == 0
+    stale = [a for a in data["actions"] if a["action"] == "stale_in_backup"]
+    assert len(stale) == 1
+    assert stale[0]["src"].endswith("old.log")
+
+
+def test_the_json_dry_run_truncates_the_actions(home, capsys):
+    """The plan is truncated, but the summary is computed on the whole plan."""
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".tree\n",
+    )
+    tree = home / ".tree"
+    tree.mkdir()
+    for index in range(FIVE_FILES):
+        (tree / f"file{index}.txt").write_text("x")
+
+    data, code = run_json(capsys, "backup", "--dry-run", "--detail", "files")
+
+    assert code == 0
+    assert len(data["actions"]) == FIVE_FILES
+    assert "truncated" not in data["summary"]
+
+    data, code = run_json(
+        capsys, "backup", "--dry-run", "--detail", "files", "--max-actions", "2",
+    )
+
+    assert code == 0
+    assert len(data["actions"]) == TWO_ACTIONS
+    assert data["summary"]["truncated"] is True
+    assert data["summary"]["limit"] == TWO_ACTIONS
+    # The summary is computed on the whole plan
+    assert data["summary"]["total_actions"] == FIVE_FILES
+    assert data["summary"]["files"] == FIVE_FILES
+
+
+def test_the_json_dry_run_entries_stays_the_same(home, capsys):
+    """The entries detail level keeps the previous behavior."""
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".tree\n",
+    )
+    tree = home / ".tree"
+    (tree / "sub").mkdir(parents=True)
+    (tree / "keep.txt").write_text("keep")
+    (tree / "sub" / "leaf.txt").write_text("leaf")
+
+    data, code = run_json(capsys, "backup", "--dry-run")
+
+    assert code == 0
+    # One entry per top level path, not per file
+    assert len(data["actions"]) == 1
+    action = data["actions"][0]
+    assert action["action"] == "copy"
+    assert action["src"].endswith(".tree")
+    assert action["size_bytes"] == len("keep") + len("leaf")
+
+
+def test_the_json_dry_run_detail_entries_is_the_default(home, capsys):
+    """The default detail level is entries."""
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".tree\n",
+    )
+    tree = home / ".tree"
+    tree.mkdir()
+    (tree / "keep.txt").write_text("keep")
+
+    default, _ = run_json(capsys, "backup", "--dry-run")
+    explicit, _ = run_json(capsys, "backup", "--dry-run", "--detail", "entries")
+
+    assert default == explicit
+
+
+def test_an_unknown_detail_level_is_an_error(home, capsys):
+    """An unknown detail level is rejected."""
+    data, code = run_json(capsys, "backup", "--dry-run", "--detail", "nope")
+
+    assert code != 0
+    assert data["error"]["code"] == "error"
