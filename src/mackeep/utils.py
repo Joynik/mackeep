@@ -97,7 +97,7 @@ def print_legacy_warnings() -> None:
     warnings: list[str] = LEGACY_WARNINGS.copy()
     LEGACY_WARNINGS.clear()
 
-    print("Warning: legacy Mackup paths are used:", file=sys.stderr)
+    print("Warning: legacy Mackup paths are found:", file=sys.stderr)
     for warning in warnings:
         print(f"  - {warning}", file=sys.stderr)
     print(

@@ -74,8 +74,6 @@ from mackeep.application import ApplicationProfile, Reporter
 from mackeep.appsdb import ApplicationsDatabase
 from mackeep.config import ConfigError
 from mackeep.constants import (
-    CUSTOM_APPS_DIR,
-    CUSTOM_APPS_DIR_XDG,
     MACKEEP_APP_NAME,
     VERSION,
 )
@@ -482,28 +480,19 @@ def _config_json(ctx: _Context) -> dict[str, Any]:
         dict
     """
     config = ctx.mckp.config
-    home: str = os.environ["HOME"]
-    xdg_config_home: str = os.environ.get(
-        "XDG_CONFIG_HOME", os.path.join(home, ".config"),
-    )
 
     return {
         "schema_version": jsonapi.SCHEMA_VERSION,
         "version": VERSION,
         "config_file": config.config_path,
-        "config_file_is_legacy": config.is_legacy,
-        "custom_apps_dirs": [
-            os.path.join(home, CUSTOM_APPS_DIR),
-            os.path.join(xdg_config_home, CUSTOM_APPS_DIR_XDG),
-        ],
-        "legacy_custom_apps_dirs": ApplicationsDatabase.get_legacy_custom_apps_dirs(),
+        "custom_apps_dir": ApplicationsDatabase.get_custom_apps_dir(),
+        "custom_apps_dirs": ApplicationsDatabase.get_custom_apps_dirs(),
         "storage": {
             "engine": config.engine,
             "path": config.path,
             "directory": config.directory,
             "resolved_backup_dir": config.fullpath,
             "exists": os.path.isdir(config.fullpath),
-            "using_legacy_directory": config.using_legacy_directory,
         },
         "apps_to_sync": sorted(config.apps_to_sync),
         "apps_to_ignore": sorted(config.apps_to_ignore),

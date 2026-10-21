@@ -1,10 +1,11 @@
 """
-Migration of the legacy Mackup files to their new Mackeep location.
+Migration of the legacy files to their new Mackeep location.
 
-The files of Mackup are copied, never moved nor deleted, so the user can
-check them before removing the old ones.
+The files are copied, never moved nor deleted, so the user can check them
+before removing the old ones.
 """
 
+import configparser
 import os
 import shutil
 
@@ -12,6 +13,7 @@ from .config import Config, ConfigError
 from .constants import (
     CUSTOM_APPS_DIR,
     CUSTOM_APPS_DIR_XDG,
+    LEGACY_BACKUP_PATH,
     LEGACY_CONFIG_FILE,
     LEGACY_CUSTOM_APPS_DIR,
     LEGACY_CUSTOM_APPS_DIR_XDG,
@@ -135,10 +137,36 @@ def _storage_directory(config_path: str) -> str | None:
     except (ConfigError, SystemExit):
         return None
 
-    if not config.using_legacy_directory:
+    if _has_directory_option(config_path):
+        # The directory is explicitly set, it is never replaced.
         return None
 
-    return config.directory
+    legacy_directory: str = os.path.join(config.path, LEGACY_BACKUP_PATH)
+    if not os.path.isdir(legacy_directory):
+        return None
+
+    return LEGACY_BACKUP_PATH
+
+
+def _has_directory_option(config_path: str) -> bool:
+    """
+    Whether the config file sets the name of the storage directory.
+
+    Args:
+        config_path (str): The path of the config file.
+
+    Returns:
+        bool
+    """
+    parser: configparser.ConfigParser = configparser.ConfigParser(
+        allow_no_value=True, inline_comment_prefixes=(";", "#"),
+    )
+    try:
+        parser.read(config_path)
+    except configparser.Error:
+        return False
+
+    return parser.has_option("storage", "directory")
 
 
 def _action(src: str, dst: str) -> dict[str, str]:

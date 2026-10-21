@@ -11,7 +11,10 @@ import sys
 from typing import Any, TextIO
 
 # The version of the JSON schema
-SCHEMA_VERSION: int = 1
+#
+# Version 2 removed the fields about the legacy paths of Mackup, they are
+# not used any more.
+SCHEMA_VERSION: int = 2
 
 
 def dumps(obj: Any) -> str:

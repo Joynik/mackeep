@@ -168,6 +168,18 @@ class ApplicationsDatabase:
         return patterns
 
     @staticmethod
+    def get_custom_apps_dir() -> str:
+        """
+        Return the main directory of the custom application configs.
+
+        It is the directory of the user, in the home directory.
+
+        Returns:
+            str
+        """
+        return os.path.join(os.environ["HOME"], CUSTOM_APPS_DIR)
+
+    @staticmethod
     def get_custom_apps_dirs() -> list[str]:
         """
         Return the directories where the custom application configs are read.
@@ -180,26 +192,32 @@ class ApplicationsDatabase:
             "XDG_CONFIG_HOME", os.path.join(home, ".config"),
         )
         return [
-            os.path.join(home, CUSTOM_APPS_DIR),
+            ApplicationsDatabase.get_custom_apps_dir(),
             os.path.join(xdg_config_home, CUSTOM_APPS_DIR_XDG),
         ]
 
     @staticmethod
-    def get_legacy_custom_apps_dirs() -> list[str]:
+    def get_legacy_custom_apps_dirs_pairs() -> list[tuple[str, str]]:
         """
-        Return the legacy directories where the custom application configs
-        are read, for backward compatibility.
+        Return the legacy directories of the custom application configs and
+        the ones that replace them.
 
         Returns:
-            list of str
+            list of (str, str): The legacy directory and the new one.
         """
         home: str = os.environ["HOME"]
         xdg_config_home: str = os.environ.get(
             "XDG_CONFIG_HOME", os.path.join(home, ".config"),
         )
         return [
-            os.path.join(home, LEGACY_CUSTOM_APPS_DIR),
-            os.path.join(xdg_config_home, LEGACY_CUSTOM_APPS_DIR_XDG),
+            (
+                os.path.join(home, LEGACY_CUSTOM_APPS_DIR),
+                os.path.join(home, CUSTOM_APPS_DIR),
+            ),
+            (
+                os.path.join(xdg_config_home, LEGACY_CUSTOM_APPS_DIR_XDG),
+                os.path.join(xdg_config_home, CUSTOM_APPS_DIR_XDG),
+            ),
         ]
 
     @staticmethod
@@ -213,8 +231,10 @@ class ApplicationsDatabase:
 
         Only one config file per application should be returned, custom config
         having a priority over stock config. The Mackeep custom apps
-        directories take priority over the XDG location and over the legacy
-        Mackup ones.
+        directory takes priority over the XDG location.
+
+        The legacy Mackup directories are not read any more. The user is
+        warned about the configs they hold, so he can migrate them.
 
         Returns:
             set of strings.
@@ -225,9 +245,8 @@ class ApplicationsDatabase:
         )
 
         # The directories of the custom application configs, the Mackeep
-        # ones first, then the legacy Mackup ones.
+        # ones first, then the XDG location.
         custom_dirs: list[str] = ApplicationsDatabase.get_custom_apps_dirs()
-        legacy_dirs: list[str] = ApplicationsDatabase.get_legacy_custom_apps_dirs()
 
         # List of stock application config files
         config_files: set[str] = set()
@@ -235,11 +254,10 @@ class ApplicationsDatabase:
         # Temp list of user added app config file names
         custom_files: set[str] = set()
 
-        for directory in [*custom_dirs, *legacy_dirs]:
+        for directory in custom_dirs:
             if not os.path.isdir(directory):
                 continue
 
-            legacy: bool = directory in legacy_dirs
             for filename in sorted(os.listdir(directory)):
                 if not filename.endswith(".cfg"):
                     continue
@@ -250,15 +268,24 @@ class ApplicationsDatabase:
                 config_files.add(path)
                 custom_files.add(filename)
 
-                if legacy and not _is_redundant(path, filename, apps_dir):
-                    # The file is used, the user has to copy it. A file that
-                    # is shadowed by a new one is not used at all, and a file
-                    # that is the same as the one that replaces it does not
-                    # have to be copied.
-                    legacy_warning(
-                        f"the application config {path} is used, copy it to"
-                        " the new directory to use the new name",
-                    )
+        # The legacy directories are not read any more, the user is told
+        # about the configs they have to migrate.
+        for legacy_dir, new_dir in (
+            ApplicationsDatabase.get_legacy_custom_apps_dirs_pairs()
+        ):
+            if not os.path.isdir(legacy_dir):
+                continue
+            count: int = _count_configs_to_migrate(
+                legacy_dir, custom_dirs, apps_dir,
+            )
+            if count == 0:
+                # There is nothing to migrate, every config is either
+                # shadowed by a new one or the same as the default one.
+                continue
+            legacy_warning(
+                f"the custom applications in {legacy_dir} are not read any"
+                f" more ({count} files), copy them to {new_dir} to use them",
+            )
 
         # Add the default provided app config files, but only if those are not
         # customized, as we don't want to overwrite custom app config.
@@ -440,6 +467,50 @@ def _is_same_file(path: str, other: str) -> bool:
             return first.read() == second.read()
     except OSError:
         return False
+
+
+def _count_configs_to_migrate(
+    legacy_dir: str, custom_dirs: list[str], apps_dir: str,
+) -> int:
+    """
+    Count the legacy application configs that have to be copied.
+
+    A config file that is shadowed by a new one with the same name is not
+    used any more, and a config file that is the same as the default config
+    of the application does not have to be copied.
+
+    Args:
+        legacy_dir (str): The legacy directory of the config files.
+        custom_dirs (list of str): The directories of the new config files.
+        apps_dir (str): The directory of the default config files.
+
+    Returns:
+        int
+    """
+    names: set[str] = set()
+    for directory in custom_dirs:
+        if not os.path.isdir(directory):
+            continue
+        names.update(
+            filename
+            for filename in os.listdir(directory)
+            if filename.endswith(".cfg")
+        )
+
+    count: int = 0
+    for filename in sorted(os.listdir(legacy_dir)):
+        if not filename.endswith(".cfg"):
+            continue
+        if filename in names:
+            # The file is shadowed by a new one, it is not used.
+            continue
+        if _is_redundant(
+            os.path.join(legacy_dir, filename), filename, apps_dir,
+        ):
+            # The file is the same as the default one, nothing to copy.
+            continue
+        count += 1
+    return count
 
 
 def _is_redundant(path: str, filename: str, apps_dir: str) -> bool:
