@@ -19,8 +19,8 @@ final class SettingsModel {
     /// The path of the config file of Mackeep.
     private(set) var configFilePath: String = ""
 
-    /// The directories where the custom application configs are read.
-    private(set) var customAppsDirs: [String] = []
+    /// The directory where the custom application configs are read.
+    private(set) var customAppsDir: String = ""
 
     /// The folder where the backup is written, as the tool of Mackeep sees it.
     private(set) var resolvedBackupDirectory: String = ""
@@ -174,7 +174,7 @@ final class SettingsModel {
         }
 
         configFilePath = config.configFile
-        customAppsDirs = config.customAppsDirs
+        customAppsDir = config.customAppsDir ?? config.customAppsDirs.first ?? ""
         globalExclude = config.globalExclude
         resolvedBackupDirectory = config.storage.resolvedBackupDir
 

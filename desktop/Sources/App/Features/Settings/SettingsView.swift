@@ -160,21 +160,21 @@ struct SettingsView: View {
                 }
             }
 
-            ForEach(model.customAppsDirs, id: \.self) { directory in
-                LabeledContent(L10n.string("settings.locations.apps")) {
-                    HStack {
-                        Text(directory)
-                            .font(.callout.monospaced())
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        Spacer(minLength: 8)
-                        Button {
-                            reveal(directory)
-                        } label: {
-                            Image(systemName: "folder")
-                        }
-                        .help(L10n.string("settings.locations.reveal"))
+            LabeledContent(L10n.string("settings.locations.apps")) {
+                HStack {
+                    Text(model.customAppsDir)
+                        .font(.callout.monospaced())
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .accessibilityIdentifier("settings.customAppsDir")
+                    Spacer(minLength: 8)
+                    Button {
+                        reveal(model.customAppsDir)
+                    } label: {
+                        Image(systemName: "folder")
                     }
+                    .help(L10n.string("settings.locations.reveal"))
+                    .disabled(model.customAppsDir.isEmpty)
                 }
             }
         }

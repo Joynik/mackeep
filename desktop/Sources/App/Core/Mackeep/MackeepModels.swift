@@ -7,7 +7,7 @@ import Foundation
 /// version of Mackeep can be read.
 enum MackeepSchema {
     /// The version of the schema of the answers.
-    static let version: Int = 1
+    static let version: Int = 2
 }
 
 /// The storage of Mackeep.
@@ -27,16 +27,12 @@ struct MackeepStorage: Codable, Equatable, Sendable {
     /// Whether the backup directory exists.
     let exists: Bool
 
-    /// Whether the legacy folder of Mackup is used.
-    let usingLegacyDirectory: Bool?
-
     enum CodingKeys: String, CodingKey {
         case engine
         case path
         case directory
         case resolvedBackupDir = "resolved_backup_dir"
         case exists
-        case usingLegacyDirectory = "using_legacy_directory"
     }
 }
 
@@ -51,14 +47,11 @@ struct MackeepConfig: Codable, Equatable, Sendable {
     /// The path of the config file.
     let configFile: String
 
-    /// Whether the config file is a legacy Mackup one.
-    let configFileIsLegacy: Bool?
+    /// The main directory where the custom application configs are read.
+    let customAppsDir: String?
 
     /// The directories where the custom application configs are read.
     let customAppsDirs: [String]
-
-    /// The legacy directories where the custom application configs are read.
-    let legacyCustomAppsDirs: [String]?
 
     /// The storage of Mackeep.
     let storage: MackeepStorage
@@ -79,9 +72,8 @@ struct MackeepConfig: Codable, Equatable, Sendable {
         case schemaVersion = "schema_version"
         case version
         case configFile = "config_file"
-        case configFileIsLegacy = "config_file_is_legacy"
+        case customAppsDir = "custom_apps_dir"
         case customAppsDirs = "custom_apps_dirs"
-        case legacyCustomAppsDirs = "legacy_custom_apps_dirs"
         case storage
         case appsToSync = "apps_to_sync"
         case appsToIgnore = "apps_to_ignore"
