@@ -1,6 +1,7 @@
 """Tests for the --config-file command line option."""
 import os
 import unittest
+from pathlib import Path
 
 import pytest
 
@@ -16,6 +17,11 @@ class TestConfigFileOption(unittest.TestCase):
         # Clear environment variables that could interfere
         os.environ.pop("XDG_CONFIG_HOME", None)
         os.environ.pop("MACKEEP_CONFIG", None)
+
+    def tearDown(self):
+        # The config file is created when it does not exist, it is removed
+        # after the test.
+        (Path(os.environ["HOME"]) / ".mackeep.cfg").unlink(missing_ok=True)
 
     def test_config_with_relative_path(self):
         """Test that a relative path to config file works."""

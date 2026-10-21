@@ -17,14 +17,15 @@ vi ~/.mackeep.cfg
 
 ## Configuration file location
 
-Config files are searched in the following order. If none is found, Mackeep will
-use the default config location of `~/.mackeep.cfg`
+Config files are searched in the following order. If none is found, Mackeep
+creates the default config location of `~/.mackeep.cfg`:
 
 - `~/.mackeep.cfg`
 - `$MACKEEP_CONFIG`
 - `$XDG_CONFIG_HOME/mackeep/mackeep.cfg` or `~/.config/mackeep/mackeep.cfg`
-- `~/.mackup.cfg` (legacy, see [Compatibility with Mackup](#compatibility-with-mackup))
-- `$XDG_CONFIG_HOME/mackup/mackup.cfg` (legacy)
+
+The config file of Mackup is not used, the legacy file of Mackup can be
+copied with [mackeep-cli migrate](#mackeep-cli-migrate).
 
 You can also specify a custom config file location using the `--config-file`
 command-line option:
@@ -617,22 +618,22 @@ written as a JSON document:
 
 ## Compatibility with Mackup
 
-Mackeep is a fork of [Mackup](https://github.com/lra/mackup). The config
-files of Mackup are still read, so nothing has to be done to keep using
-them.
+Mackeep is a fork of [Mackup](https://github.com/lra/mackup). The files of
+Mackup are not used, but they can be copied to their new location with
+`mackeep-cli migrate`.
 
 ### The config file
 
-The config file is looked up in the following order, the first one that
-exists wins:
+The config file of Mackup is not used. When there is no `~/.mackeep.cfg`,
+Mackeep creates one with the default backup folder:
 
-1. `~/.mackeep.cfg`
-2. `$MACKEEP_CONFIG`
-3. `$XDG_CONFIG_HOME/mackeep/mackeep.cfg`
-4. `~/.mackup.cfg` (legacy)
-5. `$XDG_CONFIG_HOME/mackup/mackup.cfg` (legacy)
+```ini
+[storage]
+directory = Mackeep
+```
 
-The `--config-file` option has the priority over all of them.
+The `mackeep-cli migrate` command copies the config file of Mackup to
+`~/.mackeep.cfg`.
 
 ### The custom applications
 

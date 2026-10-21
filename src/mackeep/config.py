@@ -8,12 +8,12 @@ from pathlib import Path
 from .constants import (
     CUSTOM_APPS_DIR,
     CUSTOM_APPS_DIR_XDG,
+    DOCUMENTATION_URL,
     ENGINE_DROPBOX,
     ENGINE_FS,
     ENGINE_GDRIVE,
     ENGINE_ICLOUD,
     LEGACY_BACKUP_PATH,
-    LEGACY_CONFIG_FILE,
     MACKEEP_BACKUP_PATH,
     MACKEEP_CONFIG_FILE,
 )
@@ -215,9 +215,26 @@ class Config:
         )
         # Keep track of the config file that is used
         self._config_path: str = self._best_config_path(filename)
+        if not filename and not Path(self._config_path).is_file():
+            # The config file is created when it does not exist
+            self._create_config_file()
         parser.read(self._config_path)
 
         return parser
+
+    def _create_config_file(self) -> None:
+        """Create the config file with the default content."""
+        try:
+            Path(self._config_path).write_text(
+                "# The configuration of Mackeep.\n"
+                f"# See {DOCUMENTATION_URL} for the options.\n"
+                "\n"
+                "[storage]\n"
+                f"directory = {MACKEEP_BACKUP_PATH}\n",
+                encoding="utf-8",
+            )
+        except OSError as e:
+            error(f"Unable to create the config file {self._config_path}: {e}")
 
     def _setup_exclusion_parser(self) -> configparser.ConfigParser:
         """
@@ -251,11 +268,10 @@ class Config:
         - ~/.mackeep.cfg
         - $MACKEEP_CONFIG
         - $XDG_CONFIG_HOME/mackeep/mackeep.cfg
-        - ~/.mackup.cfg (legacy)
-        - $XDG_CONFIG_HOME/mackup/mackup.cfg (legacy)
 
         The first one that exists wins. If none of these files exist, we
-        create ~/.mackeep.cfg.
+        create ~/.mackeep.cfg. The legacy file of Mackup is not used, it
+        can be migrated with `mackeep migrate`.
 
         Args:
             filename (str or None, optional): Optional override for the config
@@ -274,12 +290,6 @@ class Config:
             xdg_config_home = Path(
                 os.environ.get("XDG_CONFIG_HOME", "~/.config"),
             ).expanduser()
-            legacy_paths = [
-                # 4. the legacy config file of Mackup
-                Path.home() / LEGACY_CONFIG_FILE,
-                # 5. the legacy config file in the XDG_CONFIG_HOME directory
-                xdg_config_home / "mackup" / LEGACY_CONFIG_FILE.lstrip("."),
-            ]
             search_paths = [
                 # 1. the default config file is ~/.mackeep.cfg
                 default,
@@ -287,15 +297,8 @@ class Config:
                 Path(os.environ.get("MACKEEP_CONFIG", "")).expanduser(),
                 # 3. check for a config file in the XDG_CONFIG_HOME directory
                 xdg_config_home / "mackeep" / MACKEEP_CONFIG_FILE.lstrip("."),
-                *legacy_paths,
             ]
             config_path = next((p for p in search_paths if p.is_file()), default)
-            self._is_legacy = config_path in legacy_paths
-            if self._is_legacy:
-                legacy_warning(
-                    f"the config file {config_path} is used, copy it to "
-                    f"{default} to use the new name",
-                )
         else:
             # Support both absolute and relative paths
             config_path = Path(filename).expanduser()

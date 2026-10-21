@@ -39,7 +39,7 @@ dev = [
     "coverage[toml]>=7.16.2",
     "mypy>=2.4.0",
     "ruff>=0.17.1",
-    "ty>=0.0.89",
+    "ty>=0.0.90",
     "rumdl>=0.3.0",
 ]
 
@@ -99,6 +99,11 @@ pythonpath = ["src"]
 addopts = ["-ra"]
 
 # https://docs.astral.sh/ruff/rules/
+[tool.ruff]
+# The desktop application is a Swift project, its Python helpers have their
+# own conventions.
+exclude = ["desktop"]
+
 [tool.ruff.lint]
 select = [
     "A",     # flake8-builtins

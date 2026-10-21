@@ -1,5 +1,6 @@
 """Tests for the backward compatibility with the Mackup config files."""
 
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -111,26 +112,32 @@ def test_the_xdg_config_file_is_used(home):
     assert config.is_legacy is False
 
 
-def test_the_legacy_config_file_is_used(home):
-    """The legacy config file is used when there is nothing else."""
+def test_the_legacy_config_file_is_not_used(home):
+    """The legacy config file is not used, a new one is created."""
     write_config(home, home / ".mackup.cfg")
 
-    config = Config()
+    # The storage of the machine is not used, the config can be read
+    # without it
+    with contextlib.suppress(SystemExit):
+        config = Config()
+        assert config.config_path == str(home / ".mackeep.cfg")
+        assert config.is_legacy is False
 
-    assert config.config_path == str(home / ".mackup.cfg")
-    assert config.is_legacy is True
+    # The new config file is created with the default backup folder
+    assert (home / ".mackeep.cfg").is_file()
+    assert "directory = Mackeep" in (home / ".mackeep.cfg").read_text()
 
 
-def test_the_legacy_xdg_config_file_is_used(home):
-    """The legacy XDG config file is the last resort."""
+def test_the_legacy_xdg_config_file_is_not_used(home):
+    """The legacy XDG config file is not used either."""
     write_config(home, home / ".config" / "mackup" / "mackup.cfg")
 
-    config = Config()
+    with contextlib.suppress(SystemExit):
+        config = Config()
+        assert config.config_path == str(home / ".mackeep.cfg")
+        assert config.is_legacy is False
 
-    assert config.config_path == str(
-        home / ".config" / "mackup" / "mackup.cfg",
-    )
-    assert config.is_legacy is True
+    assert (home / ".mackeep.cfg").is_file()
 
 
 def test_the_config_file_option_has_the_priority(home):
@@ -226,7 +233,7 @@ def test_an_explicit_storage_folder_is_never_replaced(home):
 
 def test_a_warning_is_printed_once(home, capsys):
     """The legacy paths are warned about once per run."""
-    write_config(home, home / ".mackup.cfg")
+    write_config(home, home / ".mackeep.cfg")
     write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
 
     run("--json", "config")
@@ -248,14 +255,15 @@ def test_no_warning_without_the_legacy_paths(home, capsys):
 
 def test_the_json_config_holds_the_legacy_paths(home, capsys):
     """The JSON config tells which legacy paths are used."""
-    write_config(home, home / ".mackup.cfg")
+    write_config(home, home / ".mackeep.cfg")
+    write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
     (home / "storage" / "Mackup").mkdir(parents=True)
 
     data, code = run_json(capsys, "config")
 
     assert code == 0
     assert data["schema_version"] == 1
-    assert data["config_file_is_legacy"] is True
+    assert data["config_file_is_legacy"] is False
     assert data["legacy_custom_apps_dirs"] == [
         str(home / ".mackup"),
         str(home / ".config" / "mackup" / "applications"),
@@ -413,7 +421,7 @@ def test_a_used_legacy_app_is_warned_about(home, capsys):
 
 def test_the_warnings_go_to_stderr(home, capsys):
     """The warnings are written to stderr, the stdout stays clean."""
-    write_config(home, home / ".mackup.cfg")
+    write_config(home, home / ".mackeep.cfg")
     write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
 
     run("--json", "config")

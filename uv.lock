@@ -266,7 +266,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "ruff", specifier = ">=0.17.1" },
     { name = "rumdl", specifier = ">=0.3.0" },
-    { name = "ty", specifier = ">=0.0.89" },
+    { name = "ty", specifier = ">=0.0.90" },
 ]
 
 [[package]]

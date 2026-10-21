@@ -542,11 +542,16 @@ def _summary(actions: list[dict[str, Any]], app_names: set[str]) -> dict[str, An
     }
 
 
-def _cmd_migrate(args: dict[str, Any], ctx: _Context) -> None:
-    """Copy the legacy Mackup files to their new location."""
+def _cmd_migrate(dry_run: bool) -> None:
+    """
+    Copy the legacy Mackup files to their new location.
+
+    Args:
+        dry_run (bool): Whether the files are only copied in the plan.
+    """
     actions: list[dict[str, str]] = migration_plan()
     copied: int = 0
-    if not ctx.dry_run:
+    if not dry_run:
         copied = run_migration(actions)
 
     for action in actions:
@@ -560,7 +565,7 @@ def _cmd_migrate(args: dict[str, Any], ctx: _Context) -> None:
         else:
             print(f"Skip {action['src']}\n  {action['dst']} already exists")
 
-    if ctx.dry_run:
+    if dry_run:
         print("\nNothing was copied, this was a dry-run.")
     else:
         print(f"\n{copied} file(s) copied, the old ones were kept.")
@@ -585,35 +590,42 @@ def _cmd_config(ctx: _Context) -> None:
             print(f" - {pattern}")
 
 
+def _cmd_json_migrate(dry_run: bool, stream: TextIO) -> None:
+    """
+    Write the plan of the migration as JSON.
+
+    Args:
+        dry_run (bool): Whether the files are only copied in the plan.
+        stream (TextIO): The stream the JSON is written to.
+    """
+    actions: list[dict[str, str]] = migration_plan()
+    copied: int = 0
+    if not dry_run:
+        copied = run_migration(actions)
+    skipped: int = sum(1 for action in actions if action["action"] == "skip")
+    updated: int = sum(
+        1 for action in actions if action["action"] == "set_directory"
+    )
+    jsonapi.emit(
+        {
+            "schema_version": jsonapi.SCHEMA_VERSION,
+            "actions": actions,
+            "summary": {
+                "copied": copied,
+                "skipped": skipped,
+                "updated": updated,
+                "total_actions": len(actions),
+                "dry_run": dry_run,
+            },
+        },
+        stream,
+    )
+
+
 def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
     """Run a command and write its JSON answer to the given stream."""
     if args["config"]:
         jsonapi.emit(_config_json(ctx), stream)
-    elif args["migrate"]:
-        actions: list[dict[str, str]] = migration_plan()
-        copied: int = 0
-        if not ctx.dry_run:
-            copied = run_migration(actions)
-        skipped: int = sum(
-            1 for action in actions if action["action"] == "skip"
-        )
-        updated: int = sum(
-            1 for action in actions if action["action"] == "set_directory"
-        )
-        jsonapi.emit(
-            {
-                "schema_version": jsonapi.SCHEMA_VERSION,
-                "actions": actions,
-                "summary": {
-                    "copied": copied,
-                    "skipped": skipped,
-                    "updated": updated,
-                    "total_actions": len(actions),
-                    "dry_run": ctx.dry_run,
-                },
-            },
-            stream,
-        )
     elif args["list"]:
         apps: list[dict[str, Any]] = [
             _app_json(ctx.app_db, app_name)
@@ -820,6 +832,16 @@ def _run(args: dict[str, Any], json_mode: bool, stdout: TextIO) -> None:
     if args["--force"] and args["--force-no"]:
         sys.exit("Options --force and --force-no are mutually exclusive.")
 
+    if args["migrate"]:
+        # The migrate command does not need a usable storage, it is the way
+        # to fix a configuration that does not work yet.
+        dry_run: bool = bool(args["--dry-run"])
+        if json_mode:
+            _cmd_json_migrate(dry_run, stdout)
+        else:
+            _cmd_migrate(dry_run)
+        return
+
     config_file: str | None = args.get("--config-file")
     ctx = _Context(
         config_file=config_file,
@@ -858,8 +880,6 @@ def _run(args: dict[str, Any], json_mode: bool, stdout: TextIO) -> None:
         _cmd_show(args, ctx.app_db)
     elif args["config"]:
         _cmd_config(ctx)
-    elif args["migrate"]:
-        _cmd_migrate(args, ctx)
     elif args["backup"]:
         _cmd_backup(args, ctx)
     elif args["restore"]:

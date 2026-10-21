@@ -1,3 +1,4 @@
+import contextlib
 import os
 import os.path
 import unittest
@@ -27,6 +28,11 @@ class TestConfig(unittest.TestCase):
         # these may be set on some user's systems
         os.environ.pop("XDG_CONFIG_HOME", None)
         os.environ.pop("MACKEEP_CONFIG", None)
+
+    def tearDown(self):
+        # The config file is created when it does not exist, it is removed
+        # after the test.
+        (Path.home() / MACKEEP_CONFIG_FILE).unlink(missing_ok=True)
 
     def test_config_envvar(self):
         os.environ["MACKEEP_CONFIG"] = "~/mackeep-envarcheck.cfg"
@@ -68,6 +74,19 @@ class TestConfig(unittest.TestCase):
         # set MACKEEP_CONFIG, should find the MACKEEP_CONFIG file
         os.environ["MACKEEP_CONFIG"] = "~/mackeep-envarcheck.cfg"
         assert_correct_config_read("test_config_envvar")
+
+    def test_config_file_is_created(self):
+        """The config file is created when it does not exist."""
+        config_path = Path.home() / MACKEEP_CONFIG_FILE
+        config_path.unlink(missing_ok=True)
+
+        # The storage of the machine is not used, the config can be read
+        # without it
+        with contextlib.suppress(SystemExit):
+            Config()
+
+        assert config_path.is_file()
+        assert "directory = Mackeep" in config_path.read_text()
 
     def test_config_no_config(self):
         cfg = Config()
