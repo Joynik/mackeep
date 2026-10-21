@@ -287,15 +287,15 @@ Symlinks in home: ~/.config → ~/Dropbox/Mackeep/.config
 
 ### 4. Backward Compatibility
 
-- **The legacy files are read**: the config file and the custom
-  application configs of Mackup are still found, the Mackeep ones have
-  the priority
-- **The storage folder**: the legacy `Mackup` folder is used when the
-  config file does not set a directory and the new folder does not exist
+- **The legacy files are not read**: the config file and the custom
+  application configs of Mackup are ignored, only the Mackeep ones are
+  used
+- **The storage folder**: the legacy `Mackup` folder is not used any more,
+  the `Mackeep` one is
 - **A migration command**: `mackeep-cli migrate` copies the legacy files to
   their new location, without overwriting anything
-- **One warning per run**: the legacy paths that are used are reported in
-  `stderr`
+- **One warning per run**: the legacy paths that have to be migrated are
+  reported in `stderr`
 
 ### 5. Exclusions
 

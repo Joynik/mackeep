@@ -20,14 +20,12 @@ final class MackeepModelsTests: XCTestCase {
         XCTAssertEqual(config.schemaVersion, MackeepSchema.version)
         XCTAssertEqual(config.version, "0.15.1")
         XCTAssertEqual(config.configFile, "/Users/user/.mackeep.cfg")
-        XCTAssertEqual(config.configFileIsLegacy, false)
+        XCTAssertEqual(config.customAppsDir, "/Users/user/.mackeep")
         XCTAssertEqual(config.customAppsDirs.count, 2)
-        XCTAssertEqual(config.legacyCustomAppsDirs?.count, 2)
         XCTAssertEqual(config.storage.engine, "file_system")
         XCTAssertEqual(config.storage.directory, "Mackeep")
         XCTAssertEqual(config.storage.resolvedBackupDir, "/Users/user/dotfiles/Mackeep")
         XCTAssertEqual(config.storage.exists, true)
-        XCTAssertEqual(config.storage.usingLegacyDirectory, false)
         XCTAssertEqual(config.appsToSync, ["vim"])
         XCTAssertEqual(config.appsToIgnore, [])
         XCTAssertEqual(config.globalExclude, ["**/.DS_Store"])
@@ -69,7 +67,8 @@ final class MackeepModelsTests: XCTestCase {
     }
 
     func testAnOldAnswerIsStillDecoded() throws {
-        // The answer of a version of Mackeep without the legacy paths
+        // The answer of a version of Mackeep without the main custom apps
+        // directory
         let json: String = """
         {
           "schema_version": 1,
@@ -94,9 +93,7 @@ final class MackeepModelsTests: XCTestCase {
         )
 
         XCTAssertEqual(config.version, "0.13.0")
-        XCTAssertNil(config.configFileIsLegacy)
-        XCTAssertNil(config.legacyCustomAppsDirs)
-        XCTAssertNil(config.storage.usingLegacyDirectory)
+        XCTAssertNil(config.customAppsDir)
     }
 
     func testTheEventsAreDecoded() throws {

@@ -1,23 +1,18 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "version": "0.15.1",
   "config_file": "/Users/user/.mackeep.cfg",
-  "config_file_is_legacy": false,
+  "custom_apps_dir": "/Users/user/.mackeep",
   "custom_apps_dirs": [
     "/Users/user/.mackeep",
     "/Users/user/.config/mackeep/applications"
-  ],
-  "legacy_custom_apps_dirs": [
-    "/Users/user/.mackup",
-    "/Users/user/.config/mackup/applications"
   ],
   "storage": {
     "engine": "file_system",
     "path": "/Users/user/dotfiles",
     "directory": "Mackeep",
     "resolved_backup_dir": "/Users/user/dotfiles/Mackeep",
-    "exists": true,
-    "using_legacy_directory": false
+    "exists": true
   },
   "apps_to_sync": ["vim"],
   "apps_to_ignore": [],

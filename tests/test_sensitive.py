@@ -6,6 +6,9 @@ from unittest.mock import patch
 from mackeep import utils
 from mackeep_cli.main import main
 
+# The version of the schema of the JSON answers
+SCHEMA_VERSION = 2
+
 # The content of the config file of the test application
 APP_CONFIG = (
     "[application]\n"
@@ -104,7 +107,7 @@ def test_the_json_list_marks_the_sensitive_files(home, capsys):
     assert code == 0
 
     app = next(app for app in data if app["name"] == "test-app")
-    assert app["schema_version"] == 1
+    assert app["schema_version"] == SCHEMA_VERSION
     files = {file["path"]: file for file in app["files"]}
 
     assert files[".ssh/id_rsa"]["sensitive"] is True
@@ -123,7 +126,7 @@ def test_the_json_show_marks_the_sensitive_files(home, capsys):
     data, code = run_json(capsys, "show", "test-app")
 
     assert code == 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
 
     files = {file["path"]: file for file in data["files"]}
     assert files[".ssh/id_rsa"]["sensitive"] is True
@@ -137,7 +140,7 @@ def test_the_json_dry_run_marks_the_sensitive_files(home, capsys):
     data, code = run_json(capsys, "backup", "--dry-run", "test-app")
 
     assert code == 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
 
     actions = {action["src"]: action for action in data["actions"]}
     copied = next(
@@ -182,11 +185,11 @@ def test_the_backup_does_not_warn_without_the_sensitive_files(home, capsys):
     assert "Warning:" not in captured.err
 
 
-def test_the_schema_version_is_unchanged(home, capsys):
-    """The version of the schema does not change."""
+def test_the_schema_version_is_the_current_one(home, capsys):
+    """The version of the schema is the current one."""
     setup(home)
 
     data, code = run_json(capsys, "show", "test-app")
 
     assert code == 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION

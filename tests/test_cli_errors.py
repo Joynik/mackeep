@@ -11,6 +11,9 @@ from mackeep.config import ConfigError
 from mackeep_cli import main as main_module
 from mackeep_cli.main import main
 
+# The version of the schema of the JSON answers
+SCHEMA_VERSION = 2
+
 # The content of the config file of the test application
 APP_CONFIG = (
     "[application]\n"
@@ -173,7 +176,7 @@ def test_the_json_restore_command_writes_the_events(home, capsys):
     assert code == 0
     assert events[0]["event"] == "start"
     assert events[-1]["event"] == "done"
-    assert events[0]["schema_version"] == 1
+    assert events[0]["schema_version"] == SCHEMA_VERSION
 
 
 def test_the_json_mode_does_not_support_the_link_commands(home, capsys):

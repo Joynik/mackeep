@@ -10,6 +10,9 @@ import pytest
 from mackeep import utils
 from mackeep_cli.main import main
 
+# The version of the schema of the JSON answers
+SCHEMA_VERSION = 2
+
 # The number of directories where the custom application configs are looked up
 CUSTOM_APPS_DIRS_COUNT = 2
 
@@ -95,7 +98,7 @@ def test_the_json_config(home, capsys):
     data, code = run_json(capsys, "config")
 
     assert code == 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
     assert data["version"]
     assert data["config_file"] == str(home / ".mackeep.cfg")
     assert len(data["custom_apps_dirs"]) == CUSTOM_APPS_DIRS_COUNT
@@ -156,7 +159,7 @@ def test_the_json_list(home, capsys):
     assert "vim" in apps
 
     app = apps["test-app"]
-    assert app["schema_version"] == 1
+    assert app["schema_version"] == SCHEMA_VERSION
     assert app["display_name"] == "Test App"
     assert app["source"] == "custom"
     assert app["cfg_path"] == str(home / ".mackeep" / "test-app.cfg")
@@ -187,7 +190,7 @@ def test_the_json_show(home, capsys):
     data, code = run_json(capsys, "show", "test-app")
 
     assert code == 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
     assert data["name"] == "test-app"
     assert data["display_name"] == "Test App"
 
@@ -207,7 +210,7 @@ def test_the_json_show_of_an_unknown_app(home, capsys):
     data, code = run_json(capsys, "show", "not-an-app")
 
     assert code != 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
     assert data["error"]["code"] == "unsupported_application"
     assert "not-an-app" in data["error"]["message"]
 
@@ -233,7 +236,7 @@ def test_the_json_backup_dry_run(home, capsys):
     data, code = run_json(capsys, "--force", "backup", "--dry-run")
 
     assert code == 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
     assert isinstance(data["actions"], list)
     assert data["summary"]["apps"] == ["test-app"]
     assert data["summary"]["actions"]["copy"] >= 1
@@ -284,7 +287,7 @@ def test_the_json_backup_streams_the_events(home, capsys):
     events = [json.loads(line) for line in captured.out.splitlines() if line]
     assert events
     for event in events:
-        assert event["schema_version"] == 1
+        assert event["schema_version"] == SCHEMA_VERSION
 
     kinds = [event["event"] for event in events]
     assert kinds[0] == "start"
@@ -346,7 +349,7 @@ def test_the_json_restore_dry_run(home, capsys):
     data, code = run_json(capsys, "restore", "--dry-run")
 
     assert code == 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
     actions = {action["action"] for action in data["actions"]}
     assert "skip_excluded" in actions
     assert not (home / ".testdir").exists()
@@ -361,7 +364,7 @@ def test_the_json_error(home, capsys):
     data = json.loads(captured.out)
 
     assert context.value.code != 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
     assert data["error"]["code"]
     assert data["error"]["message"]
 
@@ -415,7 +418,7 @@ def test_the_json_link_is_not_supported(home, capsys):
     data, code = run_json(capsys, "link", "install")
 
     assert code != 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
     assert data["error"]["code"] == "error"
     assert "--json" in data["error"]["message"]
 
@@ -509,7 +512,7 @@ def test_the_json_backup_dry_run_does_not_need_the_backup_folder(home, capsys):
     data, code = run_json(capsys, "backup", "--dry-run")
 
     assert code == 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
     assert data["actions"][0]["action"] == "copy"
     assert not (home / "storage" / "Mackeep").exists()
 
@@ -529,7 +532,7 @@ def test_the_json_restore_dry_run_does_not_need_the_backup_folder(home, capsys):
     data, code = run_json(capsys, "restore", "--dry-run")
 
     assert code == 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
     assert data["actions"][0]["action"] == "skip_missing"
 
 
@@ -570,7 +573,7 @@ def test_the_json_dry_run_detail_files(home, capsys):
     data, code = run_json(capsys, "backup", "--dry-run", "--detail", "files")
 
     assert code == 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
 
     copied = [a for a in data["actions"] if a["action"] == "copy"]
     assert len(copied) == THREE_ACTIONS

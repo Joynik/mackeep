@@ -105,4 +105,36 @@ final class MackeepDesktopUITests: XCTestCase {
                 || checkbox.label.contains("Sync")
         )
     }
+
+    func testTheSettingsShowOneFolderForTheApplicationsOfTheUser() throws {
+        try startTheApplication()
+
+        XCTAssertTrue(window.waitForExistence(timeout: 30))
+
+        // The settings are in the sidebar
+        let item: XCUIElement = window.staticTexts
+            .matching(
+                NSPredicate(
+                    format: "value == %@ OR label == %@ OR value == %@ OR label == %@",
+                    "Настройки",
+                    "Настройки",
+                    "Settings",
+                    "Settings"
+                )
+            )
+            .firstMatch
+        XCTAssertTrue(item.waitForExistence(timeout: 20))
+
+        // The click needs the application to be in front
+        application.activate()
+        item.click()
+
+        // The folder of the applications of the user is shown
+        let folders: XCUIElementQuery = window.staticTexts
+            .matching(identifier: "settings.customAppsDir")
+        XCTAssertTrue(folders.element(boundBy: 0).waitForExistence(timeout: 20))
+
+        // It is shown only once, the XDG location is not shown
+        XCTAssertEqual(folders.count, 1)
+    }
 }

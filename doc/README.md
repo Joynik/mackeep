@@ -436,10 +436,16 @@ built on top of it. Use the `--json` option, before the command:
 mackeep-cli --json list
 ```
 
-Every answer holds a `schema_version` field, currently `1`. In this mode,
+Every answer holds a `schema_version` field, currently `2`. In this mode,
 only JSON is written to `stdout`, the human-readable output is written to
 `stderr` and no question is asked: the `--force-no` option is implied,
 unless `--force` is given.
+
+The version `2` of the schema removed the fields about the legacy paths of
+Mackup, they are not used any more: `config_file_is_legacy`,
+`legacy_custom_apps_dirs` and `storage.using_legacy_directory` are gone. The
+field `custom_apps_dir` was added, it is the main directory of the custom
+applications.
 
 ### `mackeep-cli --json config`
 
@@ -447,25 +453,20 @@ Describes the configuration of Mackeep:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "version": "0.12.1",
   "config_file": "/home/user/.mackeep.cfg",
-  "config_file_is_legacy": false,
+  "custom_apps_dir": "/home/user/.mackeep",
   "custom_apps_dirs": [
     "/home/user/.mackeep",
     "/home/user/.config/mackeep/applications"
-  ],
-  "legacy_custom_apps_dirs": [
-    "/home/user/.mackup",
-    "/home/user/.config/mackup/applications"
   ],
   "storage": {
     "engine": "file_system",
     "path": "/home/user/dotfiles",
     "directory": "Mackeep",
     "resolved_backup_dir": "/home/user/dotfiles/Mackeep",
-    "exists": true,
-    "using_legacy_directory": false
+    "exists": true
   },
   "apps_to_sync": ["vim"],
   "apps_to_ignore": [],
@@ -480,7 +481,7 @@ Describes the configuration of Mackeep:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "name": "vscode",
   "display_name": "VS Code",
   "source": "custom",
@@ -513,7 +514,7 @@ With `--dry-run`, the operations that would be done are described:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "actions": [
     {
       "app": "vscode",
@@ -558,7 +559,7 @@ the config file it comes from:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "app": "vscode",
   "action": "skip_excluded",
   "src": "/home/user/Library/Application Support/Code/User/cache",
@@ -581,7 +582,7 @@ limit, and the summary is always computed on the whole plan:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "actions": [],
   "summary": {
     "apps": ["vscode"],
@@ -599,9 +600,9 @@ Without `--dry-run`, the operations are streamed, one JSON document per
 line, so a front-end can show the progress:
 
 ```json
-{"schema_version": 1, "event": "start", "app": "vscode", "action": "backup"}
-{"schema_version": 1, "event": "file", "app": "vscode", "action": "copy", "src": "...", "dst": "...", "size_bytes": 4096}
-{"schema_version": 1, "event": "done", "app": "vscode", "action": "backup", "files": 1, "bytes": 4096, "skipped": 0}
+{"schema_version": 2, "event": "start", "app": "vscode", "action": "backup"}
+{"schema_version": 2, "event": "file", "app": "vscode", "action": "copy", "src": "...", "dst": "...", "size_bytes": 4096}
+{"schema_version": 2, "event": "done", "app": "vscode", "action": "backup", "files": 1, "bytes": 4096, "skipped": 0}
 ```
 
 ### The errors
@@ -611,7 +612,7 @@ written as a JSON document:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "error": {"code": "unsupported_application", "message": "Unsupported application: nope"}
 }
 ```
@@ -641,28 +642,33 @@ The custom application configs are read from:
 
 1. `~/.mackeep/`
 2. `$XDG_CONFIG_HOME/mackeep/applications/`
-3. `~/.mackup/` (legacy)
-4. `$XDG_CONFIG_HOME/mackup/applications/` (legacy)
 
-An application of a Mackeep directory wins over the legacy one with the
-same name. The legacy one is then ignored, without any warning.
+The legacy directories of Mackup are not read any more. The custom
+applications they hold are ignored, and Mackeep warns about them once, so
+they can be migrated with `mackeep-cli migrate`.
+
+An application of the first directory wins over the one of the second, when
+they have the same name.
 
 ### The storage folder
 
 When the config file does not set a `directory`, the `Mackeep` folder of
-the storage is used. The legacy `Mackup` folder is used instead when it
-exists and the `Mackeep` one does not. A `directory` that is explicitly
-set in the config file is never replaced.
+the storage is used. A `directory` that is explicitly set in the config file
+is never replaced.
+
+The legacy `Mackup` folder is not used any more. When the backup of Mackup
+is still there, the `mackeep-cli migrate` command writes its name in the new
+config file, so the backup stays in the same place.
 
 ### The warnings
 
-When a legacy path is used, Mackeep warns about it once, in `stderr`, and
+When a legacy path is found, Mackeep warns about it once, in `stderr`, and
 tells how to migrate. The `stdout` stays clean, so the output of `--json`
 can be piped.
 
-A custom application config of Mackup is only warned about when it is
-really used: a file that is shadowed by a new one with the same name is
-not used at all, and a file that is the same as the default config of the
+A legacy custom application config is only warned about when it has to be
+migrated: a file that is shadowed by a new one with the same name is not
+used at all, and a file that is the same as the default config of the
 application does not have to be copied.
 
 ### `mackeep-cli migrate`
@@ -698,7 +704,7 @@ With `--json`, the plan and the result are written as JSON:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "actions": [
     {
       "action": "copy",

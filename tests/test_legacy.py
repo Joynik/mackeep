@@ -14,6 +14,9 @@ from mackeep.appsdb import ApplicationsDatabase
 from mackeep.config import Config
 from mackeep_cli.main import main
 
+# The version of the schema of the JSON answers
+SCHEMA_VERSION = 2
+
 # The content of a config file of an application
 APP_CONFIG = (
     "[application]\n"
@@ -97,7 +100,6 @@ def test_the_new_config_file_has_the_priority(home):
     config = Config()
 
     assert config.config_path == str(home / ".mackeep.cfg")
-    assert config.is_legacy is False
 
 
 def test_the_xdg_config_file_is_used(home):
@@ -109,7 +111,6 @@ def test_the_xdg_config_file_is_used(home):
     assert config.config_path == str(
         home / ".config" / "mackeep" / "mackeep.cfg",
     )
-    assert config.is_legacy is False
 
 
 def test_the_legacy_config_file_is_not_used(home):
@@ -121,7 +122,6 @@ def test_the_legacy_config_file_is_not_used(home):
     with contextlib.suppress(SystemExit):
         config = Config()
         assert config.config_path == str(home / ".mackeep.cfg")
-        assert config.is_legacy is False
 
     # The new config file is created with the default backup folder
     assert (home / ".mackeep.cfg").is_file()
@@ -135,7 +135,6 @@ def test_the_legacy_xdg_config_file_is_not_used(home):
     with contextlib.suppress(SystemExit):
         config = Config()
         assert config.config_path == str(home / ".mackeep.cfg")
-        assert config.is_legacy is False
 
     assert (home / ".mackeep.cfg").is_file()
 
@@ -148,7 +147,6 @@ def test_the_config_file_option_has_the_priority(home):
     config = Config("custom.cfg")
 
     assert config.config_path == str(home / "custom.cfg")
-    assert config.is_legacy is False
 
 
 def test_the_mackeep_apps_dir_has_the_priority(home):
@@ -163,15 +161,13 @@ def test_the_mackeep_apps_dir_has_the_priority(home):
     )
 
 
-def test_the_legacy_apps_dir_is_read(home):
-    """The legacy applications directory is read when it is the only one."""
+def test_the_legacy_apps_dir_is_not_read(home):
+    """The legacy applications directory is not read any more."""
     write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
 
     db = ApplicationsDatabase()
 
-    assert db.get_config_file("test-app") == str(
-        home / ".mackup" / "test-app.cfg",
-    )
+    assert "test-app" not in db.get_app_names()
 
 
 def test_the_xdg_apps_dir_has_the_priority_over_the_legacy_one(home):
@@ -189,16 +185,15 @@ def test_the_xdg_apps_dir_has_the_priority_over_the_legacy_one(home):
     )
 
 
-def test_the_legacy_storage_folder_is_used(home):
-    """The legacy storage folder is used when the new one does not exist."""
+def test_the_legacy_storage_folder_is_not_used(home):
+    """The legacy storage folder is not used any more."""
     write_config(home, home / ".mackeep.cfg")
     (home / "storage" / "Mackup").mkdir(parents=True)
 
     config = Config()
 
-    assert config.directory == "Mackup"
-    assert config.using_legacy_directory is True
-    assert config.fullpath == str(home / "storage" / "Mackup")
+    assert config.directory == "Mackeep"
+    assert config.fullpath == str(home / "storage" / "Mackeep")
 
 
 def test_the_new_storage_folder_has_the_priority(home):
@@ -210,11 +205,10 @@ def test_the_new_storage_folder_has_the_priority(home):
     config = Config()
 
     assert config.directory == "Mackeep"
-    assert config.using_legacy_directory is False
 
 
 def test_an_explicit_storage_folder_is_never_replaced(home):
-    """An explicit directory is never replaced by the legacy one."""
+    """An explicit directory is never replaced."""
     write_config(
         home,
         home / ".mackeep.cfg",
@@ -228,7 +222,6 @@ def test_an_explicit_storage_folder_is_never_replaced(home):
     config = Config()
 
     assert config.directory == "Other"
-    assert config.using_legacy_directory is False
 
 
 def test_a_warning_is_printed_once(home, capsys):
@@ -253,8 +246,8 @@ def test_no_warning_without_the_legacy_paths(home, capsys):
     assert "legacy" not in captured.err.lower()
 
 
-def test_the_json_config_holds_the_legacy_paths(home, capsys):
-    """The JSON config tells which legacy paths are used."""
+def test_the_json_config_holds_the_custom_apps_dirs(home, capsys):
+    """The JSON config tells where the custom applications are read."""
     write_config(home, home / ".mackeep.cfg")
     write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
     (home / "storage" / "Mackup").mkdir(parents=True)
@@ -262,24 +255,27 @@ def test_the_json_config_holds_the_legacy_paths(home, capsys):
     data, code = run_json(capsys, "config")
 
     assert code == 0
-    assert data["schema_version"] == 1
-    assert data["config_file_is_legacy"] is False
-    assert data["legacy_custom_apps_dirs"] == [
-        str(home / ".mackup"),
-        str(home / ".config" / "mackup" / "applications"),
+    assert data["schema_version"] == SCHEMA_VERSION
+    assert data["custom_apps_dir"] == str(home / ".mackeep")
+    assert data["custom_apps_dirs"] == [
+        str(home / ".mackeep"),
+        str(home / ".config" / "mackeep" / "applications"),
     ]
-    assert data["storage"]["using_legacy_directory"] is True
+    # The legacy paths are not used any more, they are not reported
+    assert "config_file_is_legacy" not in data
+    assert "legacy_custom_apps_dirs" not in data
+    assert "using_legacy_directory" not in data["storage"]
 
 
 def test_the_json_config_of_a_new_setup(home, capsys):
-    """The JSON config of a new setup does not use the legacy paths."""
+    """The JSON config of a new setup is the same."""
     write_config(home, home / ".mackeep.cfg")
 
     data, code = run_json(capsys, "config")
 
     assert code == 0
-    assert data["config_file_is_legacy"] is False
-    assert data["storage"]["using_legacy_directory"] is False
+    assert data["custom_apps_dir"] == str(home / ".mackeep")
+    assert data["storage"]["directory"] == "Mackeep"
 
 
 def test_migrate_copies_the_legacy_files(home, capsys):
@@ -290,7 +286,7 @@ def test_migrate_copies_the_legacy_files(home, capsys):
     data, code = run_json(capsys, "migrate")
 
     assert code == 0
-    assert data["schema_version"] == 1
+    assert data["schema_version"] == SCHEMA_VERSION
     assert data["summary"]["copied"] == TWO_FILES
     assert data["summary"]["dry_run"] is False
 
@@ -408,15 +404,16 @@ def test_an_identical_legacy_app_is_not_warned_about(home, capsys):
     assert "legacy" not in captured.err.lower()
 
 
-def test_a_used_legacy_app_is_warned_about(home, capsys):
-    """A legacy application config that is used is warned about."""
+def test_a_legacy_app_is_warned_about(home, capsys):
+    """A legacy application config that is not read any more is warned about."""
     write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
 
     write_config(home, home / ".mackeep.cfg")
     run("--json", "config")
     captured = capsys.readouterr()
 
-    assert "test-app.cfg" in captured.err
+    assert str(home / ".mackup") in captured.err
+    assert str(home / ".mackeep") in captured.err
 
 
 def test_the_warnings_go_to_stderr(home, capsys):
@@ -429,7 +426,7 @@ def test_the_warnings_go_to_stderr(home, capsys):
 
     assert "Warning:" in captured.err
     assert "Warning:" not in captured.out
-    assert json.loads(captured.out)["schema_version"] == 1
+    assert json.loads(captured.out)["schema_version"] == SCHEMA_VERSION
 
 
 def test_migrate_writes_the_storage_directory(home, capsys):

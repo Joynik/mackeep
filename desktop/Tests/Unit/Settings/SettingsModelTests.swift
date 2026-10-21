@@ -52,19 +52,17 @@ final class SettingsModelTests: XCTestCase {
     ) throws -> MackeepCommand {
         try makeTool(config: """
         {
-          "schema_version": 1,
+          "schema_version": 2,
           "version": "0.15.1",
           "config_file": "/Users/user/.mackeep.cfg",
-          "config_file_is_legacy": false,
+          "custom_apps_dir": "/Users/user/.mackeep",
           "custom_apps_dirs": ["/Users/user/.mackeep"],
-          "legacy_custom_apps_dirs": [],
           "storage": {
             "engine": "\(engine)",
             "path": "\(path)",
             "directory": "\(directory)",
             "resolved_backup_dir": "\(path)/\(directory)",
-            "exists": true,
-            "using_legacy_directory": false
+            "exists": true
           },
           "apps_to_sync": [],
           "apps_to_ignore": [],
@@ -93,7 +91,35 @@ final class SettingsModelTests: XCTestCase {
         XCTAssertEqual(model.storagePath, "/Users/user/dotfiles")
         XCTAssertEqual(model.globalExclude, ["**/.DS_Store"])
         XCTAssertEqual(model.configFilePath, "/Users/user/.mackeep.cfg")
-        XCTAssertEqual(model.customAppsDirs, ["/Users/user/.mackeep"])
+        XCTAssertEqual(model.customAppsDir, "/Users/user/.mackeep")
+    }
+
+    func testTheCustomAppsDirIsTakenFromTheOldAnswer() async throws {
+        let command: MackeepCommand = try makeTool(config: """
+        {
+          "schema_version": 1,
+          "version": "0.15.1",
+          "config_file": "/Users/user/.mackeep.cfg",
+          "custom_apps_dirs": ["/Users/user/.mackeep"],
+          "storage": {
+            "engine": "file_system",
+            "path": "/Users/user/dotfiles",
+            "directory": "Mackeep",
+            "resolved_backup_dir": "/Users/user/dotfiles/Mackeep",
+            "exists": true
+          },
+          "apps_to_sync": [],
+          "apps_to_ignore": [],
+          "global_exclude": [],
+          "global_xdg_exclude": []
+        }
+        """)
+        let model: SettingsModel = SettingsModel(command: command, capabilities: nil)
+
+        model.load()
+        await waitForTheSettings(model)
+
+        XCTAssertEqual(model.customAppsDir, "/Users/user/.mackeep")
     }
 
     func testTheBackupFolderIsTakenFromTheTool() async throws {
