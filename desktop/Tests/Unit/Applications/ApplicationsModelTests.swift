@@ -47,28 +47,30 @@ final class ApplicationsModelTests: XCTestCase {
         return model
     }
 
-    func testTheListIsSortedByName() {
+    func testTheListHoldsTheApplicationsOfTheUserAndTheAddedOnes() {
         let model: ApplicationsModel = model(
             applications: [
+                application(name: "vim"),
+                application(name: "emacs", source: .custom),
                 application(name: "zsh"),
-                application(name: "alacritty"),
-            ]
+            ],
+            sync: ["vim"]
         )
 
         XCTAssertEqual(
-            model.visibleApplications.map(\.name),
-            ["alacritty", "zsh"]
+            model.listedApplications.map(\.name),
+            ["emacs", "vim"]
         )
     }
 
     func testTheListIsSortedByDisplayName() {
         let model: ApplicationsModel = model(
             applications: [
-                application(name: "b", displayName: "Alpha"),
-                application(name: "a", displayName: "Zulu"),
-            ]
+                application(name: "b", displayName: "Zulu"),
+                application(name: "a", displayName: "Alpha"),
+            ],
+            sync: ["a", "b"]
         )
-        model.sort = .displayName
 
         XCTAssertEqual(
             model.visibleApplications.map(\.displayName),
@@ -81,7 +83,8 @@ final class ApplicationsModelTests: XCTestCase {
             applications: [
                 application(name: "vim"),
                 application(name: "emacs"),
-            ]
+            ],
+            sync: ["vim", "emacs"]
         )
         model.searchText = "vi"
 
@@ -99,14 +102,70 @@ final class ApplicationsModelTests: XCTestCase {
             applications: [
                 application(name: "vim"),
                 application(name: "mine", source: .custom),
-            ]
+            ],
+            sync: ["vim"]
         )
         model.filter = .custom
 
         XCTAssertEqual(model.visibleApplications.map(\.name), ["mine"])
     }
 
-    func testTheFilterKeepsTheInstalledApplications() {
+    func testTheFilterKeepsTheApplicationsOfTheLibrary() {
+        let model: ApplicationsModel = model(
+            applications: [
+                application(name: "vim"),
+                application(name: "mine", source: .custom),
+            ],
+            sync: ["vim"]
+        )
+        model.filter = .library
+
+        XCTAssertEqual(model.visibleApplications.map(\.name), ["vim"])
+    }
+
+    func testTheFilterKeepsTheEnabledApplications() {
+        let model: ApplicationsModel = model(
+            applications: [
+                application(name: "vim"),
+                application(name: "emacs"),
+            ],
+            sync: ["vim"],
+            ignore: ["emacs"]
+        )
+        model.filter = .enabled
+
+        XCTAssertEqual(model.visibleApplications.map(\.name), ["vim"])
+    }
+
+    func testTheFilterKeepsTheDisabledApplications() {
+        let model: ApplicationsModel = model(
+            applications: [
+                application(name: "vim"),
+                application(name: "emacs"),
+            ],
+            sync: ["vim"],
+            ignore: ["emacs"]
+        )
+        model.filter = .disabled
+
+        XCTAssertEqual(model.visibleApplications.map(\.name), ["emacs"])
+    }
+
+    func testTheCheckedApplicationsAreTheOnlyOnesBackedUp() {
+        let model: ApplicationsModel = model(
+            applications: [
+                application(name: "vim"),
+                application(name: "emacs"),
+            ],
+            sync: ["vim"],
+            ignore: ["emacs"]
+        )
+
+        XCTAssertTrue(model.isEnabled(model.applications[0]))
+        XCTAssertFalse(model.isEnabled(model.applications[1]))
+    }
+
+    func testTheInstalledApplicationsAreKnown() {
         let model: ApplicationsModel = model(
             applications: [
                 application(
@@ -116,48 +175,50 @@ final class ApplicationsModelTests: XCTestCase {
                 application(name: "emacs"),
             ]
         )
-        model.filter = .installed
 
-        XCTAssertEqual(model.visibleApplications.map(\.name), ["vim"])
+        XCTAssertTrue(model.isInstalled(model.applications[0]))
+        XCTAssertFalse(model.isInstalled(model.applications[1]))
     }
 
-    func testTheExcludedApplicationsAreNotSynced() {
+    func testTheApplicationsOfTheLibraryAreNotInTheList() {
         let model: ApplicationsModel = model(
             applications: [
                 application(name: "vim"),
-                application(name: "emacs"),
-            ],
-            ignore: ["emacs"]
+            ]
         )
 
-        XCTAssertTrue(model.isSynced(model.applications[0]))
-        XCTAssertFalse(model.isSynced(model.applications[1]))
+        XCTAssertFalse(model.isListed(model.applications[0]))
+        XCTAssertTrue(model.visibleApplications.isEmpty)
     }
 
-    func testTheCheckedApplicationsAreTheOnlyOnesSynced() {
-        let model: ApplicationsModel = model(
-            applications: [
-                application(name: "vim"),
-                application(name: "emacs"),
-            ],
-            sync: ["vim"]
+    func testTheApplicationOfTheLibraryIsAddedToTheList() throws {
+        let url: URL = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("mackeep-tests-\(UUID().uuidString)")
+            .appendingPathComponent(".mackeep.cfg")
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(),
+            withIntermediateDirectories: true
         )
-        model.mode = .onlyChecked
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
 
-        XCTAssertTrue(model.isSynced(model.applications[0]))
-        XCTAssertFalse(model.isSynced(model.applications[1]))
-    }
-
-    func testTheFilterKeepsTheSyncedApplications() {
-        let model: ApplicationsModel = model(
-            applications: [
-                application(name: "vim"),
-                application(name: "emacs"),
-            ],
-            ignore: ["emacs"]
+        try "[applications_to_sync]\n\n[applications_to_ignore]\n".write(
+            to: url,
+            atomically: true,
+            encoding: .utf8
         )
-        model.filter = .synced
 
-        XCTAssertEqual(model.visibleApplications.map(\.name), ["vim"])
+        let model: ApplicationsModel = ApplicationsModel(command: nil)
+        model.setConfig(MainConfig(url: url, document: try INIFile.load(from: url)))
+        model.setApplications([application(name: "vim")])
+
+        model.addToTheList(model.applications[0])
+
+        XCTAssertTrue(model.isListed(model.applications[0]))
+        XCTAssertTrue(model.isEnabled(model.applications[0]))
+
+        // The config file holds the application
+        let saved: MainConfig = try MainConfig.load(from: url)
+        XCTAssertEqual(saved.appsToSync, ["vim"])
+        XCTAssertEqual(saved.appsToIgnore, [])
     }
 }

@@ -279,6 +279,18 @@ Symlinks in home: ~/.config → ~/Dropbox/Mackeep/.config
 - **Simple format**: INI-style configuration files
 - **Override capability**: User configs override built-in ones
 
+### 3. The Applications of the User
+
+- **The list of the user**: the desktop application shows the applications
+  of the user and the ones that were added from the library, nothing else
+- **The library**: the applications of the database are a catalog, they are
+  added to the list of the user when they are needed
+- **The applications of the library are read only**: they have to be copied
+  to be changed
+- **The checkbox is manual**: the applications that are checked are the ones
+  that are backed up, the list of the applications to sync is the one that
+  tells what is backed up
+
 ### 3. Storage Abstraction
 
 - **Multiple backends**: Dropbox, Google Drive, iCloud, file system

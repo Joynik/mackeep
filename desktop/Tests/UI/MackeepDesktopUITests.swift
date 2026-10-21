@@ -82,34 +82,60 @@ final class MackeepDesktopUITests: XCTestCase {
         return folder.appendingPathComponent("Mackeep.app")
     }
 
+    /// Wait for the application to be in front.
+    ///
+    /// The clicks need it, another application can take the focus.
+    private func waitForTheApplication() {
+        let deadline: Date = Date().addingTimeInterval(10)
+        while Date() < deadline {
+            if application.state == .runningForeground { break }
+            application.activate()
+            usleep(200_000)
+        }
+
+        // The application is raised above the other ones, the clicks need it
+        if let running: NSRunningApplication = NSRunningApplication
+            .runningApplications(withBundleIdentifier: Self.identifier)
+            .first
+        {
+            running.activate(options: [.activateAllWindows])
+        }
+    }
+
     func testTheWindowOpens() throws {
         try startTheApplication()
 
         XCTAssertTrue(window.waitForExistence(timeout: 30))
     }
 
-    func testTheApplicationsAreListed() throws {
+    func testTheLibraryAndTheSettings() throws {
         try startTheApplication()
 
         XCTAssertTrue(window.waitForExistence(timeout: 30))
 
-        // The applications of Mackeep are listed
-        let list: XCUIElement = window.outlines.element(boundBy: 1)
-        XCTAssertTrue(list.waitForExistence(timeout: 20))
+        // The library is opened with the button of the toolbar
+        let button: XCUIElement = window.buttons
+            .matching(identifier: "applications.library.button")
+            .firstMatch
+        XCTAssertTrue(button.waitForExistence(timeout: 20))
+        waitForTheApplication()
+        button.click()
 
-        // The applications of the database of Mackeep are there
-        let checkbox: XCUIElement = list.descendants(matching: .checkBox).firstMatch
-        XCTAssertTrue(checkbox.waitForExistence(timeout: 20))
-        XCTAssertTrue(
-            checkbox.label.contains("Синхронизировать")
-                || checkbox.label.contains("Sync")
-        )
-    }
+        // The applications of Mackeep are in the library
+        let title: XCUIElementQuery = window.descendants(
+            matching: .any
+        ).matching(identifier: "applications.library.title")
+        XCTAssertTrue(title.element(boundBy: 0).waitForExistence(timeout: 20))
 
-    func testTheSettingsShowOneFolderForTheApplicationsOfTheUser() throws {
-        try startTheApplication()
+        // The library is closed with the button
+        let close: XCUIElement = window.buttons
+            .matching(identifier: "applications.library.close")
+            .firstMatch
+        XCTAssertTrue(close.waitForExistence(timeout: 20))
+        waitForTheApplication()
+        close.click()
 
-        XCTAssertTrue(window.waitForExistence(timeout: 30))
+        XCTAssertTrue(title.element(boundBy: 0).waitForNonExistence(timeout: 20))
 
         // The settings are in the sidebar
         let item: XCUIElement = window.staticTexts
@@ -126,7 +152,7 @@ final class MackeepDesktopUITests: XCTestCase {
         XCTAssertTrue(item.waitForExistence(timeout: 20))
 
         // The click needs the application to be in front
-        application.activate()
+        waitForTheApplication()
         item.click()
 
         // The folder of the applications of the user is shown

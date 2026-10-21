@@ -160,6 +160,10 @@ ssh
 adium
 ```
 
+When the section is there, only the applications of it are backed up, even
+when it is empty. Without the section, every application of the database is
+backed up.
+
 Use `mackeep-cli list` to get a list of valid application names. Don't use fancy
 names (with spaces) here.
 

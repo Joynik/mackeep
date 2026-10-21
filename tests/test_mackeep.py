@@ -103,3 +103,38 @@ def test_the_ignored_applications_are_not_backed_up(home):
     mackeep = Mackeep()
 
     assert "test-app" not in mackeep.get_apps_to_backup()
+
+
+def test_every_application_is_backed_up_without_a_list(home):
+    """Every application is backed up when the config has no list."""
+    write_config(home, home / ".mackeep.cfg")
+
+    mackeep = Mackeep()
+
+    assert "zsh" in mackeep.get_apps_to_backup()
+
+
+def test_only_the_applications_of_the_list_are_backed_up(home):
+    """Only the applications of the list are backed up when it is there."""
+    write_config(
+        home,
+        home / ".mackeep.cfg",
+        MAIN_CONFIG + "\n[applications_to_sync]\nzsh\n",
+    )
+
+    mackeep = Mackeep()
+
+    assert mackeep.get_apps_to_backup() == {"zsh"}
+
+
+def test_nothing_is_backed_up_with_an_empty_list(home):
+    """Nothing is backed up when the list of the applications is empty."""
+    write_config(
+        home,
+        home / ".mackeep.cfg",
+        MAIN_CONFIG + "\n[applications_to_sync]\n",
+    )
+
+    mackeep = Mackeep()
+
+    assert mackeep.get_apps_to_backup() == set()

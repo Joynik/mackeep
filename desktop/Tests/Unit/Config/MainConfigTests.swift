@@ -72,7 +72,7 @@ final class MainConfigTests: XCTestCase {
         let url: URL = try makeConfig("[storage]\nengine = dropbox\n")
         let config: MainConfig = try MainConfig.load(from: url)
 
-        config.setSyncedApplications(["slack"], mode: .allExceptUnchecked)
+        config.setSyncedApplications([], ignored: ["slack"])
         try config.save()
 
         let saved: MainConfig = try MainConfig.load(from: url)
@@ -86,12 +86,27 @@ final class MainConfigTests: XCTestCase {
         )
         let config: MainConfig = try MainConfig.load(from: url)
 
-        config.setSyncedApplications(["vim"], mode: .onlyChecked)
+        config.setSyncedApplications(["vim"], ignored: [])
         try config.save()
 
         let saved: MainConfig = try MainConfig.load(from: url)
         XCTAssertEqual(saved.appsToSync, ["vim"])
         XCTAssertEqual(saved.appsToIgnore, [])
+    }
+
+    func testTheApplicationsAreWrittenInAnEmptySection() throws {
+        let url: URL = try makeConfig(
+            "[storage]\nengine = dropbox\n\n[applications_to_sync]\n\n"
+                + "[applications_to_ignore]\nslack\n"
+        )
+        let config: MainConfig = try MainConfig.load(from: url)
+
+        config.setSyncedApplications(["vim"], ignored: ["slack"])
+        try config.save()
+
+        let saved: MainConfig = try MainConfig.load(from: url)
+        XCTAssertEqual(saved.appsToSync, ["vim"])
+        XCTAssertEqual(saved.appsToIgnore, ["slack"])
     }
 
     func testTheCommentsAreKeptWhenTheFileIsWritten() throws {
@@ -107,7 +122,7 @@ final class MainConfigTests: XCTestCase {
         let url: URL = try makeConfig(text)
         let config: MainConfig = try MainConfig.load(from: url)
 
-        config.setSyncedApplications(["vim", "emacs"], mode: .onlyChecked)
+        config.setSyncedApplications(["vim", "emacs"], ignored: [])
         try config.save()
 
         let saved: String = try String(contentsOf: url, encoding: .utf8)
@@ -130,7 +145,7 @@ final class MainConfigTests: XCTestCase {
     func testThePreviousVersionIsKept() throws {
         let url: URL = try makeConfig("[storage]\nengine = dropbox\n")
         let config: MainConfig = try MainConfig.load(from: url)
-        config.setSyncedApplications(["vim"], mode: .onlyChecked)
+        config.setSyncedApplications(["vim"], ignored: [])
         try config.save()
 
         let backup: URL = url.appendingPathExtension("bak")

@@ -129,12 +129,12 @@ final class ApplicationEditorModelTests: XCTestCase {
             document: try INIFile.load(from: directory.appendingPathComponent("test-app.cfg")),
             mainConfig: config
         )
-        model.syncMode = .onlyChecked
 
         try model.save()
 
         let saved: MainConfig = try MainConfig.load(from: configURL)
         XCTAssertEqual(saved.appsToSync, ["test-app"])
+        XCTAssertEqual(saved.appsToIgnore, [])
     }
 
     func testTheUndoGivesThePreviousVersion() throws {
