@@ -423,6 +423,20 @@ class Config:
 
         return apps_to_sync
 
+    @property
+    def apps_to_sync_is_explicit(self) -> bool:
+        """
+        Whether the config file holds the list of the applications to backup.
+
+        When the list is there, only the applications of it are backed up,
+        even when it is empty. When it is not there, every application of
+        the database is backed up.
+
+        Returns:
+            bool
+        """
+        return self._parser.has_section("applications_to_sync")
+
     def _parse_exclusions(self, section_title: str) -> list[str]:
         """
         Parse a global exclusion section in the config.

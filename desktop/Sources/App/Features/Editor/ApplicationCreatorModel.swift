@@ -19,12 +19,18 @@ final class ApplicationCreatorModel {
     /// The directory where the config files of the user are.
     let directory: URL
 
+    /// The application that is copied, when the creation is a copy.
+    let source: MackeepApplication?
+
     /// Create the model.
     ///
-    /// - Parameter directory: The directory where the config files of the user
-    ///   are.
-    init(directory: URL) {
+    /// - Parameters:
+    ///   - directory: The directory where the config files of the user are.
+    ///   - source: The application that is copied, when the creation is a
+    ///     copy of an existing application.
+    init(directory: URL, source: MackeepApplication? = nil) {
         self.directory = directory
+        self.source = source
     }
 
     /// Whether the application can be created.
@@ -66,10 +72,19 @@ final class ApplicationCreatorModel {
 
     /// Create the config file of the application.
     ///
+    /// When the application is a copy of another one, the config file of
+    /// the other one is copied, with the new name.
+    ///
     /// - Returns: The identifier of the application.
     @discardableResult
     func create() throws -> String {
         let identifier: String = name.trimmingCharacters(in: .whitespaces)
+
+        if let source {
+            try copy(of: source, to: identifier)
+            return identifier
+        }
+
         var document: INIDocument = INIDocument()
 
         document.setValue(
@@ -84,5 +99,24 @@ final class ApplicationCreatorModel {
         let url: URL = directory.appendingPathComponent("\(identifier).cfg")
         try INIFile.save(document, to: url)
         return identifier
+    }
+
+    /// Copy the config file of an application.
+    ///
+    /// - Parameters:
+    ///   - source: The application that is copied.
+    ///   - identifier: The identifier of the copy.
+    private func copy(of source: MackeepApplication, to identifier: String) throws {
+        var document: INIDocument = try INIFile.load(
+            from: URL(fileURLWithPath: source.cfgPath)
+        )
+        document.setValue(
+            displayName.isEmpty ? identifier : displayName,
+            forKey: "name",
+            inSection: "application"
+        )
+
+        let url: URL = directory.appendingPathComponent("\(identifier).cfg")
+        try INIFile.save(document, to: url)
     }
 }

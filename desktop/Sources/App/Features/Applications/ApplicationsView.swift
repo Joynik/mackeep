@@ -17,6 +17,9 @@ struct ApplicationsView: View {
     /// The model of the creation.
     @State private var creator: ApplicationCreatorModel?
 
+    /// The application that is deleted, when the confirmation is shown.
+    @State private var applicationToDelete: MackeepApplication?
+
     var body: some View {
         VStack(spacing: 0) {
             toolbar
@@ -43,6 +46,28 @@ struct ApplicationsView: View {
         .sheet(isPresented: $showsLibrary) {
             LibraryView(model: model)
         }
+        .onChange(of: model.copyRequest) { _, application in
+            guard let application: MackeepApplication = application else { return }
+            openTheCopy(of: application)
+        }
+        .confirmationDialog(
+            L10n.string("applications.delete.confirm", model.selectedApplication?.displayName ?? ""),
+            isPresented: Binding(
+                get: { applicationToDelete != nil },
+                set: { if !$0 { applicationToDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(L10n.string("applications.delete"), role: .destructive) {
+                if let application: MackeepApplication = applicationToDelete {
+                    model.delete(application)
+                }
+                applicationToDelete = nil
+            }
+            Button(L10n.string("editor.create.cancel"), role: .cancel) {
+                applicationToDelete = nil
+            }
+        }
     }
 
     /// The tools of the list.
@@ -62,34 +87,23 @@ struct ApplicationsView: View {
                     }
                 }
                 .pickerStyle(.menu)
-                .frame(width: 140)
+                .frame(width: 200)
                 .accessibilityLabel(L10n.string("applications.filter.label"))
-
-                Picker("", selection: $model.sort) {
-                    ForEach(ApplicationSort.allCases) { sort in
-                        Text(sort.title).tag(sort)
-                    }
-                }
-                .pickerStyle(.menu)
-                .frame(width: 140)
-                .accessibilityLabel(L10n.string("applications.sort.label"))
             }
 
             HStack(spacing: 8) {
                 Button {
                     showsLibrary = true
                 } label: {
-                    Label(
-                        L10n.string("applications.library.add"),
-                        systemImage: "tray.full"
-                    )
+                    Image(systemName: "books.vertical")
                 }
                 .help(L10n.string("applications.library.add"))
+                .accessibilityLabel(L10n.string("applications.library.add"))
+                .accessibilityIdentifier("applications.library.button")
 
                 Button {
                     creator = ApplicationCreatorModel(
-                        directory: URL(fileURLWithPath: NSHomeDirectory())
-                            .appendingPathComponent(".mackeep")
+                        directory: model.customAppsDirectory
                     )
                     showsCreator = true
                 } label: {
@@ -101,75 +115,81 @@ struct ApplicationsView: View {
                 .help(L10n.string("applications.create.add"))
 
                 Button {
-                    copyBuiltin()
+                    copySelected()
                 } label: {
                     Label(
-                        L10n.string("applications.copyBuiltin"),
+                        L10n.string("applications.copy"),
                         systemImage: "doc.on.doc"
                     )
                 }
-                .help(L10n.string("applications.copyBuiltin"))
+                .help(L10n.string("applications.copy"))
+                .disabled(model.selectedApplication == nil)
 
                 Spacer(minLength: 8)
-
-                Picker("", selection: $model.mode) {
-                    Text(L10n.string("applications.mode.allExcept")).tag(SyncMode.allExceptUnchecked)
-                    Text(L10n.string("applications.mode.onlyChecked")).tag(SyncMode.onlyChecked)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .accessibilityLabel(L10n.string("applications.mode.label"))
             }
         }
         .padding(12)
     }
 
-    /// Copy the config file of a built-in application, so it can be changed.
-    private func copyBuiltin() {
-        guard
-            let application: MackeepApplication = model.selectedApplication,
-            application.source == .builtin
-        else {
+    /// Copy the selected application, so it can be changed.
+    private func copySelected() {
+        guard let application: MackeepApplication = model.selectedApplication else {
             return
         }
-        do {
-            let directory: URL = URL(fileURLWithPath: NSHomeDirectory())
-                .appendingPathComponent(".mackeep")
-            try FileManager.default.createDirectory(
-                at: directory,
-                withIntermediateDirectories: true
-            )
-            let source: URL = URL(fileURLWithPath: application.cfgPath)
-            let destination: URL = directory.appendingPathComponent(
-                "\(application.name).cfg"
-            )
-            guard !FileManager.default.fileExists(atPath: destination.path) else {
-                return
-            }
-            try FileManager.default.copyItem(at: source, to: destination)
-            model.load()
-            openWindow(value: application.name)
-        } catch {
-            model.presentedError = AppError(
-                title: L10n.string("error.save.title"),
-                message: "\(error)"
-            )
-        }
+        openTheCopy(of: application)
+    }
+
+    /// Open the sheet that copies an application.
+    ///
+    /// - Parameter application: The application that is copied.
+    private func openTheCopy(of application: MackeepApplication) {
+        let copy: ApplicationCreatorModel = ApplicationCreatorModel(
+            directory: model.customAppsDirectory,
+            source: application
+        )
+        copy.name = "\(application.name)-copy"
+        copy.displayName = "\(application.displayName) (copy)"
+        creator = copy
+        showsCreator = true
     }
 
     /// The list of the applications.
     private var list: some View {
         List(selection: $model.selection) {
+            if model.visibleApplications.isEmpty {
+                ContentUnavailableView {
+                    Label {
+                        Text(L10n.string("applications.list.empty"))
+                    } icon: {
+                        Image(systemName: "square.grid.2x2")
+                    }
+                } description: {
+                    Text(L10n.string("applications.list.empty.hint"))
+                }
+                .listRowSeparator(.hidden)
+            }
+
             Section {
                 ForEach(model.visibleApplications) { application in
                     ApplicationRow(application: application, model: model)
                         .tag(application.name)
                         .onTapGesture(count: 2) {
-                            openWindow(value: application.name)
+                            edit(application)
                         }
                         .contextMenu {
-                            Button(L10n.string("applications.edit")) {
-                                openWindow(value: application.name)
+                            if application.isCustom {
+                                Button(L10n.string("applications.edit")) {
+                                    edit(application)
+                                }
+                            }
+                            Button(L10n.string("applications.copy")) {
+                                model.selection = application.name
+                                copySelected()
+                            }
+                            if application.isCustom {
+                                Button(L10n.string("applications.delete"), role: .destructive) {
+                                    applicationToDelete = application
+                                }
                             }
                         }
                 }
@@ -184,9 +204,20 @@ struct ApplicationsView: View {
         }
         .listStyle(.inset)
     }
+
+    /// Open the editor of an application.
+    ///
+    /// The applications of the library cannot be changed, they have to be
+    /// copied first.
+    ///
+    /// - Parameter application: The application.
+    private func edit(_ application: MackeepApplication) {
+        guard application.isCustom else { return }
+        openWindow(value: application.name)
+    }
 }
 
-/// The applications of the database of Mackeep that are not synced yet.
+/// The library of the applications of Mackeep.
 private struct LibraryView: View {
     /// The model of the list.
     @Bindable var model: ApplicationsModel
@@ -194,53 +225,82 @@ private struct LibraryView: View {
     /// The text of the search.
     @State private var searchText: String = ""
 
+    /// Whether only the applications installed on this Mac are shown.
+    @State private var showsInstalled = false
+
+    /// Whether the sheet is shown.
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(L10n.string("applications.library.title"))
                 .font(.title3.weight(.semibold))
+                .accessibilityIdentifier("applications.library.title")
 
-            TextField(
-                L10n.string("applications.search.placeholder"),
-                text: $searchText
-            )
-            .textFieldStyle(.roundedBorder)
+            HStack(spacing: 8) {
+                TextField(
+                    L10n.string("applications.search.placeholder"),
+                    text: $searchText
+                )
+                .textFieldStyle(.roundedBorder)
+
+                Toggle(
+                    L10n.string("filter.applications.installed"),
+                    isOn: $showsInstalled
+                )
+                .toggleStyle(.switch)
+                .fixedSize()
+            }
 
             List(available, id: \.name) { application in
                 HStack {
                     Text(application.displayName)
                     Spacer()
-                    Button(L10n.string("applications.library.add")) {
-                        add(application)
+                    if model.isInstalled(application) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.tint)
+                            .help(L10n.string("applications.installed.label"))
+                            .accessibilityLabel(
+                                L10n.string("applications.installed.label")
+                            )
                     }
-                    .buttonStyle(.link)
+                    if model.isListed(application) {
+                        Text(L10n.string("applications.library.added"))
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Button(L10n.string("applications.library.addOne")) {
+                            model.addToTheList(application)
+                        }
+                        .buttonStyle(.link)
+                        .accessibilityIdentifier("applications.library.add")
+                    }
                 }
             }
             .frame(minHeight: 320)
 
             HStack {
                 Spacer()
-                Button(L10n.string("editor.create.cancel"), role: .cancel) {}
+                Button(L10n.string("applications.library.close")) {
+                    dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
+                .accessibilityIdentifier("applications.library.close")
             }
         }
         .padding(20)
-        .frame(width: 460, height: 460)
+        .frame(width: 520, height: 480)
     }
 
-    /// The applications that can be added.
+    /// The applications of the library.
     private var available: [MackeepApplication] {
         model.applications
-            .filter { $0.source == .builtin }
-            .filter { !model.isSynced($0) }
+            .filter { !$0.isCustom }
             .filter { application in
+                if showsInstalled && !model.isInstalled(application) { return false }
                 guard !searchText.isEmpty else { return true }
                 return application.name.localizedCaseInsensitiveContains(searchText)
                     || application.displayName.localizedCaseInsensitiveContains(searchText)
             }
-    }
-
-    /// Add an application to the applications that are synced.
-    private func add(_ application: MackeepApplication) {
-        model.setSynced(true, for: application)
     }
 }
 
@@ -257,8 +317,8 @@ private struct ApplicationRow: View {
             Toggle(
                 "",
                 isOn: Binding(
-                    get: { model.isSynced(application) },
-                    set: { model.setSynced($0, for: application) }
+                    get: { model.isEnabled(application) },
+                    set: { model.setEnabled($0, for: application) }
                 )
             )
             .labelsHidden()
@@ -273,6 +333,7 @@ private struct ApplicationRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            .accessibilityIdentifier("applications.list.item")
 
             Spacer(minLength: 8)
 

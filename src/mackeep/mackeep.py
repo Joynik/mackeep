@@ -90,6 +90,10 @@ class Mackeep:
 
         It's the list of allowed apps minus the list of ignored apps.
 
+        When the config file holds the list of the applications to sync, only
+        the applications of it are backed up, even when the list is empty.
+        Otherwise every application of the database is backed up.
+
         Returns:
             (set) List of application names to back up
         """
@@ -98,7 +102,10 @@ class Mackeep:
 
         # If a list of apps to sync is specify, we only allow those
         # Or we allow every supported app by default
-        apps_to_backup: set[str] = self._config.apps_to_sync or app_db.get_app_names()
+        if self._config.apps_to_sync_is_explicit:
+            apps_to_backup: set[str] = set(self._config.apps_to_sync)
+        else:
+            apps_to_backup = app_db.get_app_names()
 
         # Remove the specified apps to ignore
         for app_name in self._config.apps_to_ignore:

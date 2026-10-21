@@ -1,68 +1,68 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "applications.copyBuiltin": {
+    "applications.copy": {
       "comment": "The string of the editor",
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die eingebaute kopieren und ändern"
+            "value": "Kopieren"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copy the built-in one and change it"
+            "value": "Copy"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copiar la integrada y modificarla"
+            "value": "Copiar"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copier celle intégrée et la modifier"
+            "value": "Copier"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copia quella integrata e modificala"
+            "value": "Copia"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "内蔵版をコピーして変更する"
+            "value": "コピー"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "기본 앱을 복사해서 수정하기"
+            "value": "복사"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copiar a integrada e alterá-la"
+            "value": "Copiar"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Скопировать встроенное и изменить"
+            "value": "Скопировать"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "复制内置的配置并修改"
+            "value": "复制"
           }
         }
       }
@@ -140,61 +140,193 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Eigene Anwendung hinzufügen"
+            "value": "Erstellen"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add your own application"
+            "value": "Create"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Añadir tu propia aplicación"
+            "value": "Crear"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajouter votre propre application"
+            "value": "Créer"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aggiungi la tua applicazione"
+            "value": "Crea"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "自分のアプリを追加する"
+            "value": "作成"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "직접 앱 추가하기"
+            "value": "만들기"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adicionar seu próprio aplicativo"
+            "value": "Criar"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Создать своё приложение"
+            "value": "Создать"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加自己的应用"
+            "value": "创建"
+          }
+        }
+      }
+    },
+    "applications.delete": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Löschen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elimina"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "삭제"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excluir"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除"
+          }
+        }
+      }
+    },
+    "applications.delete.confirm": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Anwendung %@ löschen?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete the application %@?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar la aplicación %@?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer l’application %@ ?"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminare l'applicazione %@?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリケーション%@を削除しますか？"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 애플리케이션을 삭제할까요?"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excluir o aplicativo %@?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить приложение «%@»?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除应用程序 %@ 吗？"
           }
         }
       }
@@ -727,6 +859,204 @@
         }
       }
     },
+    "applications.library.addOne": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hinzufügen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "追加"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "추가"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicionar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加"
+          }
+        }
+      }
+    },
+    "applications.library.added": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In der Liste"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In the list"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En la lista"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans la liste"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nella lista"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リストにあります"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "목록에 있음"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Na lista"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В списке"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已在列表中"
+          }
+        }
+      }
+    },
+    "applications.library.close": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schließen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fermer"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chiudi"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "閉じる"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "닫기"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fechar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закрыть"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        }
+      }
+    },
     "applications.library.title": {
       "comment": "The string of the editor",
       "extractionState": "manual",
@@ -734,259 +1064,193 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Anwendungen von Mackeep"
+            "value": "Die Bibliothek"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The applications of Mackeep"
+            "value": "Library"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Las aplicaciones de Mackeep"
+            "value": "La biblioteca"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les applications de Mackeep"
+            "value": "La bibliothèque"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le applicazioni di Mackeep"
+            "value": "La biblioteca"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mackeep のアプリ"
+            "value": "ライブラリ"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mackeep의 앱"
+            "value": "라이브러리"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Os aplicativos do Mackeep"
+            "value": "A biblioteca"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Приложения Mackeep"
+            "value": "Библиотека"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mackeep 的应用"
+            "value": "库"
           }
         }
       }
     },
-    "applications.mode.allExcept": {
-      "comment": "The string of the editor",
+    "applications.list.empty": {
+      "comment": "The string of the interface",
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alle außer den markierten"
+            "value": "Die Liste ist leer"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "All but the checked"
+            "value": "The list is empty"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Todas menos las marcadas"
+            "value": "La lista está vacía"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toutes sauf les cochées"
+            "value": "La liste est vide"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tutte tranne quelle spuntate"
+            "value": "L'elenco è vuoto"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "チェックしたものを除くすべて"
+            "value": "リストは空です"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "선택한 것을 제외한 모든 앱"
+            "value": "목록이 비어 있습니다"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Todos, menos os marcados"
+            "value": "A lista está vazia"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Все, кроме отмеченных"
+            "value": "Список пуст"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "除勾选之外的全部"
+            "value": "列表为空"
           }
         }
       }
     },
-    "applications.mode.label": {
-      "comment": "The string of the editor",
+    "applications.list.empty.hint": {
+      "comment": "The string of the interface",
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Art, wie die Anwendungen gewählt werden"
+            "value": "Füge die gewünschten Anwendungen aus der Bibliothek hinzu"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The way the applications are selected"
+            "value": "Add the applications you want from the library"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "La forma de elegir las aplicaciones"
+            "value": "Añade las aplicaciones que quieras desde la biblioteca"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La façon dont les applications sont choisies"
+            "value": "Ajoutez les applications voulues depuis la bibliothèque"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Il modo in cui le applicazioni sono scelte"
+            "value": "Aggiungi le applicazioni che vuoi dalla biblioteca"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "アプリの選び方"
+            "value": "ライブラリから必要なアプリケーションを追加してください"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "앱을 고르는 방법"
+            "value": "라이브러리에서 필요한 애플리케이션을 추가하세요"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "A forma de escolher os aplicativos"
+            "value": "Adicione os aplicativos que quiser da biblioteca"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Как выбираются приложения"
+            "value": "Добавьте нужные приложения из библиотеки"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择应用的方式"
-          }
-        }
-      }
-    },
-    "applications.mode.onlyChecked": {
-      "comment": "The string of the editor",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nur die markierten"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Only the checked"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Solo las marcadas"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seulement les cochées"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Solo quelle spuntate"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "チェックしたものだけ"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "선택한 앱만"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Somente os marcados"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Только отмеченные"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "仅勾选的"
+            "value": "从库中添加需要的应用程序"
           }
         }
       }
@@ -1255,72 +1519,6 @@
         }
       }
     },
-    "applications.sort.label": {
-      "comment": "The label of the order of the list of the applications",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reihenfolge"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Order"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Orden"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ordre"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ordine"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "並び順"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "並び順"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ordem"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Порядок"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "排序"
-          }
-        }
-      }
-    },
     "applications.source.builtin": {
       "comment": "The label of the applications of the database of Mackeep",
       "extractionState": "manual",
@@ -1460,61 +1658,61 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ synchronisieren"
+            "value": "In der Sicherung verwenden %@"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sync %@"
+            "value": "Use in the backup %@"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sincronizar %@"
+            "value": "Usar en la copia de seguridad %@"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchroniser %@"
+            "value": "Utiliser dans la sauvegarde %@"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sincronizza %@"
+            "value": "Usa nel backup %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ を同期"
+            "value": "バックアップに使用 %@"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ 동기화"
+            "value": "백업에 사용 %@"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sincronizar %@"
+            "value": "Usar no backup %@"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Синхронизировать %@"
+            "value": "Использовать в бэкапе %@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "同步 %@"
+            "value": "用于备份 %@"
           }
         }
       }
@@ -3891,6 +4089,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "取消"
+          }
+        }
+      }
+    },
+    "editor.create.copyTitle": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Anwendung kopieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy the application"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar la aplicación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier l’application"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia l'applicazione"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリケーションをコピー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "애플리케이션 복사"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar o aplicativo"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопировать приложение"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制应用程序"
           }
         }
       }
@@ -6667,68 +6931,134 @@
         }
       }
     },
-    "filter.applications.excluded": {
-      "comment": "The filter of the applications: the ones that are not synced",
+    "filter.applications.disabled": {
+      "comment": "The string of the interface",
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ausgeschlossen"
+            "value": "Deaktivierte"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Excluded"
+            "value": "Disabled"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Excluidas"
+            "value": "Desactivadas"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exclues"
+            "value": "Désactivées"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Escluse"
+            "value": "Disattivate"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "除外"
+            "value": "無効"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "제외됨"
+            "value": "사용 안 함"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Excluídos"
+            "value": "Desativados"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Исключённые"
+            "value": "Отключённые"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已排除"
+            "value": "已禁用"
+          }
+        }
+      }
+    },
+    "filter.applications.enabled": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktivierte"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enabled"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activadas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activées"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attivate"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有効"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사용"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ativados"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включённые"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已启用"
           }
         }
       }
@@ -6799,68 +7129,68 @@
         }
       }
     },
-    "filter.applications.synced": {
-      "comment": "The filter of the applications: the ones that are synced",
+    "filter.applications.library": {
+      "comment": "The string of the interface",
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisiert"
+            "value": "Bibliothek"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synced"
+            "value": "Library"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sincronizadas"
+            "value": "Biblioteca"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisées"
+            "value": "Bibliothèque"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sincronizzate"
+            "value": "Biblioteca"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "同期"
+            "value": "ライブラリ"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "동기화됨"
+            "value": "라이브러리"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sincronizados"
+            "value": "Biblioteca"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Синхронизируемые"
+            "value": "Библиотека"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已同步"
+            "value": "库"
           }
         }
       }
@@ -10755,204 +11085,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "版本"
-          }
-        }
-      }
-    },
-    "sort.applications.displayName": {
-      "comment": "The order of the applications: by name",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Name"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Name"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nombre"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nom"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nome"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "名前"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "이름"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nome"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Название"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "名称"
-          }
-        }
-      }
-    },
-    "sort.applications.name": {
-      "comment": "The order of the applications: by identifier",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kennung"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Identifier"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Identificador"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Identifiant"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Identificatore"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "識別子"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "식별자"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Identificador"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Идентификатор"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "标识符"
-          }
-        }
-      }
-    },
-    "sort.applications.size": {
-      "comment": "The order of the applications: by size",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Größe"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Size"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tamaño"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Taille"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dimensione"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "サイズ"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "크기"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tamanho"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Размер"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "大小"
           }
         }
       }

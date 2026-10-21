@@ -344,13 +344,16 @@ struct INIDocument: Equatable, Sendable {
 
     /// Replace the options of a section.
     private mutating func replaceOptions(_ options: [INIOption], inSection section: String) {
-        // Find the lines of the options of the section
+        // Find the lines of the options of the section, and the line of its
+        // header
         var indexes: [Int] = []
+        var header: Int?
         var current: String?
         for (index, line) in lines.enumerated() {
             switch line {
             case let .section(name, _):
                 current = name
+                if current == section { header = index }
             case .option:
                 if current == section { indexes.append(index) }
             case .empty(_), .comment:
@@ -359,6 +362,15 @@ struct INIDocument: Equatable, Sendable {
         }
 
         guard let first = indexes.first else {
+            if let header {
+                // The section is there, but it has no option yet, the new
+                // ones go right after its header
+                for (offset, option) in options.enumerated() {
+                    lines.insert(.option(option), at: header + 1 + offset)
+                }
+                return
+            }
+
             ensureSection(section)
             for option in options { lines.append(.option(option)) }
             return

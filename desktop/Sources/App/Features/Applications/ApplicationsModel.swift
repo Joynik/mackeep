@@ -2,20 +2,20 @@ import Foundation
 
 /// The filter of the list of the applications.
 enum ApplicationFilter: String, CaseIterable, Identifiable {
-    /// Every application.
+    /// Every application of the list.
     case all
-
-    /// The applications that are synced.
-    case synced
-
-    /// The applications that are not synced.
-    case excluded
 
     /// The applications of the user.
     case custom
 
-    /// The applications that are installed on this Mac.
-    case installed
+    /// The applications that were added from the library.
+    case library
+
+    /// The applications that are used for the backup.
+    case enabled
+
+    /// The applications that are not used for the backup.
+    case disabled
 
     var id: String { rawValue }
 
@@ -23,33 +23,10 @@ enum ApplicationFilter: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .all: L10n.string("filter.applications.all")
-        case .synced: L10n.string("filter.applications.synced")
-        case .excluded: L10n.string("filter.applications.excluded")
         case .custom: L10n.string("filter.applications.custom")
-        case .installed: L10n.string("filter.applications.installed")
-        }
-    }
-}
-
-/// The order of the list of the applications.
-enum ApplicationSort: String, CaseIterable, Identifiable {
-    /// By identifier.
-    case name
-
-    /// By name.
-    case displayName
-
-    /// By size, the biggest first.
-    case size
-
-    var id: String { rawValue }
-
-    /// The title of the order.
-    var title: String {
-        switch self {
-        case .name: L10n.string("sort.applications.name")
-        case .displayName: L10n.string("sort.applications.displayName")
-        case .size: L10n.string("sort.applications.size")
+        case .library: L10n.string("filter.applications.library")
+        case .enabled: L10n.string("filter.applications.enabled")
+        case .disabled: L10n.string("filter.applications.disabled")
         }
     }
 }
@@ -64,17 +41,14 @@ final class ApplicationsModel {
     /// The identifier of the selected application.
     var selection: String?
 
+    /// The application that is copied, when the user asks for a copy.
+    var copyRequest: MackeepApplication?
+
     /// The text of the search.
     var searchText: String = ""
 
     /// The filter of the list.
     var filter: ApplicationFilter = .all
-
-    /// The order of the list.
-    var sort: ApplicationSort = .name
-
-    /// The way the applications are selected.
-    var mode: SyncMode = .allExceptUnchecked
 
     /// The estimated size of the applications, in bytes.
     private(set) var sizes: [String: Int] = [:]
@@ -84,6 +58,9 @@ final class ApplicationsModel {
 
     /// The main config file of Mackeep.
     private(set) var config: MainConfig?
+
+    /// The directory where the config files of the user are.
+    private(set) var customAppsDir: String?
 
     /// The command line tool of Mackeep.
     private let command: MackeepCommand?
@@ -98,10 +75,26 @@ final class ApplicationsModel {
         self.command = command
     }
 
-    /// The applications of the list, after the filter, the search and the
-    /// order.
+    /// The applications of the list: the ones of the user and the ones that
+    /// were added from the library.
+    ///
+    /// The applications of the library that the user did not add are not in
+    /// the list, they are in the library.
+    var listedApplications: [MackeepApplication] {
+        applications
+            .filter { application in
+                application.isCustom || isListed(application)
+            }
+            .sorted {
+                $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
+            }
+    }
+
+    /// The applications of the list, after the filter and the search.
+    ///
+    /// They are sorted by the name of the application.
     var visibleApplications: [MackeepApplication] {
-        let searched: [MackeepApplication] = applications.filter { application in
+        let searched: [MackeepApplication] = listedApplications.filter { application in
             guard !searchText.isEmpty else { return true }
             return application.name.localizedCaseInsensitiveContains(searchText)
                 || application.displayName.localizedCaseInsensitiveContains(searchText)
@@ -109,47 +102,47 @@ final class ApplicationsModel {
         let filtered: [MackeepApplication] = searched.filter { application in
             switch filter {
             case .all: true
-            case .synced: isSynced(application)
-            case .excluded: !isSynced(application)
             case .custom: application.isCustom
-            case .installed: isInstalled(application)
+            case .library: !application.isCustom
+            case .enabled: isEnabled(application)
+            case .disabled: !isEnabled(application)
             }
         }
-        switch sort {
-        case .name:
-            return filtered.sorted { $0.name < $1.name }
-        case .displayName:
-            return filtered.sorted { $0.displayName < $1.displayName }
-        case .size:
-            return filtered.sorted { (sizes[$0.name] ?? 0) > (sizes[$1.name] ?? 0) }
+        return filtered.sorted {
+            $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
         }
     }
 
     /// The selected application.
     var selectedApplication: MackeepApplication? {
         guard let selection else { return nil }
-        return applications.first { $0.name == selection }
+        return listedApplications.first { $0.name == selection }
     }
 
-    /// The applications that are not synced.
-    var excludedApplications: Set<String> {
-        Set(config?.appsToIgnore ?? [])
-    }
-
-    /// Whether an application is synced.
+    /// Whether the application is used for the backup.
+    ///
+    /// The checkbox of the list is set by hand, it tells what is backed up.
     ///
     /// - Parameter application: The application.
-    /// - Returns: True when the application is synced.
-    func isSynced(_ application: MackeepApplication) -> Bool {
-        switch mode {
-        case .allExceptUnchecked:
-            !excludedApplications.contains(application.name)
-        case .onlyChecked:
-            (config?.appsToSync ?? []).contains(application.name)
-        }
+    /// - Returns: True when the application is backed up.
+    func isEnabled(_ application: MackeepApplication) -> Bool {
+        (config?.appsToSync ?? []).contains(application.name)
     }
 
-    /// Whether an application is installed on this Mac.
+    /// Whether the application is in the list of the user.
+    ///
+    /// The applications of the user are always in it, the ones of the library
+    /// are in it when the user added them.
+    ///
+    /// - Parameter application: The application.
+    /// - Returns: True when the application is in the list.
+    func isListed(_ application: MackeepApplication) -> Bool {
+        guard let config else { return false }
+        return config.appsToSync.contains(application.name)
+            || config.appsToIgnore.contains(application.name)
+    }
+
+    /// Whether the application is installed on this Mac.
     ///
     /// - Parameter application: The application.
     /// - Returns: True when one of its paths exists.
@@ -165,27 +158,65 @@ final class ApplicationsModel {
         sizes[application.name] ?? 0
     }
 
-    /// Set whether an application is synced, and write the config file.
+    /// Set whether the application is used for the backup, and write the
+    /// config file.
+    ///
+    /// The applications that are checked are the ones to sync, the ones of
+    /// the list that are not checked are the ones to ignore. The
+    /// applications that are not in the list are not backed up.
     ///
     /// - Parameters:
     ///   - application: The application.
-    ///   - synced: Whether the application is synced.
-    func setSynced(_ synced: Bool, for application: MackeepApplication) {
+    ///   - enabled: Whether the application is backed up.
+    func setEnabled(_ enabled: Bool, for application: MackeepApplication) {
         guard let config else { return }
 
-        var names: Set<String>
-        switch mode {
-        case .allExceptUnchecked:
-            // The applications that are not synced are the ones that are
-            // ignored
-            names = excludedApplications
-            if !synced { names.insert(application.name) }
-        case .onlyChecked:
-            names = Set(config.appsToSync)
-            if synced { names.insert(application.name) } else { names.remove(application.name) }
+        var synced: Set<String> = Set(config.appsToSync)
+        var ignored: Set<String> = Set(config.appsToIgnore)
+
+        if enabled {
+            synced.insert(application.name)
+            ignored.remove(application.name)
+        } else {
+            synced.remove(application.name)
+            ignored.insert(application.name)
         }
 
-        config.setSyncedApplications(Array(names), mode: mode)
+        config.setSyncedApplications(Array(synced), ignored: Array(ignored))
+        do {
+            try config.save()
+        } catch {
+            presentedError = AppError(
+                title: L10n.string("error.save.title"),
+                message: "\(error)"
+            )
+        }
+    }
+
+    /// Add an application of the library to the list of the user.
+    ///
+    /// The application is checked, it is used for the backup.
+    ///
+    /// - Parameter application: The application.
+    func addToTheList(_ application: MackeepApplication) {
+        setEnabled(true, for: application)
+    }
+
+    /// Remove an application of the library from the list of the user.
+    ///
+    /// The application is not backed up any more, and it is not in the list
+    /// of the user.
+    ///
+    /// - Parameter application: The application.
+    func removeFromTheList(_ application: MackeepApplication) {
+        guard let config else { return }
+
+        var synced: Set<String> = Set(config.appsToSync)
+        var ignored: Set<String> = Set(config.appsToIgnore)
+        synced.remove(application.name)
+        ignored.remove(application.name)
+
+        config.setSyncedApplications(Array(synced), ignored: Array(ignored))
         do {
             try config.save()
         } catch {
@@ -231,6 +262,44 @@ final class ApplicationsModel {
         self.applications = applications
     }
 
+    /// The directory where the config files of the user are.
+    ///
+    /// It is the directory the tool of Mackeep reads, the user can have it
+    /// somewhere else.
+    var customAppsDirectory: URL {
+        if let directory: String = customAppsDir {
+            return URL(fileURLWithPath: directory)
+        }
+        return URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent(".mackeep")
+    }
+
+    /// Delete an application of the user.
+    ///
+    /// The config file of the application is removed, and the application is
+    /// not in the list any more. The applications of the library cannot be
+    /// deleted, they can only be copied.
+    ///
+    /// - Parameter application: The application.
+    func delete(_ application: MackeepApplication) {
+        guard application.isCustom else { return }
+
+        let url: URL = URL(fileURLWithPath: application.cfgPath)
+        do {
+            try FileManager.default.removeItem(at: url)
+        } catch {
+            presentedError = AppError(
+                title: L10n.string("error.save.title"),
+                message: "\(error)"
+            )
+            return
+        }
+
+        editors.removeValue(forKey: application.name)
+        removeFromTheList(application)
+        load()
+    }
+
     /// Set the config file of Mackeep.
     ///
     /// - Parameter config: The config.
@@ -263,6 +332,9 @@ final class ApplicationsModel {
         /// The content of the config file.
         let configDocument: INIDocument?
 
+        /// The directory where the config files of the user are.
+        let customAppsDir: String?
+
         /// The message of the error, when there is one.
         let errorMessage: String?
     }
@@ -292,6 +364,7 @@ final class ApplicationsModel {
                 applications: applications,
                 configURL: url,
                 configDocument: document,
+                customAppsDir: json.customAppsDir,
                 errorMessage: nil
             )
         } catch {
@@ -299,6 +372,7 @@ final class ApplicationsModel {
                 applications: [],
                 configURL: nil,
                 configDocument: nil,
+                customAppsDir: nil,
                 errorMessage: "\(error)"
             )
         }
@@ -317,6 +391,7 @@ final class ApplicationsModel {
         }
 
         applications = result.applications
+        customAppsDir = result.customAppsDir
         if let url: URL = result.configURL, let document: INIDocument = result.configDocument {
             config = MainConfig(url: url, document: document)
         }

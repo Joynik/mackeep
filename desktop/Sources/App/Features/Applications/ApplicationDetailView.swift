@@ -8,10 +8,17 @@ struct ApplicationDetailView: View {
     /// The model of the list.
     let model: ApplicationsModel
 
+    /// Opens the window of the editor.
+    @Environment(\.openWindow) private var openWindow
+
+    /// Whether the confirmation of the deletion is shown.
+    @State private var showsDeletion = false
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
+                actions
                 paths
                 exclusions
             }
@@ -19,6 +26,16 @@ struct ApplicationDetailView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .navigationTitle(application.displayName)
+        .confirmationDialog(
+            L10n.string("applications.delete.confirm", application.displayName),
+            isPresented: $showsDeletion,
+            titleVisibility: .visible
+        ) {
+            Button(L10n.string("applications.delete"), role: .destructive) {
+                model.delete(application)
+            }
+            Button(L10n.string("editor.create.cancel"), role: .cancel) {}
+        }
     }
 
     /// The name and the source of the application.
@@ -49,6 +66,45 @@ struct ApplicationDetailView: View {
                 .foregroundStyle(.secondary)
             }
             .padding(.top, 4)
+        }
+    }
+
+    /// The actions of the application.
+    ///
+    /// The applications of the library cannot be changed, they have to be
+    /// copied first.
+    private var actions: some View {
+        HStack(spacing: 8) {
+            if application.isCustom {
+                Button {
+                    openWindow(value: application.name)
+                } label: {
+                    Label(
+                        L10n.string("applications.edit"),
+                        systemImage: "pencil"
+                    )
+                }
+            }
+
+            Button {
+                model.copyRequest = application
+            } label: {
+                Label(
+                    L10n.string("applications.copy"),
+                    systemImage: "doc.on.doc"
+                )
+            }
+
+            if application.isCustom {
+                Button(role: .destructive) {
+                    showsDeletion = true
+                } label: {
+                    Label(
+                        L10n.string("applications.delete"),
+                        systemImage: "trash"
+                    )
+                }
+            }
         }
     }
 

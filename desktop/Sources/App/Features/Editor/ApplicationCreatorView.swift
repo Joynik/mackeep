@@ -16,8 +16,12 @@ struct ApplicationCreatorView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(L10n.string("editor.create.title"))
-                .font(.title3.weight(.semibold))
+            Text(
+                model.source == nil
+                    ? L10n.string("editor.create.title")
+                    : L10n.string("editor.create.copyTitle")
+            )
+            .font(.title3.weight(.semibold))
 
             Form {
                 Section {
@@ -31,18 +35,20 @@ struct ApplicationCreatorView: View {
                     )
                 }
 
-                Section(L10n.string("editor.create.template")) {
-                    Picker("", selection: $model.template) {
-                        ForEach(ApplicationTemplate.allCases) { template in
-                            Text(template.title).tag(template)
+                if model.source == nil {
+                    Section(L10n.string("editor.create.template")) {
+                        Picker("", selection: $model.template) {
+                            ForEach(ApplicationTemplate.allCases) { template in
+                                Text(template.title).tag(template)
+                            }
                         }
+                        .pickerStyle(.inline)
+                        .labelsHidden()
                     }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
                 }
             }
             .formStyle(.grouped)
-            .frame(height: 280)
+            .frame(height: model.source == nil ? 280 : 140)
 
             if !model.issues.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {

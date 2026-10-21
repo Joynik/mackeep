@@ -86,24 +86,21 @@ final class MainConfig {
         document.value(forKey: "directory", inSection: "storage")
     }
 
-    /// Set the applications that are synced.
+    /// Set the applications that are used for the backup, and the ones that
+    /// are not.
     ///
-    /// The two modes of Mackeep are used one at a time: either the
-    /// applications to sync are written, or the ones to ignore. The other
-    /// list is cleared, so the file always means one thing.
+    /// The two lists are written: the applications to sync are the ones that
+    /// are checked, the applications to ignore are the ones of the list that
+    /// are not. The applications that are not in the list at all are not
+    /// backed up either, the list of the applications to sync is the one
+    /// that tells what is backed up.
     ///
     /// - Parameters:
-    ///   - names: The names of the applications.
-    ///   - mode: The mode of the selection.
-    func setSyncedApplications(_ names: [String], mode: SyncMode) {
-        switch mode {
-        case .allExceptUnchecked:
-            document.setOptionKeys(names.sorted(), inSection: "applications_to_ignore")
-            document.setOptionKeys([], inSection: "applications_to_sync")
-        case .onlyChecked:
-            document.setOptionKeys(names.sorted(), inSection: "applications_to_sync")
-            document.setOptionKeys([], inSection: "applications_to_ignore")
-        }
+    ///   - synced: The names of the applications to sync.
+    ///   - ignored: The names of the applications to ignore.
+    func setSyncedApplications(_ synced: [String], ignored: [String]) {
+        document.setOptionKeys(synced.sorted(), inSection: "applications_to_sync")
+        document.setOptionKeys(ignored.sorted(), inSection: "applications_to_ignore")
     }
 
     /// Set the storage of Mackeep.
@@ -135,15 +132,4 @@ final class MainConfig {
     func save() throws {
         try INIFile.save(document, to: url)
     }
-}
-
-/// The way the applications are selected.
-enum SyncMode: String, CaseIterable, Identifiable {
-    /// Everything is synced, except the applications that are not checked.
-    case allExceptUnchecked
-
-    /// Only the applications that are checked are synced.
-    case onlyChecked
-
-    var id: String { rawValue }
 }

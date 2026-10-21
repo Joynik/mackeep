@@ -112,9 +112,6 @@ final class ApplicationEditorModel {
     /// The main config file of Mackeep, where the name of the application goes.
     private var mainConfig: MainConfig?
 
-    /// The mode of the selection of the applications.
-    var syncMode: SyncMode = .allExceptUnchecked
-
     /// The date when the config file was written the last time.
     private var lastModification: Date?
 
@@ -307,10 +304,12 @@ final class ApplicationEditorModel {
         history.removeAll()
 
         // The application is added to the applications to sync
-        if let mainConfig, syncMode == .onlyChecked {
+        if let mainConfig {
             var names: Set<String> = Set(mainConfig.appsToSync)
             names.insert(appName)
-            mainConfig.setSyncedApplications(Array(names), mode: .onlyChecked)
+            var ignored: Set<String> = Set(mainConfig.appsToIgnore)
+            ignored.remove(appName)
+            mainConfig.setSyncedApplications(Array(names), ignored: Array(ignored))
             try mainConfig.save()
         }
     }
