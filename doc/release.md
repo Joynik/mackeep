@@ -25,6 +25,11 @@ and pushes. The workflow takes over from the tag push:
   platform (macOS and Linux)
 - Creates the GitHub release with auto-generated notes and the binaries
 
+The application of the desktop is released with the tool, they share the same
+version. The `make release` command writes the version of the release in
+`desktop/project.yml`, so the version of the application is always the one of
+the release, in the "About" window too.
+
 The releases hold one package per platform:
 
 ```text

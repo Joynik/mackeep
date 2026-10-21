@@ -52,8 +52,9 @@ binary:
 	rm -rf dist-bin/mackeep-cli
 	mv dist-bin/__main__.dist dist-bin/mackeep-cli
 
-# Cut a release in one command. Bumps the version, syncs the lockfile, then
-# commits, tags and pushes. The release workflow takes over from the tag push.
+# Cut a release in one command. Bumps the version of the tool and of the
+# application, syncs the lockfile, then commits, tags and pushes. The release
+# workflow takes over from the tag push.
 # Bump level defaults to patch: 0.12.X for the small changes,
 # `make release BUMP=minor` for the big ones (0.13.0), `BUMP=major` for the
 # breaking ones (1.0.0), or pin a version with `make release VERSION=0.13.0`.
@@ -63,6 +64,7 @@ release: check
 	@if [ -n "$(VERSION)" ]; then uv version "$(VERSION)"; else uv version --bump $(BUMP); fi
 	uv sync -U
 	@V=$$(uv version --short); \
+	python3 desktop/Tools/sync_version.py "$$V" && \
 	git commit -am "Mackeep $$V" && \
 	git tag "$$V" && \
 	git push && \
