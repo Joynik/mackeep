@@ -14,15 +14,25 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            storage
-            exclusions
+            appearance
             locations
             tool
-            appearance
+            storage
+            exclusions
         }
         .formStyle(.grouped)
         .navigationTitle(L10n.string("section.settings.title"))
+        .disabled(model.isLoading)
+        .overlay(alignment: .topTrailing) {
+            if model.isLoading {
+                ProgressView()
+                    .controlSize(.small)
+                    .padding(12)
+            }
+        }
         .onAppear {
+            // The settings are read when the section is shown for the
+            // first time, the window does not wait for them.
             model.load()
         }
     }
@@ -184,7 +194,7 @@ struct SettingsView: View {
                     .font(.callout.monospaced())
             }
 
-            if !model.isToolSupported {
+            if model.isToolKnown, !model.isToolSupported {
                 Label(
                     L10n.string("settings.tool.oldVersion"),
                     systemImage: "exclamationmark.triangle"
@@ -216,6 +226,14 @@ struct SettingsView: View {
                 Text(L10n.string("settings.language.system")).tag(AppLanguage.system)
                 Text(L10n.string("settings.language.russian")).tag(AppLanguage.russian)
                 Text(L10n.string("settings.language.english")).tag(AppLanguage.english)
+                Text(L10n.string("settings.language.spanish")).tag(AppLanguage.spanish)
+                Text(L10n.string("settings.language.german")).tag(AppLanguage.german)
+                Text(L10n.string("settings.language.french")).tag(AppLanguage.french)
+                Text(L10n.string("settings.language.italian")).tag(AppLanguage.italian)
+                Text(L10n.string("settings.language.portuguese")).tag(AppLanguage.portuguese)
+                Text(L10n.string("settings.language.japanese")).tag(AppLanguage.japanese)
+                Text(L10n.string("settings.language.korean")).tag(AppLanguage.korean)
+                Text(L10n.string("settings.language.chinese")).tag(AppLanguage.chinese)
             }
 
             Picker(

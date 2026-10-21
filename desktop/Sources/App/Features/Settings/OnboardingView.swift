@@ -111,7 +111,7 @@ struct OnboardingView: View {
                 Text(L10n.string("onboarding.tool.help"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            } else if !settings.isToolSupported {
+            } else if settings.isToolKnown, !settings.isToolSupported {
                 Label(
                     L10n.string("settings.tool.oldVersion"),
                     systemImage: "exclamationmark.triangle"

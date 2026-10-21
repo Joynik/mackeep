@@ -33,6 +33,29 @@ final class MainConfig {
         return MainConfig(url: url, document: document)
     }
 
+    /// Create the config file, when it does not exist.
+    ///
+    /// The file is created with the default backup folder, the same way the
+    /// command line version does it.
+    ///
+    /// - Parameter url: The path of the config file.
+    /// - Returns: The config.
+    static func createIfNeeded(at url: URL) throws -> MainConfig {
+        if !FileManager.default.fileExists(atPath: url.path) {
+            let document: INIDocument = INIDocument(text: """
+            # The configuration of Mackeep.
+            # See https://github.com/Joynik/mackeep/blob/master/doc/README.md
+
+            [storage]
+            directory = Mackeep
+
+            """)
+            try INIFile.save(document, to: url, backup: false)
+        }
+
+        return try load(from: url)
+    }
+
     /// The names of the applications to sync.
     var appsToSync: [String] {
         document.values(inSection: "applications_to_sync")

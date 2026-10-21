@@ -56,7 +56,14 @@ final class BackupModelTests: XCTestCase {
         return MackeepCommand(path: url.path, home: directory.path)
     }
 
-    func testThePlanIsRead() throws {
+    /// Wait for the model to finish the command it runs.
+    private func waitForThePlan(_ model: BackupModel) async {
+        while model.isRunning {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
+    func testThePlanIsRead() async throws {
         var command: MackeepCommand = try makeTool()
         command.environment["PLAN"] = directory.appendingPathComponent("plan.json").path
         let model: BackupModel = BackupModel(
@@ -65,6 +72,7 @@ final class BackupModelTests: XCTestCase {
         )
 
         model.dryRun()
+        await waitForThePlan(model)
 
         XCTAssertNotNil(model.plan)
         XCTAssertEqual(model.plan?.actions.count, 1)
@@ -72,7 +80,7 @@ final class BackupModelTests: XCTestCase {
         XCTAssertEqual(model.summary?.totalBytes, 12)
     }
 
-    func testTheFilterKeepsTheActions() throws {
+    func testTheFilterKeepsTheActions() async throws {
         var command: MackeepCommand = try makeTool()
         command.environment["PLAN"] = directory.appendingPathComponent("plan.json").path
         let model: BackupModel = BackupModel(
@@ -80,6 +88,7 @@ final class BackupModelTests: XCTestCase {
             historyStore: HistoryStore()
         )
         model.dryRun()
+        await waitForThePlan(model)
 
         model.filter = .copy
         XCTAssertEqual(model.visibleActions.count, 1)

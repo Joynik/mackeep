@@ -26,6 +26,24 @@ final class MainConfigTests: XCTestCase {
         return url
     }
 
+    func testTheConfigFileIsCreatedWhenItIsMissing() throws {
+        let url: URL = directory.appendingPathComponent(".mackeep.cfg")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
+
+        let config: MainConfig = try MainConfig.createIfNeeded(at: url)
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+        XCTAssertEqual(config.storageDirectory, "Mackeep")
+    }
+
+    func testTheExistingConfigFileIsKept() throws {
+        let url: URL = try makeConfig("[storage]\ndirectory = Other\n")
+
+        let config: MainConfig = try MainConfig.createIfNeeded(at: url)
+
+        XCTAssertEqual(config.storageDirectory, "Other")
+    }
+
     func testTheApplicationsAreRead() throws {
         let url: URL = try makeConfig(
             """

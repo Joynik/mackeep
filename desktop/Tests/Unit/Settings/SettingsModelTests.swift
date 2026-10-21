@@ -74,11 +74,19 @@ final class SettingsModelTests: XCTestCase {
         """)
     }
 
-    func testTheConfigurationIsRead() throws {
+    /// Wait for the model to finish the command it runs.
+    private func waitForTheSettings(_ model: SettingsModel) async {
+        while model.isLoading {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
+    func testTheConfigurationIsRead() async throws {
         let command: MackeepCommand = try makeConfig()
         let model: SettingsModel = SettingsModel(command: command, capabilities: nil)
 
         model.load()
+        await waitForTheSettings(model)
 
         XCTAssertEqual(model.engine, .fileSystem)
         XCTAssertEqual(model.directory, "Mackeep")
@@ -88,11 +96,12 @@ final class SettingsModelTests: XCTestCase {
         XCTAssertEqual(model.customAppsDirs, ["/Users/user/.mackeep"])
     }
 
-    func testTheBackupFolderIsTakenFromTheTool() throws {
+    func testTheBackupFolderIsTakenFromTheTool() async throws {
         let command: MackeepCommand = try makeConfig()
         let model: SettingsModel = SettingsModel(command: command, capabilities: nil)
 
         model.load()
+        await waitForTheSettings(model)
 
         XCTAssertEqual(
             model.backupDirectory,

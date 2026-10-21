@@ -87,11 +87,25 @@ final class LocalizationTests: XCTestCase {
         }
     }
 
+    /// The languages of the interface, with the key of their name.
+    static let languages: [(code: String, key: String)] = [
+        ("en", "settings.language.english"),
+        ("ru", "settings.language.russian"),
+        ("es", "settings.language.spanish"),
+        ("de", "settings.language.german"),
+        ("fr", "settings.language.french"),
+        ("it", "settings.language.italian"),
+        ("pt-BR", "settings.language.portuguese"),
+        ("ja", "settings.language.japanese"),
+        ("ko", "settings.language.korean"),
+        ("zh-Hans", "settings.language.chinese"),
+    ]
+
     func testEveryKeyIsTranslated() throws {
         let catalog: StringCatalog = try XCTUnwrap(Self.catalog)
 
         for (key, entry) in catalog.strings {
-            for language: String in ["en", "ru"] {
+            for language: String in Self.languages.map(\.code) {
                 let localization: StringCatalog.Entry.Localization? = entry
                     .localizations[language]
                 let text: String = localization?.stringUnit.value ?? ""
@@ -105,6 +119,17 @@ final class LocalizationTests: XCTestCase {
                     "The key \(key) is not translated in \(language)"
                 )
             }
+        }
+    }
+
+    func testEveryLanguageIsInThePicker() throws {
+        let catalog: StringCatalog = try XCTUnwrap(Self.catalog)
+
+        for language: (code: String, key: String) in Self.languages {
+            XCTAssertNotNil(
+                catalog.strings[language.key]?.localizations[language.code],
+                "The language \(language.code) has no name"
+            )
         }
     }
 

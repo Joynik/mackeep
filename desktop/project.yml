@@ -12,7 +12,8 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "0.15.1"
-    CURRENT_PROJECT_VERSION: "1"
+    # The build number is not shown in the About window
+    CURRENT_PROJECT_VERSION: ""
     # A real identity is needed to run the UI tests.
     # The team of the certificate "Apple Development: kira.dev.ap@gmail.com
     # (NZ3F5F9AR5)" is 682U8JF485, NZ3F5F9AR5 is the name of the developer.
@@ -39,9 +40,11 @@ targets:
         CFBundleName: Mackeep
         CFBundleDisplayName: Mackeep
         CFBundleShortVersionString: $(MARKETING_VERSION)
-        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # The build number is empty, so the About window does not show it
+        # in brackets
+        CFBundleVersion: ""
         LSMinimumSystemVersion: "15.0"
-        NSHumanReadableCopyright: GPL-3.0-or-later, Copyright (C) 2013-2025 Laurent Raufaste
+        NSHumanReadableCopyright: Copyright (C) 2026
         LSApplicationCategoryType: public.app-category.utilities
         NSSupportsAutomaticTermination: true
         NSSupportsSuddenTermination: true

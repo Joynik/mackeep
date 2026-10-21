@@ -6,10 +6,19 @@ import SwiftUI
 @MainActor
 final class AppEnvironment {
     /// The language of the interface.
-    var language: AppLanguage = .system {
-        didSet {
-            guard language != oldValue else { return }
-            L10n.language = language
+    ///
+    /// The language of the user is kept between the runs, the language of
+    /// the system is used when nothing is chosen.
+    var language: AppLanguage {
+        get {
+            guard let raw: String = UserDefaults.standard.string(forKey: "language") else {
+                return .system
+            }
+            return AppLanguage(rawValue: raw) ?? .system
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: "language")
+            L10n.language = newValue
             NotificationCenter.default.post(
                 name: .mackeepLanguageDidChange,
                 object: nil
@@ -57,6 +66,9 @@ final class AppEnvironment {
         self.backup = BackupModel(command: command)
         self.settings = SettingsModel(command: command, capabilities: nil)
 
+        // The strings are read in the language of the user
+        L10n.language = language
+
         guard let path else { return }
         mackeepPath = path
 
@@ -92,9 +104,17 @@ final class AppEnvironment {
 
 /// The languages of the interface.
 enum AppLanguage: String, CaseIterable, Identifiable {
-    case system
-    case russian
-    case english
+    case system = "system"
+    case russian = "ru"
+    case english = "en"
+    case spanish = "es"
+    case german = "de"
+    case french = "fr"
+    case italian = "it"
+    case portuguese = "pt-BR"
+    case japanese = "ja"
+    case korean = "ko"
+    case chinese = "zh-Hans"
 
     var id: String { rawValue }
 
@@ -102,8 +122,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     var locale: Locale? {
         switch self {
         case .system: nil
-        case .russian: Locale(identifier: "ru")
-        case .english: Locale(identifier: "en")
+        default: Locale(identifier: rawValue)
         }
     }
 

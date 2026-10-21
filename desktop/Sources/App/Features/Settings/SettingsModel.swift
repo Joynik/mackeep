@@ -37,6 +37,12 @@ final class SettingsModel {
     /// The error shown to the user, when there is one.
     var presentedError: AppError?
 
+    /// Whether the settings are being read.
+    private(set) var isLoading: Bool = false
+
+    /// Whether the settings were already read.
+    private var hasLoaded: Bool = false
+
     /// The main config file of Mackeep.
     private var mainConfig: MainConfig?
 
@@ -52,6 +58,12 @@ final class SettingsModel {
 
     /// Whether the binary of Mackeep is recent enough.
     var isToolSupported: Bool { capabilities?.isSupported ?? false }
+
+    /// Whether the capabilities of the binary of Mackeep are known.
+    ///
+    /// The warning about an old version is only shown when the version of
+    /// the binary is known.
+    var isToolKnown: Bool { capabilities != nil }
 
     /// The folder where the backup is written.
     ///
@@ -74,36 +86,107 @@ final class SettingsModel {
     }
 
     /// Read the configuration of Mackeep.
+    ///
+    /// The work is done out of the main thread, so the window stays alive.
+    /// The settings are only read once, the view asks for them when it is
+    /// shown for the first time.
     func load() {
-        guard let command else { return }
+        guard let command, !hasLoaded else { return }
 
+        hasLoaded = true
+        isLoading = true
+
+        Task { [weak self] in
+            let result: LoadResult = await Task.detached(priority: .userInitiated) {
+                Self.load(with: command)
+            }.value
+            self?.apply(result)
+        }
+    }
+
+    /// What is read from Mackeep.
+    private struct LoadResult: Sendable {
+        /// The configuration of Mackeep.
+        let config: MackeepConfig?
+
+        /// The content of the config file Mackeep uses.
+        let document: INIDocument?
+
+        /// The path of the config file Mackeep uses.
+        let configURL: URL?
+
+        /// The message of the error, when there is one.
+        let errorMessage: String?
+    }
+
+    /// Read the configuration of Mackeep.
+    ///
+    /// - Parameter command: The command line tool of Mackeep.
+    /// - Returns: What was read.
+    nonisolated private static func load(with command: MackeepCommand) -> LoadResult {
         do {
             let config: MackeepConfig = try command.runJSON(
                 ["--json", "config"],
                 as: MackeepConfig.self
             )
-            configFilePath = config.configFile
-            customAppsDirs = config.customAppsDirs
-            globalExclude = config.globalExclude
-            resolvedBackupDirectory = config.storage.resolvedBackupDir
-
-            let raw: String = config.storage.engine
-            if let engine: StorageEngine = StorageEngine(rawValue: raw) {
-                self.engine = engine
-            }
-            directory = config.storage.directory
-
-            if engine == .fileSystem {
-                storagePath = config.storage.path
-            }
-            mainConfig = try MainConfig.load(
-                from: URL(fileURLWithPath: config.configFile)
+            let url: URL = URL(fileURLWithPath: config.configFile)
+            // The config file is created when it does not exist, the
+            // settings are shown anyway when it cannot be read
+            let document: INIDocument? = try? MainConfig.createIfNeeded(at: url)
+                .document
+            return LoadResult(
+                config: config,
+                document: document,
+                configURL: url,
+                errorMessage: nil
             )
         } catch {
+            return LoadResult(
+                config: nil,
+                document: nil,
+                configURL: nil,
+                errorMessage: "\(error)"
+            )
+        }
+    }
+
+    /// Take what was read from Mackeep.
+    ///
+    /// - Parameter result: What was read.
+    private func apply(_ result: LoadResult) {
+        isLoading = false
+
+        if let message: String = result.errorMessage {
             presentedError = AppError(
                 title: L10n.string("error.load.title"),
-                message: "\(error)"
+                message: message
             )
+            return
+        }
+
+        guard
+            let config: MackeepConfig = result.config,
+            let url: URL = result.configURL
+        else {
+            return
+        }
+
+        configFilePath = config.configFile
+        customAppsDirs = config.customAppsDirs
+        globalExclude = config.globalExclude
+        resolvedBackupDirectory = config.storage.resolvedBackupDir
+
+        let raw: String = config.storage.engine
+        if let engine: StorageEngine = StorageEngine(rawValue: raw) {
+            self.engine = engine
+        }
+        directory = config.storage.directory
+
+        if engine == .fileSystem {
+            storagePath = config.storage.path
+        }
+        if let document: INIDocument = result.document {
+            mainConfig = MainConfig(url: url, document: document)
         }
     }
 
