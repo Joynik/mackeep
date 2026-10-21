@@ -46,7 +46,7 @@ jobs:
           uv build --wheel
           uv venv .build-venv
           uv pip install --python .build-venv/bin/python dist/*.whl nuitka
-          .build-venv/bin/python -m nuitka --standalone --onefile \
+          .build-venv/bin/python -m nuitka --standalone \
             --output-filename=mackeep-cli \
             --include-package=mackeep \
             --include-package-data=mackeep \
@@ -54,12 +54,14 @@ jobs:
             --assume-yes-for-downloads \
             --output-dir=dist-bin \
             src/mackeep_cli/__main__.py
+          rm -rf dist-bin/mackeep-cli
+          mv dist-bin/__main__.dist dist-bin/mackeep-cli
 
       - name: Sign the binary
         if: runner.os == 'macOS'
         run: |
-          codesign --force --sign - dist-bin/mackeep-cli
-          codesign --verify --verbose dist-bin/mackeep-cli
+          codesign --force --sign - dist-bin/mackeep-cli/mackeep-cli
+          codesign --verify --verbose dist-bin/mackeep-cli/mackeep-cli
 
       - name: Package the binary
         run: |
@@ -70,8 +72,8 @@ jobs:
             mkdir -p dist-check
             tar -xzf "dist/mackeep-cli-$(uv version --short)-${{ matrix.suffix }}.tar.gz" \
               -C dist-check
-            codesign --verify --verbose dist-check/mackeep-cli
-            codesign -dv --verbose=2 dist-check/mackeep-cli
+            codesign --verify --verbose dist-check/mackeep-cli/mackeep-cli
+            codesign -dv --verbose=2 dist-check/mackeep-cli/mackeep-cli
           fi
 
       - name: Smoke test the archive
@@ -83,7 +85,7 @@ jobs:
           XDG_DIR="$HOME_DIR/.config"
           mkdir -p "$WORK_DIR/app" "$HOME_DIR/storage/Mackeep" "$XDG_DIR"
           tar -xzf "$ARCHIVE" -C "$WORK_DIR/app"
-          BIN="$WORK_DIR/app/mackeep-cli"
+          BIN="$WORK_DIR/app/mackeep-cli/mackeep-cli"
           chmod +x "$BIN"
           printf '[storage]\nengine = file_system\npath = %s\ndirectory = Mackeep\n' \
             "$HOME_DIR/storage" > "$HOME_DIR/.mackeep.cfg"

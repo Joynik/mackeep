@@ -32,8 +32,11 @@ mackeep-cli-0.14.0-macos-arm64.tar.gz
 mackeep-cli-0.14.0-linux-x86_64.tar.gz
 ```
 
-Each package holds the `mackeep-cli` binary, which does not need Python to
-run. The binary can also be built locally, with `make binary`.
+Each package holds the `mackeep-cli` folder with the binary and the runtime
+it needs, so Python is not required to run it. The binary is a folder and
+not a single file on purpose: a single file has to unpack itself on every
+run, that takes seconds. The binary can also be built locally, with
+`make binary`.
 
 ## The versioning scheme
 

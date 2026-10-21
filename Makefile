@@ -35,11 +35,13 @@ clean:
 	rm -rf coverage.xml
 
 # Build the standalone binary, like the releases do. Needs a C compiler.
+# The binary is a folder, not a single file: a single file has to unpack
+# itself on every run, that takes seconds.
 binary:
 	uv build --wheel
 	uv venv .build-venv
 	uv pip install --python .build-venv/bin/python dist/*.whl nuitka
-	.build-venv/bin/python -m nuitka --standalone --onefile \
+	.build-venv/bin/python -m nuitka --standalone \
 		--output-filename=mackeep-cli \
 		--include-package=mackeep \
 		--include-package-data=mackeep \
@@ -47,6 +49,8 @@ binary:
 		--assume-yes-for-downloads \
 		--output-dir=dist-bin \
 		src/mackeep_cli/__main__.py
+	rm -rf dist-bin/mackeep-cli
+	mv dist-bin/__main__.dist dist-bin/mackeep-cli
 
 # Cut a release in one command. Bumps the version, syncs the lockfile, then
 # commits, tags and pushes. The release workflow takes over from the tag push.
