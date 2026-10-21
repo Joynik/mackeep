@@ -127,6 +127,21 @@ final class SettingsModelTests: XCTestCase {
         )
     }
 
+    func testTheVersionIsTakenFromTheCapabilities() {
+        let model: SettingsModel = SettingsModel(command: nil, capabilities: nil)
+        XCTAssertEqual(model.mackeepVersion, "")
+
+        model.capabilities = MackeepCapabilities(
+            version: "0.18.0",
+            supportsJSON: true,
+            supportsExclusions: true
+        )
+
+        XCTAssertEqual(model.mackeepVersion, "0.18.0")
+        XCTAssertTrue(model.isToolKnown)
+        XCTAssertTrue(model.isToolSupported)
+    }
+
     func testTheGlobalExclusionsAreChanged() throws {
         let command: MackeepCommand = try makeTool(config: "{}")
         let model: SettingsModel = SettingsModel(command: command, capabilities: nil)

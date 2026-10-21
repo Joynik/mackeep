@@ -29,7 +29,10 @@ final class SettingsModel {
     private(set) var mackeepPath: String = ""
 
     /// The version of the binary of Mackeep.
-    private(set) var mackeepVersion: String = ""
+    ///
+    /// It is known when the capabilities of the tool are read, they arrive
+    /// after the start of the application.
+    var mackeepVersion: String { capabilities?.version ?? "" }
 
     /// What the binary of Mackeep can do.
     var capabilities: MackeepCapabilities?
@@ -53,7 +56,6 @@ final class SettingsModel {
         self.command = command
         self.capabilities = capabilities
         self.mackeepPath = command?.path ?? ""
-        self.mackeepVersion = capabilities?.version ?? ""
     }
 
     /// Whether the binary of Mackeep is recent enough.
