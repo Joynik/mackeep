@@ -2,6 +2,8 @@
 
 import json
 import runpy
+from types import SimpleNamespace
+from typing import cast
 from unittest.mock import patch
 
 import pytest
@@ -9,7 +11,7 @@ import pytest
 from mackeep import utils
 from mackeep.jsonapi import SCHEMA_VERSION
 from mackeep_cli import main as main_module
-from mackeep_cli.main import main
+from mackeep_cli.main import _Context, main
 
 # The content of the config file of the test application
 APP_CONFIG = (
@@ -322,3 +324,30 @@ def test_the_verbose_option_has_no_short_option(home, capsys):
     captured = capsys.readouterr()
 
     assert "applications supported in Mackeep" in captured.out
+
+
+def test_cancellation_stops_between_complete_applications(monkeypatch):
+    """A stop request finishes the current app and never starts the next."""
+    copied = []
+    events = []
+
+    def copy_first():
+        copied.append("first")
+        main_module._request_cancel(0, None)  # noqa: SLF001 - exercise signal boundary
+
+    profiles = [
+        ("first", SimpleNamespace(copy=copy_first, failed=False)),
+        ("second", SimpleNamespace(copy=lambda: copied.append("second"), failed=False)),
+    ]
+    monkeypatch.setattr(main_module, "_cancel_requested", False)
+    monkeypatch.setattr(main_module, "_preflight", lambda *_: profiles)
+    ctx = cast(
+        "_Context",
+        SimpleNamespace(verbose=False, reporter=lambda event, _: events.append(event)),
+    )
+    with pytest.raises(SystemExit) as error:
+        main_module._run_action(ctx, {"first", "second"}, "copy")  # noqa: SLF001
+    cancelled = 130
+    assert error.value.code == cancelled
+    assert copied == ["first"]
+    assert events == ["start", "done"]

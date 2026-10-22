@@ -11,7 +11,7 @@ final class AppEnvironment {
     /// the system is used when nothing is chosen.
     var language: AppLanguage = .system {
         didSet {
-            UserDefaults.standard.set(language.rawValue, forKey: "language")
+            preferences.set(language.rawValue, forKey: "language")
             L10n.language = language
             NotificationCenter.default.post(
                 name: .mackeepLanguageDidChange,
@@ -26,21 +26,9 @@ final class AppEnvironment {
     /// the system is used when nothing is chosen.
     var appearance: AppAppearance = .system {
         didSet {
-            UserDefaults.standard.set(appearance.rawValue, forKey: "appearance")
+            preferences.set(appearance.rawValue, forKey: "appearance")
         }
     }
-
-    /// The path of the `mackeep-cli` binary.
-    var mackeepPath: String = ""
-
-    /// The version of the `mackeep-cli` binary, when it is known.
-    var mackeepVersion: String = ""
-
-    /// What the `mackeep-cli` binary can do.
-    var capabilities: MackeepCapabilities?
-
-    /// The error shown to the user, when there is one.
-    var presentedError: AppError?
 
     /// The model of the list of the applications.
     let applications: ApplicationsModel
@@ -53,56 +41,66 @@ final class AppEnvironment {
 
     /// Whether the wizard of the first launch was shown.
     var hasSeenOnboarding: Bool {
-        get { UserDefaults.standard.bool(forKey: "hasSeenOnboarding") }
-        set { UserDefaults.standard.set(newValue, forKey: "hasSeenOnboarding") }
+        get { preferences.bool(forKey: "hasSeenOnboarding") }
+        set { preferences.set(newValue, forKey: "hasSeenOnboarding") }
     }
 
-    /// The command line tool of Mackeep.
-    private let command: MackeepCommand?
+    private let preferences: UserDefaults
 
-    init() {
-        let path: String? = MackeepDiscovery.find()
-        self.command = path.map { MackeepCommand(path: $0) }
-        self.applications = ApplicationsModel(command: command)
-        self.backup = BackupModel(command: command)
+    init(
+        command injected: MackeepCommand? = nil, defaults: UserDefaults? = nil,
+        discover: Bool = true
+    ) {
+        let testing = EditorPath.isTesting
+        let preferences =
+            defaults
+            ?? (testing
+                ? UserDefaults(
+                    suiteName:
+                        "com.joynik.mackeep.tests.\(ProcessInfo.processInfo.processIdentifier)")!
+                : .standard)
+        self.preferences = preferences
+        if testing { preferences.set(true, forKey: "hasSeenOnboarding") }
+        let testPath = EditorPath.testValue("MACKEEP_TEST_CLI")
+        let path =
+            injected?.path ?? (testing ? testPath : (discover ? MackeepDiscovery.find() : nil))
+        let command = injected ?? path.map { MackeepCommand(path: $0) }
+        let applications = ApplicationsModel(command: command)
+        self.applications = applications
+        self.backup = BackupModel(
+            command: command, prepare: { try await applications.flushSelection() })
         self.settings = SettingsModel(command: command, capabilities: nil)
 
         // The choices of the user are kept between the runs
-        language = Self.savedLanguage()
-        appearance = Self.savedAppearance()
+        language = Self.savedLanguage(in: preferences)
+        appearance = Self.savedAppearance(in: preferences)
 
         // The strings are read in the language of the user
         L10n.language = language
 
         guard let path else { return }
-        mackeepPath = path
 
         // The capabilities of the tool are checked out of the main thread,
         // the window must show up right away.
         Task { [weak self] in
             let capabilities: MackeepCapabilities = await Task.detached {
-                MackeepCommand(path: path).capabilities()
+                (injected ?? MackeepCommand(path: path)).capabilities()
             }.value
-            self?.capabilities = capabilities
-            self?.mackeepVersion = capabilities.version
             self?.settings.capabilities = capabilities
         }
     }
 
-    /// Whether the tool of Mackeep is recent enough for the application.
-    var isToolSupported: Bool { capabilities?.isSupported ?? false }
-
     /// The language that was chosen the last time.
-    private static func savedLanguage() -> AppLanguage {
-        guard let raw: String = UserDefaults.standard.string(forKey: "language") else {
+    private static func savedLanguage(in preferences: UserDefaults) -> AppLanguage {
+        guard let raw: String = preferences.string(forKey: "language") else {
             return .system
         }
         return AppLanguage(rawValue: raw) ?? .system
     }
 
     /// The appearance that was chosen the last time.
-    private static func savedAppearance() -> AppAppearance {
-        guard let raw: String = UserDefaults.standard.string(forKey: "appearance") else {
+    private static func savedAppearance(in preferences: UserDefaults) -> AppAppearance {
+        guard let raw: String = preferences.string(forKey: "appearance") else {
             return .system
         }
         return AppAppearance(rawValue: raw) ?? .system
@@ -116,11 +114,7 @@ final class AppEnvironment {
         applications.editor(for: appName)
     }
 
-    /// The directory where the config files of the user are.
-    var customAppsDirectory: URL {
-        URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent(".mackeep")
-    }
+
 }
 
 /// The languages of the interface.

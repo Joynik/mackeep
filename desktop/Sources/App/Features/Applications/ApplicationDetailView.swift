@@ -26,6 +26,7 @@ struct ApplicationDetailView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .navigationTitle(application.displayName)
+        .task(id: application) { model.estimateSize(for: application) }
         .confirmationDialog(
             L10n.string("applications.delete.confirm", application.displayName),
             isPresented: $showsDeletion,

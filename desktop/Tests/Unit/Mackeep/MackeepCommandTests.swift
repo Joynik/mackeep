@@ -93,7 +93,7 @@ final class MackeepCommandTests: XCTestCase {
         let path: String = try makeTool(
             """
             #!/bin/sh
-            echo '{"schema_version": 1, "version": "1.2.3"}'
+            echo '{"schema_version": 4, "version": "1.2.3"}'
             """
         )
         let command: MackeepCommand = MackeepCommand(path: path, home: "/tmp")
@@ -117,9 +117,9 @@ final class MackeepCommandTests: XCTestCase {
         let path: String = try makeTool(
             """
             #!/bin/sh
-            echo '{"schema_version": 1, "event": "start", "app": "demo"}'
-            echo '{"schema_version": 1, "event": "file", "app": "demo", "size_bytes": 7}'
-            echo '{"schema_version": 1, "event": "done", "app": "demo", "files": 1, "bytes": 7, "skipped": 0}'
+            echo '{"schema_version": 4, "event": "start", "app": "demo"}'
+            echo '{"schema_version": 4, "event": "file", "app": "demo", "size_bytes": 7}'
+            echo '{"schema_version": 4, "event": "done", "app": "demo", "files": 1, "bytes": 7, "skipped": 0}'
             """
         )
         let command: MackeepCommand = MackeepCommand(path: path, home: "/tmp")
@@ -207,4 +207,57 @@ final class MackeepCommandTests: XCTestCase {
             "/does/not/exist/mackeep-cli"
         )
     }
+    func testBothPipesAreDrainedWithoutDeadlock() throws {
+        let path = try makeTool("#!/bin/sh\nhead -c 262144 /dev/zero >&2\necho ok\n")
+        XCTAssertEqual(
+            try MackeepCommand(path: path).run([]).trimmingCharacters(in: .whitespacesAndNewlines),
+            "ok")
+    }
+
+    func testMalformedAndIncompleteStreamsAreRejected() throws {
+        for text in [
+            "not-json", "{\"schema_version\":4,\"event\":\"start\",\"app\":\"demo\"}",
+            "{\"schema_version\":99,\"event\":\"done\",\"app\":\"demo\"}",
+        ] {
+            let path = try makeTool("#!/bin/sh\nprintf '%s\\n' '\(text)'\n")
+            XCTAssertThrowsError(try MackeepCommand(path: path).streamEvents([]) { _ in })
+        }
+    }
+
+    func testExplicitEmptySelectionAllowsAnEmptyStream() throws {
+        let path = try makeTool("#!/bin/sh\nexit 0\n")
+        let command = MackeepCommand(path: path)
+        XCTAssertThrowsError(try command.streamEvents([]) { _ in })
+        XCTAssertNoThrow(try command.streamEvents([], allowEmpty: true) { _ in })
+    }
+
+    func testCancellationBeforeLaunchDoesNotExecuteTheTool() throws {
+        let marker = directory.appendingPathComponent("started")
+        let path = try makeTool("#!/bin/sh\ntouch '\(marker.path)'\n")
+        var command = MackeepCommand(path: path)
+        let token = CommandCancellation()
+        token.cancel()
+        command.cancellation = token
+        XCTAssertThrowsError(try command.run([]))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: marker.path))
+    }
+
+    func testSplitUTF8EventIsDecodedAfterTheLineIsComplete() throws {
+        let path = try makeTool(
+            """
+            #!/bin/sh
+            echo '{"schema_version":4,"event":"start","app":"demo"}'
+            printf '%s' '{"schema_version":4,"event":"file","app":"demo","src":"'
+            printf '\\303'
+            sleep 0.05
+            printf '\\251"}\\n'
+            echo '{"schema_version":4,"event":"done","app":"demo"}'
+            """)
+        var names: [String] = []
+        try MackeepCommand(path: path).streamEvents([]) { event in
+            if let src = event.src { names.append(src) }
+        }
+        XCTAssertEqual(names, ["é"])
+    }
+
 }

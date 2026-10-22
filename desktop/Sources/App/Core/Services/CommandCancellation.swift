@@ -1,40 +1,38 @@
 import Foundation
 
-/// The token of a command that can be stopped.
+/// Serializes launch and cancellation so a stopped task cannot start afterward.
 final class CommandCancellation: @unchecked Sendable {
-    private let lock: NSLock = NSLock()
+    private let lock = NSLock()
     private var process: Process?
-    private var stopped: Bool = false
+    private var stopped = false
+    private let signal: Int32
 
-    /// Whether the command was stopped.
+    init(signal: Int32 = SIGTERM) { self.signal = signal }
+
     var isCancelled: Bool {
         lock.lock()
         defer { lock.unlock() }
         return stopped
     }
 
-    /// Follow the process of the command.
-    ///
-    /// - Parameter process: The process.
-    func attach(_ process: Process) {
+    func launch(_ process: Process) throws {
         lock.lock()
         defer { lock.unlock() }
+        if stopped { throw CancellationError() }
+        try process.run()
         self.process = process
-        if stopped { process.terminate() }
     }
 
-    /// The command was stopped.
     func forget() {
         lock.lock()
         defer { lock.unlock() }
         process = nil
     }
 
-    /// Stop the command.
     func cancel() {
         lock.lock()
         defer { lock.unlock() }
         stopped = true
-        process?.terminate()
+        if let process, process.isRunning { kill(process.processIdentifier, signal) }
     }
 }

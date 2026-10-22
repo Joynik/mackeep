@@ -1,7 +1,7 @@
 import Foundation
 
 /// A file or a folder that was found for an application.
-struct FoundFile: Identifiable, Equatable {
+struct FoundFile: Identifiable, Equatable, Sendable {
     /// The absolute path of the file.
     let url: URL
 
@@ -18,7 +18,7 @@ struct FoundFile: Identifiable, Equatable {
     let size: Int
 
     /// The identifier of the file.
-    var id: String { relativePath }
+    var id: String { "\(isXDG ? "xdg:" : "home:")\(relativePath)" }
 
     /// The size of the file, in a readable way.
     var sizeText: String {
@@ -70,6 +70,18 @@ final class ApplicationSearchModel {
 
     /// The task of the search that is running.
     private var task: Task<Void, Never>?
+    private var cancellation: CommandCancellation?
+    private var cachedIdentifiers: [String]?
+    private var active = false
+
+    func start() { active = true; search() }
+
+    func cancel() {
+        active = false
+        task?.cancel()
+        cancellation?.cancel()
+        isSearching = false
+    }
 
     /// Whether the application has files that can be searched.
     var hasFolders: Bool { !roots.isEmpty || !rootFiles.isEmpty }
@@ -95,7 +107,7 @@ final class ApplicationSearchModel {
         var known: Set<String> = []
 
         for path: EditorPath in paths + xdgPaths {
-            known.insert(path.path)
+            known.insert(path.id)
             let url: URL = path.url
             var isDirectory: ObjCBool = false
             guard
@@ -141,8 +153,9 @@ final class ApplicationSearchModel {
         roots = folders
         rootFiles = files
         knownPaths = known
+        if appNames != [name, identifier] { cachedIdentifiers = nil }
         appNames = [name, identifier]
-        search()
+        if active { search() }
     }
 
     /// The standard places of an application, on macOS.
@@ -190,6 +203,7 @@ final class ApplicationSearchModel {
         var found: [FoundFile] = []
 
         for child: URL in children {
+            if Task.isCancelled { break }
             var title: String = child.lastPathComponent
             if title.hasPrefix(".") { title.removeFirst() }
 
@@ -201,7 +215,7 @@ final class ApplicationSearchModel {
                 continue
             }
             guard let file: FoundFile = makeFile(child) else { continue }
-            guard !known.contains(file.relativePath) else { continue }
+            guard !known.contains(file.id) else { continue }
 
             if file.isDirectory {
                 folders.append(child)
@@ -244,6 +258,7 @@ final class ApplicationSearchModel {
 
         var found: [FoundFile] = []
         for child: URL in children {
+            if Task.isCancelled { break }
             let title: String = child.lastPathComponent
             guard
                 names.contains(where: {
@@ -254,7 +269,7 @@ final class ApplicationSearchModel {
             }
             guard let file: FoundFile = makeFile(child) else { continue }
             guard matches(file, text: text) else { continue }
-            guard !known.contains(file.relativePath) else { continue }
+            guard !known.contains(file.id) else { continue }
 
             found.append(file)
             if found.count >= maximumResults { return found }
@@ -269,14 +284,19 @@ final class ApplicationSearchModel {
     ///
     /// - Parameter names: The names of the application.
     /// - Returns: The identifiers of the bundles that were found.
-    nonisolated static func bundleIdentifiers(named names: [String]) -> [String] {
+    nonisolated static func bundleIdentifiers(
+        named names: [String], cancellation: CommandCancellation? = nil
+    ) -> [String] {
         var identifiers: [String] = []
 
         for name: String in names {
+            if Task.isCancelled { break }
             let trimmed: String = name.trimmingCharacters(in: .whitespaces)
             guard !trimmed.isEmpty else { continue }
 
-            for path: String in mdfind("kMDItemFSName == '*\(trimmed).app'c") {
+            for path: String in mdfind(
+                "kMDItemFSName == '*\(Self.escapedQuery(trimmed)).app'c", cancellation: cancellation
+            ) {
                 guard path.hasSuffix(".app") else { continue }
                 guard
                     let identifier: String = bundleIdentifier(of: path),
@@ -313,23 +333,21 @@ final class ApplicationSearchModel {
 
     /// The home directory of the user.
     nonisolated static var home: URL {
-        URL(fileURLWithPath: NSHomeDirectory())
+        EditorPath.homeDirectory
     }
 
     /// The directory of the configuration of the user, the XDG one.
     nonisolated static var xdgConfigHome: URL {
-        URL(
-            fileURLWithPath: ProcessInfo.processInfo
-                .environment["XDG_CONFIG_HOME"]
-                ?? home.appendingPathComponent(".config").path
-        )
+        EditorPath.xdgDirectory
     }
 
     /// Search the files a little later, when the user stops typing.
     ///
     /// The search of the disk is not cheap, it waits for the user.
     private func scheduleSearch() {
+        guard active else { return }
         task?.cancel()
+        cancellation?.cancel()
         task = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
@@ -339,7 +357,12 @@ final class ApplicationSearchModel {
 
     /// Search the files that match the text.
     func search() {
+        guard active else { return }
         task?.cancel()
+        cancellation?.cancel()
+        let token = CommandCancellation()
+        cancellation = token
+        let cached = cachedIdentifiers
         let roots: [URL] = self.roots
         let files: [URL] = self.rootFiles
         let known: Set<String> = self.knownPaths
@@ -348,11 +371,11 @@ final class ApplicationSearchModel {
 
         isSearching = true
         task = Task { [weak self] in
-            let found: [FoundFile] = await Task.detached(priority: .userInitiated) {
+            let worker = Task.detached(priority: .userInitiated) {
                 // The identifier of the bundle of the application, the files
                 // of an application are often named after it
-                let identifiers: [String] = names
-                    + Self.bundleIdentifiers(named: names)
+                let identifiers =
+                    cached ?? (names + Self.bundleIdentifiers(named: names, cancellation: token))
 
                 // The standard places of the application, they are named
                 // after the application and after its bundle
@@ -401,21 +424,27 @@ final class ApplicationSearchModel {
                 found += Self.spotlightSearch(
                     names: identifiers,
                     matching: text,
-                    known: known
+                    known: known,
+                    cancellation: token
                 )
 
-                return found
-                    .reduce(into: [FoundFile]()) { result, file in
-                        // The same file can be found twice
-                        if !result.contains(where: { $0.relativePath == file.relativePath })
-                        {
-                            result.append(file)
-                        }
-                    }
+                var seen: Set<String> = []
+                return (
+                    identifiers,
+                    found
+                        .filter { seen.insert($0.id).inserted }
                     .sorted { $0.relativePath < $1.relativePath }
-            }.value
+                        .prefix(Self.maximumResults).map { $0 }
+                )
+            }
+            let (identifiers, found) = await withTaskCancellationHandler {
+                await worker.value
+            } onCancel: {
+                worker.cancel(); token.cancel()
+            }
 
             guard !Task.isCancelled else { return }
+            self?.cachedIdentifiers = identifiers
             self?.results = found
             self?.isSearching = false
         }
@@ -426,7 +455,7 @@ final class ApplicationSearchModel {
     /// - Parameter file: The file.
     /// - Returns: True when the file is in the application.
     func isKnown(_ file: FoundFile) -> Bool {
-        knownPaths.contains(file.relativePath)
+        knownPaths.contains(file.id)
     }
 
     /// Find the files that match the text, in the folders.
@@ -453,7 +482,7 @@ final class ApplicationSearchModel {
             else {
                 continue
             }
-            if matches(item, text: text) && !known.contains(item.relativePath) {
+            if matches(item, text: text) && !known.contains(item.id) {
                 found.append(item)
             }
         }
@@ -462,13 +491,14 @@ final class ApplicationSearchModel {
             // The folder itself is a file of the application
             if let root: FoundFile = makeFile(root),
                matches(root, text: text),
-               !known.contains(root.relativePath)
+                !known.contains(root.id)
             {
                 found.append(root)
             }
 
             var stack: [(url: URL, depth: Int)] = [(root, 0)]
             while let item: (url: URL, depth: Int) = stack.popLast() {
+                if Task.isCancelled { break }
                 guard item.depth < maximumDepth else { continue }
 
                 let children: [URL] = (try? manager.contentsOfDirectory(
@@ -478,9 +508,10 @@ final class ApplicationSearchModel {
                 )) ?? []
 
                 for child: URL in children {
+                    if Task.isCancelled { break }
                     guard let file: FoundFile = makeFile(child) else { continue }
 
-                    if matches(file, text: text) && !known.contains(file.relativePath) {
+                    if matches(file, text: text) && !known.contains(file.id) {
                         found.append(file)
                     }
 
@@ -510,16 +541,20 @@ final class ApplicationSearchModel {
     nonisolated static func spotlightSearch(
         names: [String],
         matching text: String,
-        known: Set<String>
+        known: Set<String>,
+        cancellation: CommandCancellation? = nil
     ) -> [FoundFile] {
         var found: [FoundFile] = []
         var seen: Set<String> = []
 
         for name: String in names {
+            if Task.isCancelled { break }
             let trimmed: String = name.trimmingCharacters(in: .whitespaces)
             guard !trimmed.isEmpty else { continue }
 
-            for path: String in mdfind("kMDItemFSName == '*\(trimmed)*'c") {
+            for path: String in mdfind(
+                "kMDItemFSName == '*\(Self.escapedQuery(trimmed))*'c", cancellation: cancellation)
+            {
                 guard !seen.contains(path) else { continue }
                 seen.insert(path)
 
@@ -527,7 +562,7 @@ final class ApplicationSearchModel {
                 guard isInTheHome(url) else { continue }
                 guard let file: FoundFile = makeFile(url) else { continue }
                 guard matches(file, text: text) else { continue }
-                guard !known.contains(file.relativePath) else { continue }
+                guard !known.contains(file.id) else { continue }
 
                 found.append(file)
                 if found.count >= maximumResults { return found }
@@ -537,11 +572,18 @@ final class ApplicationSearchModel {
         return found
     }
 
+    nonisolated private static func escapedQuery(_ value: String) -> String {
+        value.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "'", with: "\\'")
+    }
+
     /// Ask Spotlight for the files that match the query.
     ///
     /// - Parameter query: The query of Spotlight.
     /// - Returns: The paths that Spotlight knows.
-    nonisolated static func mdfind(_ query: String) -> [String] {
+    nonisolated static func mdfind(_ query: String, cancellation: CommandCancellation? = nil)
+        -> [String]
+    {
         let process: Process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/mdfind")
         process.arguments = [query]
@@ -551,7 +593,9 @@ final class ApplicationSearchModel {
         process.standardError = FileHandle.nullDevice
 
         do {
-            try process.run()
+            if Task.isCancelled { return [] }
+            if let cancellation { try cancellation.launch(process) } else { try process.run() }
+            defer { cancellation?.forget() }
             let data: Data = pipe.fileHandleForReading.readDataToEndOfFile()
             process.waitUntilExit()
 

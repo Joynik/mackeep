@@ -33,11 +33,13 @@ struct ApplicationCreatorView: View {
                         text: $model.displayName
                     )
                     .textFieldStyle(AppFieldStyle())
+                    .accessibilityIdentifier("editor.create.name")
                     TextField(
                         L10n.string("editor.create.identifier.placeholder"),
                         text: $model.name
                     )
                     .textFieldStyle(AppFieldStyle())
+                    .accessibilityIdentifier("editor.create.identifier")
                 }
             }
             .formStyle(.grouped)
@@ -66,12 +68,14 @@ struct ApplicationCreatorView: View {
                 }
                 .keyboardShortcut(.defaultAction)
                 .disabled(!model.canCreate)
+                .accessibilityIdentifier("editor.create.confirm")
             }
         }
         .padding(20)
         .frame(width: 460)
         // The controls of the window have the same height, so they line up.
         .appControlSize()
+        .appError($presentedError)
         .onChange(of: model.name) {
             model.validate(existing: existing)
         }
@@ -85,7 +89,7 @@ struct ApplicationCreatorView: View {
         } catch {
             presentedError = AppError(
                 title: L10n.string("error.save.title"),
-                message: "\(error)"
+                message: error.localizedDescription
             )
         }
     }

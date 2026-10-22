@@ -73,7 +73,7 @@ final class ApplicationEditorModelTests: XCTestCase {
 
     func testThePathIsRelativeToTheHomeFolder() throws {
         let (editor, _) = try makeEditor()
-        let url: URL = URL(fileURLWithPath: NSHomeDirectory())
+        let url: URL = URL(fileURLWithPath: EditorPath.homeDirectory.path)
             .appendingPathComponent(".newfile")
 
         editor.addPath(url.path, isXDG: false)
@@ -91,7 +91,7 @@ final class ApplicationEditorModelTests: XCTestCase {
 
     func testTheDuplicatePathIsRefused() throws {
         let (editor, _) = try makeEditor()
-        let url: URL = URL(fileURLWithPath: NSHomeDirectory())
+        let url: URL = URL(fileURLWithPath: EditorPath.homeDirectory.path)
             .appendingPathComponent(".testrc")
 
         editor.addPath(url.path, isXDG: false)
@@ -102,7 +102,7 @@ final class ApplicationEditorModelTests: XCTestCase {
 
     func testTheAbsolutePathInTheHomeFolderIsCut() throws {
         let (editor, _) = try makeEditor()
-        let url: URL = URL(fileURLWithPath: NSHomeDirectory())
+        let url: URL = URL(fileURLWithPath: EditorPath.homeDirectory.path)
             .appendingPathComponent(".Test")
 
         editor.addPath(url.path, isXDG: false)
@@ -121,7 +121,7 @@ final class ApplicationEditorModelTests: XCTestCase {
 
     func testTheAbsolutePathInTheConfigFolderIsCut() throws {
         let (editor, _) = try makeEditor()
-        let url: URL = URL(fileURLWithPath: NSHomeDirectory())
+        let url: URL = URL(fileURLWithPath: EditorPath.homeDirectory.path)
             .appendingPathComponent(".config/git/config")
 
         editor.addPath(url.path, isXDG: true)
@@ -160,7 +160,7 @@ final class ApplicationEditorModelTests: XCTestCase {
         XCTAssertTrue(saved.text.contains("# The name of the application"))
     }
 
-    func testTheApplicationGoesToTheApplicationsToSync() throws {
+    func testSavingAnEditorDoesNotChangeSelection() throws {
         _ = try makeEditor()
         let configURL: URL = directory.appendingPathComponent(".mackeep.cfg")
         try "[storage]\nengine = dropbox\n".write(
@@ -179,7 +179,7 @@ final class ApplicationEditorModelTests: XCTestCase {
         try model.save()
 
         let saved: MainConfig = try MainConfig.load(from: configURL)
-        XCTAssertEqual(saved.appsToSync, ["test-app"])
+        XCTAssertEqual(saved.appsToSync, [])
         XCTAssertEqual(saved.appsToIgnore, [])
     }
 
@@ -244,6 +244,24 @@ final class ApplicationEditorModelTests: XCTestCase {
         )
         editor.addPath("/Volumes/External/config", isXDG: false)
         XCTAssertEqual(editor.paths.first?.path, "/Volumes/External/config")
+        XCTAssertTrue(editor.canSave)
+    }
+
+    func testExternalChangesRequireExplicitOverwrite() throws {
+        let (editor, url) = try makeEditor()
+        try "[application]\nname = External\n".write(to: url, atomically: true, encoding: .utf8)
+        editor.displayName = "Local"
+        XCTAssertTrue(editor.hasChangedOutside())
+        XCTAssertThrowsError(try editor.save())
+        try editor.save(overwrite: true)
+        XCTAssertEqual(
+            try INIFile.load(from: url).value(forKey: "name", inSection: "application"), "Local")
+    }
+
+    func testHomeAndXDGPathsAreDistinct() throws {
+        let (editor, _) = try makeEditor()
+        editor.addPath("demo/settings", isXDG: false)
+        editor.addPath("demo/settings", isXDG: true)
         XCTAssertTrue(editor.canSave)
     }
 

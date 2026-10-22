@@ -63,7 +63,7 @@ final class ApplicationSearchModelTests: XCTestCase {
         _ = try write("notes.txt")
 
         let known: Set<String> = [
-            directory.appendingPathComponent("config.yml").path
+            "home:" + directory.appendingPathComponent("config.yml").path
         ]
         let found: [FoundFile] = ApplicationSearchModel.find(
             in: [directory],
@@ -171,7 +171,7 @@ final class ApplicationSearchModelTests: XCTestCase {
         // The files that are outside of the home cannot be added to the
         // application, they are not shown
         XCTAssertTrue(
-            found.allSatisfy { $0.url.path.hasPrefix(NSHomeDirectory()) }
+            found.allSatisfy { $0.url.path.hasPrefix(EditorPath.homeDirectory.path) }
         )
     }
 }

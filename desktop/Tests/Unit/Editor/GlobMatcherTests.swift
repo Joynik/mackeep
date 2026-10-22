@@ -70,4 +70,12 @@ final class GlobMatcherTests: XCTestCase {
 
         XCTAssertEqual(files.sorted(), ["app.log", "sub/app.log"])
     }
+    func testReinclusionAndDirectoryAncestorsFollowCLI() {
+        XCTAssertFalse(GlobMatcher(patterns: ["*.log", "!keep.log"]).matches("keep.log"))
+        XCTAssertTrue(GlobMatcher(patterns: ["Library/Caches/"]).matches("Library/Caches/file"))
+        XCTAssertFalse(GlobMatcher(patterns: ["cache/"]).matches("cache"))
+        XCTAssertTrue(GlobMatcher(patterns: ["cache/"]).matches("cache", isDirectory: true))
+        XCTAssertTrue(GlobMatcher(patterns: ["cache/", "!cache/keep"]).matches("cache/keep"))
+    }
+
 }

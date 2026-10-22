@@ -122,6 +122,17 @@ Built-in definitions are read-only in the editor until copied into custom
 configuration. Application selection is written off the main thread; operations
 wait for pending saves before reading it.
 
+The desktop command adapter drains stdout/stderr concurrently and assembles
+NDJSON as bytes before decoding complete lines. It validates schema and paired
+application completion events; an empty stream is accepted only for an explicit
+empty selection. A bounded event channel and log prevent per-file UI tasks from
+accumulating. Previews, search, and exclusion-mask scans support cancellation.
+
+Execution cancellation uses SIGUSR1 only when the CLI advertises support. The
+signal sets a flag; `_run_action` checks it between application transactions.
+It never interrupts staging, commit, or rollback. The CLI reports cancellation
+with a nonzero exit status after the current application finishes.
+
 `MainConfig` serializes writes within the process and merges edited keys/sections
 into the latest file, avoiding stale settings and selection snapshots overwriting
 each other. This is not a cross-process configuration lock. Language, appearance,

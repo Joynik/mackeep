@@ -14,7 +14,7 @@ final class ApplicationsModelTests: XCTestCase {
         error: String? = nil
     ) -> MackeepApplication {
         MackeepApplication(
-            schemaVersion: 1,
+            schemaVersion: 4,
             name: name,
             displayName: displayName ?? name.capitalized,
             source: source,
@@ -43,7 +43,8 @@ final class ApplicationsModelTests: XCTestCase {
             \(ignore.joined(separator: "\n"))
             """
         )
-        let url: URL = URL(fileURLWithPath: "/tmp/.mackeep.cfg")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "mackeep-tests-\(UUID().uuidString)/main.cfg")
         model.setConfig(MainConfig(url: url, document: document))
         model.setApplications(applications)
         return model
@@ -315,6 +316,36 @@ final class ApplicationsModelTests: XCTestCase {
         model.setEnabled(true, for: application(name: "vim"))
         await model.waitForPendingSaves()
         XCTAssertTrue(try MainConfig.load(from: url).allowExternalPaths)
+    }
+
+    func testAbsentSelectionMeansAllExceptIgnored() {
+        let model = ApplicationsModel(command: nil)
+        model.setApplications([application(name: "vim"), application(name: "emacs")])
+        model.setConfig(
+            MainConfig(
+                url: URL(fileURLWithPath: "/unused"),
+                document: INIDocument(text: "[applications_to_ignore]\nemacs\n")))
+        XCTAssertTrue(model.isEnabled(model.applications[0]))
+        XCTAssertFalse(model.isEnabled(model.applications[1]))
+    }
+
+    func testFailedSaveRestoresSelectionAndBlocksOperations() async throws {
+        let parent = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString)
+        try Data().write(to: parent)
+        defer { try? FileManager.default.removeItem(at: parent) }
+        let model = ApplicationsModel(command: nil)
+        model.setConfig(
+            MainConfig(
+                url: parent.appendingPathComponent("main.cfg"),
+                document: INIDocument(text: "[applications_to_sync]\n")))
+        let app = application(name: "vim")
+        model.setEnabled(true, for: app)
+        do {
+            try await model.flushSelection(); XCTFail("An unsaved selection must block operations")
+        } catch {}
+        XCTAssertFalse(model.isEnabled(app))
+        XCTAssertNotNil(model.presentedError)
     }
 
 }

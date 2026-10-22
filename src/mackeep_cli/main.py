@@ -63,6 +63,7 @@ See https://github.com/Joynik/mackeep/tree/master/doc for more information.
 
 import os
 import re
+import signal
 import sys
 import traceback
 from dataclasses import dataclass
@@ -89,6 +90,16 @@ ANSI_CODES = re.compile(r"\033\[[0-9;]*m")
 
 # The default maximum number of actions of the JSON dry-run
 DEFAULT_MAX_ACTIONS: int = 5000
+CANCELLED_EXIT_CODE = 130
+
+# SIGUSR1 requests a stop between application transactions, never inside one.
+_cancel_requested = False
+
+
+def _request_cancel(_signum: int, _frame: object) -> None:
+    """Request cancellation at the next application boundary."""
+    global _cancel_requested  # noqa: PLW0603 - signal handler state
+    _cancel_requested = True
 
 
 class ColorFormatCodes:
@@ -248,6 +259,8 @@ def _run_action(
                 profile.ownership_baseline = baseline
     failed = False
     for app_name, app in profiles:
+        if _cancel_requested:
+            sys.exit(CANCELLED_EXIT_CODE)
         _print_app_header(app_name, ctx.verbose)
         if ctx.reporter is not None:
             ctx.reporter("start", {"app": app_name, "action": label or action})
@@ -261,6 +274,8 @@ def _run_action(
         if ctx.reporter is not None:
             ctx.reporter("done", {"app": app_name, "action": label or action})
         failed = failed or app.failed
+    if _cancel_requested:
+        sys.exit(CANCELLED_EXIT_CODE)
     if failed:
         sys.exit("One or more applications could not be copied.")
 
@@ -633,6 +648,7 @@ def _config_json(ctx: _Context) -> dict[str, Any]:
         "apps_to_ignore": sorted(config.apps_to_ignore),
         "allow_external_paths": config.allow_external_paths,
         "storage_configured": bool(config.path),
+        "supports_safe_cancellation": True,
         "global_exclude": config.global_exclude,
         "global_xdg_exclude": config.global_xdg_exclude,
     }
@@ -832,6 +848,9 @@ def main() -> None:
         # goes to stderr.
         sys.stdout = sys.stderr
 
+    global _cancel_requested  # noqa: PLW0603 - signal handler state
+    _cancel_requested = False
+    previous_handler = signal.signal(signal.SIGUSR1, _request_cancel)
     try:
         args: dict[str, Any] = docopt(docstring, version=f"Mackeep {VERSION}")
         _run(args, json_mode, stdout)
@@ -850,6 +869,7 @@ def main() -> None:
         print(f"Error: {exc}", file=sys.stderr)
         sys.exit(1)
     finally:
+        signal.signal(signal.SIGUSR1, previous_handler)
         utils.print_legacy_warnings()
         sys.stdout = stdout
 
@@ -911,13 +931,16 @@ def _handle_exit(exc: SystemExit, json_mode: bool, stdout: TextIO) -> None:
     if isinstance(code, str):
         message: str = _clean_error(code)
         error_code: str = _error_code(message)
+    elif code == CANCELLED_EXIT_CODE:
+        message = "Cancelled after the current application."
+        error_code = "cancelled"
     else:
         message = f"Mackeep failed with the exit code {code}"
         error_code = "error"
 
     if json_mode:
         jsonapi.emit_error(error_code, message, stdout)
-        sys.exit(1)
+        sys.exit(CANCELLED_EXIT_CODE if code == CANCELLED_EXIT_CODE else 1)
 
     raise exc
 

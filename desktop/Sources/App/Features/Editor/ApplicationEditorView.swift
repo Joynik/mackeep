@@ -4,6 +4,7 @@ import SwiftUI
 struct ApplicationEditorView: View {
     /// The model of the editor.
     @Bindable var model: ApplicationEditorModel
+    @Environment(AppEnvironment.self) private var environment
 
     /// The error shown to the user, when there is one.
     @State private var presentedError: AppError?
@@ -26,14 +27,18 @@ struct ApplicationEditorView: View {
             footer
         }
         .frame(minWidth: 720, minHeight: 520)
+        .disabled(environment.backup.isRunning)
         .navigationTitle(model.title)
         // The controls of the window have the same height, so they line up.
         .appControlSize()
+        .appError($presentedError)
         .sheet(isPresented: $showsSearch) {
             ApplicationSearchView(model: search, editor: model)
                 .onAppear {
                     setThePathsOfTheSearch()
+                    search.start()
                 }
+                .onDisappear { search.cancel() }
         }
         .alert(
             L10n.string("editor.reload.title"),
@@ -42,14 +47,21 @@ struct ApplicationEditorView: View {
             Button(L10n.string("editor.reload.reload")) {
                 reload()
             }
+            Button(L10n.string("editor.reload.overwrite"), role: .destructive) {
+                save(overwrite: true)
+            }
             Button(L10n.string("editor.reload.cancel"), role: .cancel) {
                 showsReloadAlert = false
             }
         } message: {
             Text(L10n.string("editor.reload.message"))
         }
-        .onAppear {
+        .onAppear { model.validate() }
+        .onReceive(
+            NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+        ) { _ in
             model.validate()
+            if model.hasChangedOutside() { showsReloadAlert = true }
         }
     }
 
@@ -79,10 +91,10 @@ struct ApplicationEditorView: View {
         }
         .padding(12)
         .onChange(of: model.paths) {
-            setThePathsOfTheSearch()
+            if showsSearch { setThePathsOfTheSearch() }
         }
         .onChange(of: model.xdgPaths) {
-            setThePathsOfTheSearch()
+            if showsSearch { setThePathsOfTheSearch() }
         }
     }
 
@@ -90,7 +102,6 @@ struct ApplicationEditorView: View {
     private func openTheSearch() {
         // The folders of the application are searched, they are read here,
         // the paths of the application are not changed when the window opens.
-        setThePathsOfTheSearch()
         showsSearch = true
     }
 
@@ -219,7 +230,8 @@ struct ApplicationEditorView: View {
                             model.setExcludes(newValue, isXDG: false)
                         }
                     ),
-                    isXDG: false
+                    isXDG: false,
+                    globalPatterns: model.globalExcludes(isXDG: false)
                 )
             } header: {
                 BlockHeader(
@@ -238,7 +250,8 @@ struct ApplicationEditorView: View {
                             model.setExcludes(newValue, isXDG: true)
                         }
                     ),
-                    isXDG: true
+                    isXDG: true,
+                    globalPatterns: model.globalExcludes(isXDG: true)
                 )
             } header: {
                 BlockHeader(
@@ -305,13 +318,14 @@ struct ApplicationEditorView: View {
     }
 
     /// Write the config file.
-    private func save() {
+    private func save(overwrite: Bool = false) {
+        if !overwrite && model.hasChangedOutside() { showsReloadAlert = true; return }
         do {
-            try model.save()
+            try model.save(overwrite: overwrite)
         } catch {
             presentedError = AppError(
                 title: L10n.string("error.save.title"),
-                message: "\(error)"
+                message: error.localizedDescription
             )
         }
     }
@@ -323,7 +337,7 @@ struct ApplicationEditorView: View {
         } catch {
             presentedError = AppError(
                 title: L10n.string("error.load.title"),
-                message: "\(error)"
+                message: error.localizedDescription
             )
         }
     }

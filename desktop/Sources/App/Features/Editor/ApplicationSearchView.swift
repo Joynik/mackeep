@@ -59,6 +59,8 @@ struct ApplicationSearchView: View {
                             .foregroundStyle(.secondary)
 
                         VStack(alignment: .leading, spacing: 2) {
+                            Text(file.isXDG ? "XDG" : "HOME").font(.caption).foregroundStyle(
+                                .secondary)
                             Text(file.relativePath)
                                 .font(.callout.monospaced())
                                 .lineLimit(1)

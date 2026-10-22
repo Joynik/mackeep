@@ -69,6 +69,10 @@ final class HistoryStore {
             self.url = url
             return
         }
+        if EditorPath.isTesting {
+            self.url = EditorPath.homeDirectory.appendingPathComponent("history.json")
+            return
+        }
         let support: URL = fileManager.urls(
             for: .applicationSupportDirectory,
             in: .userDomainMask

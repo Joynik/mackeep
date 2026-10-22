@@ -37,7 +37,7 @@ enum StorageEngine: String, CaseIterable, Identifiable, Codable {
 
     /// The standard folder of the engine, when it has one.
     var standardPath: String? {
-        let home: URL = URL(fileURLWithPath: NSHomeDirectory())
+        let home: URL = URL(fileURLWithPath: EditorPath.homeDirectory.path)
         switch self {
         case .dropbox:
             return home.appendingPathComponent("Dropbox").path

@@ -108,43 +108,19 @@ final class ApplicationCreatorModel: Identifiable {
     /// - Returns: The identifier of the application.
     @discardableResult
     func create() throws -> String {
+        guard canCreate else { throw CocoaError(.fileWriteInvalidFileName) }
         let identifier: String = name.trimmingCharacters(in: .whitespaces)
 
-        if let source {
-            try copy(of: source, to: identifier)
-            return identifier
-        }
-
-        var document: INIDocument = INIDocument()
-
+        var document =
+            try source.map { try INIFile.load(from: URL(fileURLWithPath: $0.cfgPath)) }
+            ?? INIDocument()
         document.setValue(
             displayName.isEmpty ? identifier : displayName,
-            forKey: "name",
-            inSection: "application"
-        )
-        document.ensureSection(EditorSection.configurationFiles.rawValue)
-
-        let url: URL = directory.appendingPathComponent("\(identifier).cfg")
-        try INIFile.save(document, to: url)
+            forKey: "name", inSection: "application")
+        if source == nil { document.ensureSection(EditorSection.configurationFiles.rawValue) }
+        try INIFile.save(
+            document, to: directory.appendingPathComponent("\(identifier).cfg"),
+            backup: false, replaceExisting: false)
         return identifier
-    }
-
-    /// Copy the config file of an application.
-    ///
-    /// - Parameters:
-    ///   - source: The application that is copied.
-    ///   - identifier: The identifier of the copy.
-    private func copy(of source: MackeepApplication, to identifier: String) throws {
-        var document: INIDocument = try INIFile.load(
-            from: URL(fileURLWithPath: source.cfgPath)
-        )
-        document.setValue(
-            displayName.isEmpty ? identifier : displayName,
-            forKey: "name",
-            inSection: "application"
-        )
-
-        let url: URL = directory.appendingPathComponent("\(identifier).cfg")
-        try INIFile.save(document, to: url)
     }
 }

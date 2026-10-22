@@ -1,6 +1,6 @@
 [
   {
-    "schema_version": 1,
+    "schema_version": 4,
     "name": "demo",
     "display_name": "Demo",
     "source": "custom",
@@ -14,7 +14,7 @@
     "error": "Invalid exclusion pattern in /Users/user/.mackeep/demo.cfg: unsupported absolute path: /absolute/path"
   },
   {
-    "schema_version": 1,
+    "schema_version": 4,
     "name": "vim",
     "display_name": "Vim",
     "source": "builtin",

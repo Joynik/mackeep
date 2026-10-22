@@ -189,4 +189,10 @@ TRANSLATION: dict[str, str] = {
     "settings.security.externalPaths.help": 'Типово вимкнено. Зовнішні файли зберігаються окремо в резервній копії та відновлюються за налаштованими абсолютними шляхами. Потрібна сумісна версія CLI.',
     "backup.action.removeStale": 'Видалити застарілу копію',
     "settings.storage.unconfigured": 'Не налаштовано',
+    "error.dismiss": "ОК",
+    "editor.reload.overwrite": "Перезаписати",
+    "backup.cancelled": "Скасовано",
+    "backup.stopping": "Зупинка після поточного застосунку…",
+    "backup.plan.truncated": "Показано лише частину плану.",
+    "editor.exclusions.rule": "Виключено правилом: %@",
 }

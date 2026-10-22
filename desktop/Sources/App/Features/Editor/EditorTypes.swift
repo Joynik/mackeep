@@ -52,14 +52,41 @@ struct EditorPath: Identifiable, Equatable {
 
     /// The home directory of the user.
     static var homeDirectory: URL {
-        URL(fileURLWithPath: NSHomeDirectory())
+        if isTesting {
+            let path =
+                Self.testValue("MACKEEP_TEST_HOME")
+                ?? FileManager.default.temporaryDirectory.appendingPathComponent(
+                    "MackeepTests-\(ProcessInfo.processInfo.processIdentifier)"
+                ).path
+            return URL(fileURLWithPath: path)
+        }
+        return URL(fileURLWithPath: NSHomeDirectory())
+    }
+
+    static var isTesting: Bool {
+        Bundle.main.bundleIdentifier == "com.joynik.mackeep.testing"
+            || ProcessInfo.processInfo.environment["MACKEEP_TESTING"] == "1"
+            || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
+    /// LaunchServices can discard environment overrides; test builds also accept arguments.
+    static func testValue(_ key: String) -> String? {
+        if let value = ProcessInfo.processInfo.environment[key] { return value }
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-" + key), index + 1 < arguments.count else {
+            return nil
+        }
+        return arguments[index + 1]
     }
 
     /// The XDG config home of the user.
     static var xdgDirectory: URL {
         let home: URL = EditorPath.homeDirectory
-        return URL(fileURLWithPath: ProcessInfo.processInfo
-            .environment["XDG_CONFIG_HOME"] ?? home.appendingPathComponent(".config").path)
+        return URL(
+            fileURLWithPath: isTesting
+                ? home.appendingPathComponent(".config").path
+                : ProcessInfo.processInfo.environment["XDG_CONFIG_HOME"]
+                    ?? home.appendingPathComponent(".config").path)
     }
 
     /// Cut the parts of a path that the tool does not accept.

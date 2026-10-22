@@ -5,7 +5,7 @@ import XCTest
 /// The tests of the paths of an application.
 final class EditorPathTests: XCTestCase {
     /// The home directory of the user.
-    private var home: String { NSHomeDirectory() }
+    private var home: String { EditorPath.homeDirectory.path }
 
     func testThePathInTheHomeFolderIsRelative() {
         XCTAssertEqual(

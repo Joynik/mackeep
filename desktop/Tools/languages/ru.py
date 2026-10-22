@@ -189,4 +189,10 @@ TRANSLATION: dict[str, str] = {
     "settings.security.externalPaths.help": 'По умолчанию выключено. Внешние файлы хранятся отдельно в бэкапе и восстанавливаются по настроенным абсолютным путям. Требуется совместимая версия CLI.',
     "backup.action.removeStale": 'Удалить устаревшую копию',
     "settings.storage.unconfigured": 'Не настроено',
+    "error.dismiss": "ОК",
+    "editor.reload.overwrite": "Перезаписать",
+    "backup.cancelled": "Отменено",
+    "backup.stopping": "Остановка после текущего приложения…",
+    "backup.plan.truncated": "Показана только часть плана.",
+    "editor.exclusions.rule": "Исключено правилом: %@",
 }

@@ -24,11 +24,12 @@ struct RootView: View {
         } detail: {
             switch selection ?? .applications {
             case .applications:
-                applications
+                applications.disabled(environment.backup.isRunning)
             case .backup:
                 BackupView(model: environment.backup)
             case .settings:
                 SettingsView(model: environment.settings)
+                    .disabled(environment.backup.isRunning)
             }
         }
         .task {
@@ -104,27 +105,6 @@ enum SidebarSection: String, CaseIterable, Identifiable {
         case .applications: "square.grid.2x2"
         case .backup: "arrow.triangle.2.circlepath"
         case .settings: "gearshape"
-        }
-    }
-}
-
-/// A view shown while a section is not implemented yet.
-struct PlaceholderView: View {
-    /// The key of the title of the view.
-    let title: String
-
-    /// The key of the message of the view.
-    let message: String
-
-    var body: some View {
-        ContentUnavailableView {
-            Label {
-                Text(L10n.string(title))
-            } icon: {
-                Image(systemName: "wrench.and.screwdriver")
-            }
-        } description: {
-            Text(L10n.string(message))
         }
     }
 }

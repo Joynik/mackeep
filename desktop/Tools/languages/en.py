@@ -189,4 +189,10 @@ TRANSLATION: dict[str, str] = {
     "settings.security.externalPaths.help": 'Off by default. External files are stored separately in the backup and restored to their configured absolute paths. Requires a compatible CLI.',
     "backup.action.removeStale": 'Remove outdated backup',
     "settings.storage.unconfigured": 'Not configured',
+    "error.dismiss": "OK",
+    "editor.reload.overwrite": "Overwrite",
+    "backup.cancelled": "Cancelled",
+    "backup.stopping": "Stopping after the current application…",
+    "backup.plan.truncated": "Only part of the plan is shown.",
+    "editor.exclusions.rule": "Excluded by rule: %@",
 }

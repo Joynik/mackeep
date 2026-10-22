@@ -76,6 +76,10 @@ final class ApplicationsModel {
 
     /// The latest save, chained after earlier writes to preserve click order.
     private var pendingSave: Task<Void, Never>?
+    private var saveRevision = 0
+    private var saveError: String?
+    private var savedSelection: (Set<String>, Set<String>) = ([], [])
+    private var sizeTask: Task<Void, Never>?
 
     /// The editors of the applications, by identifier.
     private var editors: [String: ApplicationEditorModel] = [:]
@@ -120,9 +124,7 @@ final class ApplicationsModel {
             case .disabled: !isEnabled(application)
             }
         }
-        return filtered.sorted {
-            $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
-        }
+        return filtered
     }
 
     /// The selected application.
@@ -220,6 +222,9 @@ final class ApplicationsModel {
         config.setSyncedApplications(Array(syncedApps), ignored: Array(ignoredApps))
         let document = config.document
         let url = config.url
+        saveRevision += 1
+        let revision = saveRevision
+        let selection = (syncedApps, ignoredApps)
         let previous = pendingSave
         pendingSave = Task {
             await previous?.value
@@ -236,7 +241,12 @@ final class ApplicationsModel {
                     return error.localizedDescription
                 }
             }.value
+            if message == nil { savedSelection = selection }
+            guard revision == saveRevision else { return }
+            saveError = message
             if let message {
+                syncedApps = savedSelection.0
+                ignoredApps = savedSelection.1
                 presentedError = AppError(
                     title: L10n.string("error.save.title"),
                     message: message
@@ -247,7 +257,22 @@ final class ApplicationsModel {
 
     /// Wait until the queued configuration writes finish.
     func waitForPendingSaves() async {
-        await pendingSave?.value
+        while true {
+            let revision = saveRevision
+            await pendingSave?.value
+            if revision == saveRevision { return }
+        }
+    }
+
+    /// Fail closed if the user's intended selection could not be saved.
+    func flushSelection() async throws {
+        await waitForPendingSaves()
+        if let saveError {
+            self.saveError = nil
+            throw NSError(
+                domain: "MackeepSelection", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: saveError])
+        }
     }
 
     /// The model of the editor of an application.
@@ -287,6 +312,7 @@ final class ApplicationsModel {
     /// - Parameter applications: The applications.
     func setApplications(_ applications: [MackeepApplication]) {
         self.applications = applications
+        if let config { setConfig(config) }
     }
 
     /// The directory where the config files of the user are.
@@ -322,7 +348,7 @@ final class ApplicationsModel {
         } catch {
             presentedError = AppError(
                 title: L10n.string("error.save.title"),
-                message: "\(error)"
+                message: error.localizedDescription
             )
             return
         }
@@ -337,23 +363,32 @@ final class ApplicationsModel {
     /// - Parameter config: The config.
     func setConfig(_ config: MainConfig) {
         self.config = config
-        syncedApps = Set(config.appsToSync)
         ignoredApps = Set(config.appsToIgnore)
+        syncedApps =
+            config.document.hasSection("applications_to_sync")
+            ? Set(config.appsToSync).subtracting(ignoredApps)
+            : Set(applications.map(\.name)).subtracting(ignoredApps)
+        savedSelection = (syncedApps, ignoredApps)
     }
 
     /// Load the applications and the config of Mackeep.
     ///
     /// The work is done out of the main thread, so the window stays alive.
     func load() {
-        guard let command else { return }
+        Task { await reload() }
+    }
 
-        Task { [weak self] in
-            await self?.waitForPendingSaves()
-            let result: LoadResult = await Task.detached(priority: .userInitiated) {
-                Self.load(with: command)
-            }.value
-            self?.apply(result)
-        }
+    @discardableResult
+    func reload() async -> Bool {
+        guard let command else { return false }
+        await waitForPendingSaves()
+        let revision = saveRevision
+        let result = await Task.detached(priority: .userInitiated) {
+            Self.load(with: command)
+        }.value
+        guard revision == saveRevision else { return false }
+        apply(result)
+        return result.errorMessage == nil
     }
 
     /// What is read from Mackeep.
@@ -408,7 +443,7 @@ final class ApplicationsModel {
                 configURL: nil,
                 configDocument: nil,
                 customAppsDir: nil,
-                errorMessage: "\(error)"
+                errorMessage: error.localizedDescription
             )
         }
     }
@@ -430,43 +465,35 @@ final class ApplicationsModel {
         if let url: URL = result.configURL, let document: INIDocument = result.configDocument {
             setConfig(MainConfig(url: url, document: document))
         }
-        estimateSizes()
+        sizeTask?.cancel()
+        sizes = [:]
     }
 
-    /// Estimate the size of the applications, in the background.
-    private func estimateSizes() {
-        let home: String = NSHomeDirectory()
-        let applications: [MackeepApplication] = self.applications
-
-        Task { [weak self] in
-            let sizes: [String: Int] = await Task.detached(priority: .utility) {
-                Self.computeSizes(of: applications, in: home)
-            }.value
-            self?.sizes = sizes
-        }
-    }
-
-    /// Compute the size of the applications.
-    ///
-    /// - Parameters:
-    ///   - applications: The applications.
-    ///   - home: The home directory of the user.
-    /// - Returns: The size of every application, in bytes.
-    nonisolated private static func computeSizes(
-        of applications: [MackeepApplication],
-        in home: String
-    ) -> [String: Int] {
-        var sizes: [String: Int] = [:]
-        for application in applications {
-            var size: Int = 0
-            for path in application.files + application.xdgFiles where path.exists {
-                size += Self.size(
-                    of: URL(fileURLWithPath: home).appendingPathComponent(path.path)
-                )
+    /// Estimate only the selected application, never the entire catalog.
+    func estimateSize(for application: MackeepApplication) {
+        guard sizes[application.name] == nil else { return }
+        sizeTask?.cancel()
+        sizeTask = Task {
+            let worker = Task.detached(priority: .utility) {
+                var size = 0
+                var seen: Set<URL> = []
+                for (paths, isXDG) in [(application.files, false), (application.xdgFiles, true)] {
+                    for path in paths where path.exists {
+                        if Task.isCancelled { return 0 }
+                        let url = EditorPath.absoluteURL(of: path.path, isXDG: isXDG)
+                            .standardizedFileURL
+                        if seen.insert(url).inserted { size += Self.size(of: url) }
+                    }
+                }
+                return size
             }
-            sizes[application.name] = size
+            let size = await withTaskCancellationHandler {
+                await worker.value
+            } onCancel: {
+                worker.cancel()
+            }
+            if !Task.isCancelled { sizes[application.name] = size }
         }
-        return sizes
     }
 
     /// The size of a file or of a directory.
@@ -495,6 +522,7 @@ final class ApplicationsModel {
             return 0
         }
         for case let file as URL in enumerator {
+            if Task.isCancelled { break }
             let attributes: [FileAttributeKey: Any] = (try? manager.attributesOfItem(
                 atPath: file.path
             )) ?? [:]

@@ -59,6 +59,7 @@ final class SettingsModel {
 
     /// Whether the settings were already read.
     private var hasLoaded: Bool = false
+    private var savedValues: (StorageEngine, String, String, Bool, [String])?
 
     /// The main config file of Mackeep.
     private var mainConfig: MainConfig?
@@ -94,9 +95,9 @@ final class SettingsModel {
         let base: String
         switch engine {
         case .fileSystem:
-            base = storagePath.isEmpty ? NSHomeDirectory() : storagePath
+            base = storagePath.isEmpty ? EditorPath.homeDirectory.path : storagePath
         default:
-            base = engine.standardPath ?? NSHomeDirectory()
+            base = engine.standardPath ?? EditorPath.homeDirectory.path
         }
 
         return (base as NSString).appendingPathComponent(directory)
@@ -149,7 +150,7 @@ final class SettingsModel {
             let url: URL = URL(fileURLWithPath: config.configFile)
             // The config file is created when it does not exist, the
             // settings are shown anyway when it cannot be read
-            let document: INIDocument? = try? MainConfig.createIfNeeded(at: url)
+            let document: INIDocument? = try MainConfig.createIfNeeded(at: url)
                 .document
             return LoadResult(
                 config: config,
@@ -162,7 +163,7 @@ final class SettingsModel {
                 config: nil,
                 document: nil,
                 configURL: nil,
-                errorMessage: "\(error)"
+                errorMessage: error.localizedDescription
             )
         }
     }
@@ -174,6 +175,7 @@ final class SettingsModel {
         isLoading = false
 
         if let message: String = result.errorMessage {
+            hasLoaded = false
             presentedError = AppError(
                 title: L10n.string("error.load.title"),
                 message: message
@@ -209,6 +211,7 @@ final class SettingsModel {
         if let document: INIDocument = result.document {
             mainConfig = MainConfig(url: url, document: document)
         }
+        savedValues = (engine, storagePath, directory, allowExternalPaths, globalExclude)
     }
 
     /// Write the settings in the config file of Mackeep.
@@ -227,12 +230,16 @@ final class SettingsModel {
 
         do {
             try mainConfig.save()
+            savedValues = (engine, storagePath, directory, allowExternalPaths, globalExclude)
             resolvedBackupDirectory = ""
             storageIsConfigured = engine == .fileSystem ? !storagePath.isEmpty : engine.isAvailable
         } catch {
+            if let savedValues {
+                (engine, storagePath, directory, allowExternalPaths, globalExclude) = savedValues
+            }
             presentedError = AppError(
                 title: L10n.string("error.save.title"),
-                message: "\(error)"
+                message: error.localizedDescription
             )
         }
     }

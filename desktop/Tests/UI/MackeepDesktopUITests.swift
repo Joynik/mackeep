@@ -2,104 +2,59 @@ import XCTest
 
 /// The UI tests of the application.
 final class MackeepDesktopUITests: XCTestCase {
-    /// The identifier of the application.
-    private static let identifier: String = "com.joynik.mackeep"
-
-    /// The application of Mackeep.
-    private var application: XCUIApplication {
-        XCUIApplication(bundleIdentifier: Self.identifier)
-    }
-
-    /// The window of the application.
-    private var window: XCUIElement {
-        application.windows.firstMatch
-    }
+    private let application = XCUIApplication(bundleIdentifier: "com.joynik.mackeep.testing")
+    private var directory: URL!
+    private var instance: NSRunningApplication?
+    private var window: XCUIElement { application.windows.firstMatch }
 
     override func setUpWithError() throws {
-        try super.setUpWithError()
-
-        // A running copy of the application takes the windows for itself,
-        // so the new copy stays without a window
-        stopTheApplication()
+        // Both the runner and test app need access; the runner's container is private.
+        directory = URL(fileURLWithPath: "/private/tmp").appendingPathComponent(
+            "mackeep-ui-\(UUID().uuidString)")
+        let tool = try XCTUnwrap(
+            Bundle(for: Self.self).url(forResource: "mackeep-cli", withExtension: "sh"))
+        application.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        application.launchEnvironment = [
+            "MACKEEP_TESTING": "1", "MACKEEP_TEST_HOME": directory.path,
+            "MACKEEP_TEST_CLI": tool.path,
+        ]
     }
 
-    override func tearDownWithError() throws {
-        stopTheApplication()
+    override func tearDownWithError() throws { instance?.terminate() }
 
-        try super.tearDownWithError()
-    }
-
-    /// Start the application.
-    ///
-    /// The application is started through the LaunchServices, because a
-    /// application, that is started directly, does not get a window.
     private func startTheApplication() throws {
-        let process: Process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        process.arguments = ["-a", Self.applicationPath().path]
-        try process.run()
-        process.waitUntilExit()
-
-        // The application comes to the front when it starts
-        application.activate()
+        var products = Bundle(for: Self.self).bundleURL
+        while products.pathComponents.count > 1 && products.lastPathComponent != "Debug" {
+            products.deleteLastPathComponent()
+        }
+        let app = products.appendingPathComponent("Mackeep.app")
+        guard Bundle(url: app)?.bundleIdentifier == "com.joynik.mackeep.testing" else {
+            throw XCTSkip(
+                "Build UI tests with MACKEEP_BUNDLE_IDENTIFIER=com.joynik.mackeep.testing")
+        }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        configuration.arguments = application.launchArguments
+        for (key, value) in application.launchEnvironment.sorted(by: { $0.key < $1.key }) {
+            configuration.arguments += ["-" + key, value]
+        }
+        configuration.environment = application.launchEnvironment
+        let launched = expectation(description: "Test application launched")
+        var failure: Error?
+        NSWorkspace.shared.openApplication(at: app, configuration: configuration) { app, error in
+            self.instance = app
+            failure = error
+            launched.fulfill()
+        }
+        wait(for: [launched], timeout: 20)
+        if let failure { throw failure }
+        XCTAssertTrue(window.waitForExistence(timeout: 20))
+        waitForTheApplication()
     }
 
-    /// Stop every copy of the application and wait for them.
-    private func stopTheApplication() {
-        let running: [NSRunningApplication] = NSRunningApplication
-            .runningApplications(withBundleIdentifier: Self.identifier)
-
-        for copy: NSRunningApplication in running {
-            copy.terminate()
-        }
-
-        let deadline: Date = Date().addingTimeInterval(10)
-        while Date() < deadline {
-            let copies: [NSRunningApplication] = NSRunningApplication
-                .runningApplications(withBundleIdentifier: Self.identifier)
-            if copies.isEmpty { return }
-
-            usleep(200_000)
-        }
-
-        // The polite request was not enough
-        for copy: NSRunningApplication in NSRunningApplication
-            .runningApplications(withBundleIdentifier: Self.identifier)
-        {
-            copy.forceTerminate()
-        }
-    }
-
-    /// The path of the built application.
-    private static func applicationPath() -> URL {
-        var folder: URL = Bundle(for: MackeepDesktopUITests.self).bundleURL
-        while folder.pathComponents.count > 1,
-              folder.lastPathComponent != "Debug"
-        {
-            folder = folder.deletingLastPathComponent()
-        }
-
-        return folder.appendingPathComponent("Mackeep.app")
-    }
-
-    /// Wait for the application to be in front.
-    ///
-    /// The clicks need it, another application can take the focus.
     private func waitForTheApplication() {
-        let deadline: Date = Date().addingTimeInterval(10)
-        while Date() < deadline {
-            if application.state == .runningForeground { break }
-            application.activate()
-            usleep(200_000)
-        }
-
-        // The application is raised above the other ones, the clicks need it
-        if let running: NSRunningApplication = NSRunningApplication
-            .runningApplications(withBundleIdentifier: Self.identifier)
-            .first
-        {
-            running.activate(options: [.activateAllWindows])
-        }
+        instance?.activate(options: [.activateAllWindows])
+        XCTAssertTrue(application.wait(for: .runningForeground, timeout: 10))
     }
 
     func testTheWindowOpens() throws {
@@ -162,5 +117,31 @@ final class MackeepDesktopUITests: XCTestCase {
 
         // It is shown only once, the XDG location is not shown
         XCTAssertEqual(folders.count, 1)
+        XCTAssertEqual(folders.element(boundBy: 0).value as? String, directory.appendingPathComponent(".mackeep").path)
     }
+    func testCreatingAnApplicationOpensItsEditor() throws {
+        try startTheApplication()
+        let create = window.buttons["applications.create.button"]
+        XCTAssertTrue(create.waitForExistence(timeout: 20))
+        waitForTheApplication()
+        create.click()
+        let identifier = application.textFields["editor.create.identifier"]
+        guard identifier.waitForExistence(timeout: 10) else {
+            let errors = application.sheets.staticTexts.allElementsBoundByIndex.map {
+                $0.value as? String ?? $0.label
+            }
+            XCTFail(errors.joined(separator: "\n") + "\n" + application.debugDescription)
+            return
+        }
+        identifier.click()
+        identifier.typeText("new-app")
+        XCTAssertEqual(identifier.value as? String, "new-app")
+        let name = application.textFields["editor.create.name"]
+        name.click()
+        name.typeText("New App")
+        XCTAssertEqual(name.value as? String, "New App")
+        application.buttons["editor.create.confirm"].click()
+        XCTAssertTrue(application.windows["New App"].waitForExistence(timeout: 20))
+    }
+
 }

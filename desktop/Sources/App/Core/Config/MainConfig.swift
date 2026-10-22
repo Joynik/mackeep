@@ -64,12 +64,12 @@ final class MainConfig {
 
     /// The names of the applications to sync.
     var appsToSync: [String] {
-        document.values(inSection: "applications_to_sync")
+        document.optionKeys(inSection: "applications_to_sync")
     }
 
     /// The names of the applications to ignore.
     var appsToIgnore: [String] {
-        document.values(inSection: "applications_to_ignore")
+        document.optionKeys(inSection: "applications_to_ignore")
     }
 
     /// Whether definitions may refer to files outside HOME.

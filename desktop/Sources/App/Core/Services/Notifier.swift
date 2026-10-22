@@ -21,6 +21,7 @@ enum Notifier {
     /// - Returns: True when the notification was sent.
     @discardableResult
     static func notify(title: String, message: String) -> Bool {
+        if EditorPath.isTesting { return false }
         let content: UNMutableNotificationContent = UNMutableNotificationContent()
         content.title = title
         content.body = message

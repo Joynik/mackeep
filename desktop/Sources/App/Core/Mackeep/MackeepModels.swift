@@ -76,10 +76,12 @@ struct MackeepConfig: Codable, Equatable, Sendable {
     /// Missing on older CLI versions, which do not support this setting.
     var allowExternalPaths: Bool? = nil
     var storageConfigured: Bool? = nil
+    var supportsSafeCancellation: Bool? = nil
 
     enum CodingKeys: String, CodingKey {
         case allowExternalPaths = "allow_external_paths"
         case storageConfigured = "storage_configured"
+        case supportsSafeCancellation = "supports_safe_cancellation"
         case schemaVersion = "schema_version"
         case version
         case configFile = "config_file"

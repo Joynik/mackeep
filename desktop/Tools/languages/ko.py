@@ -189,4 +189,10 @@ TRANSLATION: dict[str, str] = {
     "settings.security.externalPaths.help": '기본적으로 꺼져 있습니다. 외부 파일은 별도로 백업되며 설정된 절대 경로로 복원됩니다. 호환되는 CLI가 필요합니다.',
     "backup.action.removeStale": '오래된 백업 삭제',
     "settings.storage.unconfigured": '설정되지 않음',
+    "error.dismiss": "확인",
+    "editor.reload.overwrite": "덮어쓰기",
+    "backup.cancelled": "취소됨",
+    "backup.stopping": "현재 앱 완료 후 중지 중…",
+    "backup.plan.truncated": "계획의 일부만 표시됩니다.",
+    "editor.exclusions.rule": "제외 규칙: %@",
 }

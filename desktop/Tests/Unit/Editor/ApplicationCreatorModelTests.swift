@@ -33,7 +33,7 @@ final class ApplicationCreatorModelTests: XCTestCase {
     /// An application of the database.
     private func application(name: String, path: String) -> MackeepApplication {
         MackeepApplication(
-            schemaVersion: 1,
+            schemaVersion: 4,
             name: name,
             displayName: name.capitalized,
             source: .builtin,

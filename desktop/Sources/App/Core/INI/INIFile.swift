@@ -51,13 +51,23 @@ enum INIFile {
     static func save(
         _ document: INIDocument,
         to url: URL,
-        backup: Bool = true
+        backup: Bool = true,
+        replaceExisting: Bool = true
     ) throws {
+        if !document.diagnostics.isEmpty {
+            throw FileError.cannotWrite(
+                url,
+                NSError(
+                    domain: "INI", code: 1,
+                    userInfo: [
+                        NSLocalizedDescriptionKey: document.diagnostics.joined(separator: "\n")
+                    ]))
+        }
         let manager: FileManager = .default
         let directory: URL = url.deletingLastPathComponent()
 
         do {
-            if backup, manager.fileExists(atPath: url.path) {
+            if backup && replaceExisting, manager.fileExists(atPath: url.path) {
                 let backupURL: URL = url.appendingPathExtension("bak")
                 if manager.fileExists(atPath: backupURL.path) {
                     try manager.removeItem(at: backupURL)
@@ -76,12 +86,13 @@ enum INIFile {
             let temporary: URL = directory.appendingPathComponent(
                 ".\(url.lastPathComponent).\(UUID().uuidString).tmp"
             )
+            defer { try? manager.removeItem(at: temporary) }
             try document.text.write(
                 to: temporary,
                 atomically: true,
                 encoding: .utf8
             )
-            if manager.fileExists(atPath: url.path) {
+            if replaceExisting && manager.fileExists(atPath: url.path) {
                 _ = try manager.replaceItemAt(url, withItemAt: temporary)
             } else {
                 try manager.moveItem(at: temporary, to: url)

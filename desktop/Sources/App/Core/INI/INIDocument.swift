@@ -54,13 +54,15 @@ struct INIOption: Equatable, Sendable {
 
     /// The original text of the option.
     var text: String {
-        prefix + key + separator + value + comment + suffix
+        prefix + key + separator
+            + value.replacingOccurrences(of: "\n", with: "\n" + prefix + "    ") + comment + suffix
     }
 
     /// The value of the option, the inline comment included when the
     /// document keeps it.
     func resolvedValue(stripsInlineComments: Bool) -> String {
-        stripsInlineComments ? value : value + comment
+        (stripsInlineComments ? value : value + comment).trimmingCharacters(
+            in: .whitespacesAndNewlines)
     }
 }
 
@@ -86,6 +88,7 @@ struct INIDocument: Equatable, Sendable {
 
     /// Whether the document ends with a newline.
     private(set) var endsWithNewline: Bool = true
+    private var newline = "\n"
 
     /// Create a document from the text of a file.
     ///
@@ -97,7 +100,8 @@ struct INIDocument: Equatable, Sendable {
         self.stripsInlineComments = stripsInlineComments
 
         var lines: [INILine] = []
-        var content: Substring = Substring(text)
+        self.newline = text.contains("\r\n") ? "\r\n" : "\n"
+        var content = Substring(text.replacingOccurrences(of: "\r\n", with: "\n"))
         if content.hasSuffix("\n") {
             content = content.dropLast()
             self.endsWithNewline = true
@@ -121,8 +125,9 @@ struct INIDocument: Equatable, Sendable {
 
     /// The text of the document.
     var text: String {
-        let body: String = lines.map(\.text).joined(separator: "\n")
-        return endsWithNewline ? body + "\n" : body
+        let body = lines.map(\.text).joined(separator: "\n").replacingOccurrences(
+            of: "\n", with: newline)
+        return endsWithNewline ? body + newline : body
     }
 
     /// The names of the sections, in the order they appear.
@@ -141,92 +146,94 @@ struct INIDocument: Equatable, Sendable {
         sectionNames.contains(name)
     }
 
-    /// The keys of the options of a section, in the order they appear.
-    ///
-    /// - Parameter section: The name of the section.
-    /// - Returns: The keys.
-    func optionKeys(inSection section: String) -> [String] {
-        var keys: [String] = []
+    private func key(of option: INIOption, in section: String) -> String {
+        let key = stripsInlineComments ? Self.splitInlineComment(option.key).0 : option.key
+        return stripsInlineComments && !["exclude", "xdg_exclude"].contains(section)
+            ? key.lowercased() : key
+    }
+
+    /// Read indented continuation lines as part of the preceding value.
+    private func options(in section: String) -> [INIOption] {
+        var result: [INIOption] = []
         var current: String?
         for line in lines {
             switch line {
-            case let .section(name, _):
-                current = name
-            case let .option(option):
-                if current == section { keys.append(option.key) }
-            case .empty(_), .comment:
-                continue
+            case let .section(name, _): current = name
+            case let .option(option) where current == section:
+                if let last = result.last, last.hasValue, option.prefix.count > last.prefix.count {
+                    let text = option.text.trimmingCharacters(in: .whitespaces)
+                    let value = stripsInlineComments ? Self.splitInlineComment(text).0 : text
+                    result[result.count - 1].value =
+                        last.resolvedValue(stripsInlineComments: stripsInlineComments) + "\n"
+                        + value
+                    result[result.count - 1].comment = ""
+                } else {
+                    result.append(option)
+                }
+            default: break
             }
         }
-        return keys
+        return result
     }
 
-    /// The value of an option.
-    ///
-    /// - Parameters:
-    ///   - key: The key of the option.
-    ///   - section: The name of the section.
-    /// - Returns: The value, nil when the option is not there or has no
-    ///   value.
+    func optionKeys(inSection section: String) -> [String] {
+        options(in: section).map { key(of: $0, in: section) }
+    }
+
     func value(forKey key: String, inSection section: String) -> String? {
-        guard let option = option(forKey: key, inSection: section) else {
+        guard let option = option(forKey: key, inSection: section), option.hasValue else {
             return nil
         }
-        guard option.hasValue else { return nil }
         return option.resolvedValue(stripsInlineComments: stripsInlineComments)
     }
 
-    /// The values of the options of a section, in the order they appear.
-    ///
-    /// The options without a value give their key, the way Mackeep stores
-    /// the paths of an application.
-    ///
-    /// - Parameter section: The name of the section.
-    /// - Returns: The values.
     func values(inSection section: String) -> [String] {
-        var values: [String] = []
-        var current: String?
-        for line in lines {
-            switch line {
-            case let .section(name, _):
-                current = name
-            case let .option(option):
-                guard current == section else { continue }
-                if option.hasValue {
-                    values.append(
-                        option.resolvedValue(
-                            stripsInlineComments: stripsInlineComments
-                        )
-                    )
-                } else {
-                    values.append(option.key)
-                }
-            case .empty(_), .comment:
-                continue
-            }
+        options(in: section).map { option in
+            option.hasValue
+                ? option.resolvedValue(stripsInlineComments: stripsInlineComments)
+                : key(of: option, in: section)
         }
-        return values
     }
 
-    /// The option of a section.
-    ///
-    /// - Parameters:
-    ///   - key: The key of the option.
-    ///   - section: The name of the section.
-    /// - Returns: The option, nil when it is not there.
     func option(forKey key: String, inSection section: String) -> INIOption? {
-        var current: String?
-        for line in lines {
+        options(in: section).last { self.key(of: $0, in: section) == key }
+    }
+
+    /// Structural problems that must be resolved before writing a configuration.
+    var diagnostics: [String] {
+        var problems: [String] = []
+        var sections: Set<String> = []
+        var keys: Set<String> = []
+        var section: String?
+        var previous: INIOption?
+        for (offset, line) in lines.enumerated() {
+            let location = "Line \(offset + 1)"
             switch line {
             case let .section(name, _):
-                current = name
+                if !sections.insert(name).inserted {
+                    problems.append("\(location): duplicate section [\(name)]")
+                }
+                section = name
+                previous = nil
+                keys = []
             case let .option(option):
-                if current == section, option.key == key { return option }
-            case .empty(_), .comment:
-                continue
+                if let previous, option.prefix.count > previous.prefix.count {
+                    if !previous.hasValue {
+                        problems.append("\(location): continuation after an option without a value")
+                    }
+                    continue
+                }
+                previous = option
+                if section == nil { problems.append("\(location): option outside a section") }
+                if option.key.isEmpty || option.key.hasPrefix("[") {
+                    problems.append("\(location): invalid option or section header")
+                } else if !keys.insert(key(of: option, in: section ?? "")).inserted {
+                    problems.append("\(location): duplicate option \(option.key)")
+                }
+            case .comment, .empty: break
             }
         }
-        return nil
+        return problems
     }
 
     // MARK: - Writing
@@ -240,9 +247,16 @@ struct INIDocument: Equatable, Sendable {
     mutating func setValue(_ value: String, forKey key: String, inSection section: String) {
         if let index = indexOfOption(forKey: key, inSection: section) {
             var option = lines[index].optionValue
+            if !option.hasValue { option.separator = " = " }
             option.value = value
             option.comment = ""
             lines[index] = .option(option)
+            while index + 1 < lines.count,
+                case let .option(continuation) = lines[index + 1],
+                continuation.prefix.count > option.prefix.count
+            {
+                lines.remove(at: index + 1)
+            }
             return
         }
         appendOption(
@@ -306,7 +320,7 @@ struct INIDocument: Equatable, Sendable {
             case let .section(name, _):
                 current = name
             case let .option(option):
-                if current == section, option.key == key { return index }
+                if current == section, self.key(of: option, in: section) == key { return index }
             case .empty(_), .comment:
                 continue
             }
@@ -397,8 +411,10 @@ struct INIDocument: Equatable, Sendable {
             return .comment(line)
         }
 
-        if trimmed.hasPrefix("["), trimmed.hasSuffix("]"), trimmed.count >= 2 {
-            let name: String = String(trimmed.dropFirst().dropLast())
+        if trimmed.hasPrefix("["), let end = trimmed.firstIndex(of: "]"),
+            end > trimmed.index(after: trimmed.startIndex)
+        {
+            let name = String(trimmed[trimmed.index(after: trimmed.startIndex)..<end])
             return .section(name: name, text: line)
         }
 
@@ -459,7 +475,8 @@ struct INIDocument: Equatable, Sendable {
         while index < value.endIndex {
             let character: Character = value[index]
             if character == ";" || character == "#" {
-                let previous: Character? = value.index(after: index) == value.endIndex
+                let previous: Character? =
+                    index == value.startIndex
                     ? nil
                     : value[value.index(before: index)]
                 if index == value.startIndex || previous == " " || previous == "\t" {

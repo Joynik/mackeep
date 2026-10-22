@@ -14,6 +14,8 @@ struct ExclusionsEditorView: View {
 
     /// Whether the rules are the XDG ones.
     let isXDG: Bool
+    var globalPatterns: [String] = []
+    @State private var preview: [String] = []
 
     /// The mask written by hand.
     @State private var mask: String = ""
@@ -22,6 +24,7 @@ struct ExclusionsEditorView: View {
     @State private var expanded: Set<String> = []
 
     var body: some View {
+        let matcher = GlobMatcher(patterns: globalPatterns + patterns)
         VStack(alignment: .leading, spacing: 10) {
             if paths.isEmpty {
                 Text(L10n.string("editor.exclusions.noPaths"))
@@ -30,7 +33,7 @@ struct ExclusionsEditorView: View {
             } else {
                 ForEach(paths) { path in
                     if path.url.hasDirectoryPath {
-                        folder(path)
+                        folder(path, matcher: matcher)
                     }
                 }
             }
@@ -53,12 +56,7 @@ struct ExclusionsEditorView: View {
             }
 
             if !mask.isEmpty {
-                let matcher: GlobMatcher = GlobMatcher(patterns: [mask])
-                let files: [String] = paths.flatMap { path in
-                    // The masks are relative to the root of the section, the
-                    // way the tool matches them.
-                    matcher.matchingFiles(in: path.url, relativeTo: root)
-                }
+                let files = preview
                 if files.isEmpty {
                     Text(L10n.string("editor.exclusions.mask.none"))
                         .font(.caption)
@@ -103,6 +101,30 @@ struct ExclusionsEditorView: View {
                 }
             }
         }
+        .task(id: mask + paths.map(\.id).joined(separator: "|")) {
+            preview = []
+            guard !mask.isEmpty else { return }
+            do { try await Task.sleep(for: .milliseconds(300)) } catch { return }
+            let roots = paths.map(\.url)
+            let root = root
+            let matcher = GlobMatcher(patterns: [mask])
+            let worker = Task.detached(priority: .utility) {
+                var found: Set<String> = []
+                for path in roots {
+                    if Task.isCancelled { break }
+                    found.formUnion(
+                        matcher.matchingFiles(in: path, relativeTo: root, limit: 300 - found.count))
+                    if found.count >= 300 { break }
+                }
+                return found.sorted()
+            }
+            let files = await withTaskCancellationHandler {
+                await worker.value
+            } onCancel: {
+                worker.cancel()
+            }
+            if !Task.isCancelled { preview = files }
+        }
     }
 
     /// The root of the files of the section.
@@ -115,7 +137,7 @@ struct ExclusionsEditorView: View {
 
     /// The tree of a folder of the application.
     @ViewBuilder
-    private func folder(_ path: EditorPath) -> some View {
+    private func folder(_ path: EditorPath, matcher: GlobMatcher) -> some View {
         DisclosureGroup(
             isExpanded: Binding(
                 get: { expanded.contains(path.path) },
@@ -130,11 +152,16 @@ struct ExclusionsEditorView: View {
         ) {
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(children(of: path.url), id: \.self) { child in
+                    let relative = pattern(of: child, in: path)
+                    let reason = matcher.reason(for: relative, isDirectory: child.hasDirectoryPath)
+                    let remaining = GlobMatcher(
+                        patterns: globalPatterns + patterns.filter { $0 != relative })
+                    let inherited = remaining.matches(relative, isDirectory: child.hasDirectoryPath)
                     HStack(spacing: 8) {
                         Toggle(
                             "",
                             isOn: Binding(
-                                get: { !isExcluded(child, in: path) },
+                                get: { reason == nil },
                                 set: { isChecked in
                                     if isChecked {
                                         removePattern(of: child, in: path)
@@ -147,12 +174,19 @@ struct ExclusionsEditorView: View {
                         .labelsHidden()
                         .toggleStyle(.switch)
                         .controlSize(.mini)
+                        .disabled(reason != nil && inherited)
+                        .accessibilityLabel(child.lastPathComponent)
+                        .help(reason.map { L10n.string("editor.exclusions.rule", $0) } ?? "")
 
                         Image(systemName: child.hasDirectoryPath ? "folder" : "doc")
                             .foregroundStyle(.secondary)
 
-                        Text(child.lastPathComponent)
-                            .font(.callout)
+                        VStack(alignment: .leading) {
+                            Text(child.lastPathComponent).font(.callout)
+                            if let reason {
+                                Text(reason).font(.caption.monospaced()).foregroundStyle(.secondary)
+                            }
+                        }
 
                         Spacer(minLength: 0)
                     }
@@ -190,11 +224,6 @@ struct ExclusionsEditorView: View {
         return contents.sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
 
-    /// Whether an item of a folder is excluded.
-    private func isExcluded(_ child: URL, in path: EditorPath) -> Bool {
-        patterns.contains(pattern(of: child, in: path))
-    }
-
     /// Exclude an item of a folder.
     private func addPattern(of child: URL, in path: EditorPath) {
         let pattern: String = pattern(of: child, in: path)
@@ -213,11 +242,7 @@ struct ExclusionsEditorView: View {
     /// The rules are relative to the root of the section, the way the tool
     /// matches them, so the full path of the file is written.
     private func pattern(of child: URL, in path: EditorPath) -> String {
-        let relative: String = child.path.replacingOccurrences(
-            of: root.path + "/",
-            with: ""
-        )
-        return relative.isEmpty ? child.lastPathComponent : relative
+        EditorPath.relativePath(of: child, isXDG: isXDG)
     }
 
     /// Add the mask that is written by hand.

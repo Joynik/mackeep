@@ -306,6 +306,7 @@ mackeep-cli --json config
   "apps_to_ignore": [],
   "allow_external_paths": false,
   "storage_configured": true,
+  "supports_safe_cancellation": true,
   "global_exclude": [],
   "global_xdg_exclude": []
 }
@@ -314,6 +315,12 @@ mackeep-cli --json config
 `storage_configured` means a nonempty storage path was resolved, not that the
 folder exists or is writable. Check `storage.exists` for the backup directory.
 New configurations use `unconfigured` with an empty resolved backup path.
+
+`supports_safe_cancellation` is optional for compatibility with older tools.
+When true, SIGUSR1 requests a stop after the current application transaction.
+No further application starts; the command emits a `cancelled` error and exits
+with status 130. This does not interrupt a commit or rollback. Consumers must
+check this capability before sending the signal to an older CLI.
 
 ### Application descriptions
 

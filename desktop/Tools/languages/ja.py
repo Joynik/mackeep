@@ -189,4 +189,10 @@ TRANSLATION: dict[str, str] = {
     "settings.security.externalPaths.help": '既定では無効です。外部ファイルはバックアップ内に個別に保存され、設定した絶対パスに復元されます。対応するCLIが必要です。',
     "backup.action.removeStale": '古いバックアップを削除',
     "settings.storage.unconfigured": '未設定',
+    "error.dismiss": "OK",
+    "editor.reload.overwrite": "上書き",
+    "backup.cancelled": "キャンセル済み",
+    "backup.stopping": "現在のアプリの完了後に停止します…",
+    "backup.plan.truncated": "計画の一部のみ表示されています。",
+    "editor.exclusions.rule": "除外ルール: %@",
 }

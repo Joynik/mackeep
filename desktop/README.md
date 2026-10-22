@@ -29,6 +29,16 @@ Security controls depending on new CLI fields are disabled with older tools
 that do not advertise them. See the [CLI reference](../doc/README.md) for
 replacement, cleanup, exclusions, and external-path behavior.
 
+Selection saves finish before preview or execution; a failed save restores the
+persisted checkboxes and prevents that operation. Editing an application does
+not enable it. Restore confirmation requires a successful current preview.
+External edits to an open definition require reload or explicit overwrite.
+
+Cancellation stops previews immediately. During backup/restore it waits for the
+current application to finish, then stops before the next one. This requires a
+CLI advertising `supports_safe_cancellation`; older tools have no execution
+cancel button. File-size estimates are calculated when an application is selected.
+
 ## Build and test
 
 Use Xcode with a macOS SDK compatible with the sources and
@@ -46,6 +56,13 @@ make run       # Build and open the application
 products live in `desktop/build/`. Signing defaults refer to the maintainer's
 Apple Development identity; adjust signing for your own environment. UI tests
 need suitable signing and permission to control the app.
+
+`make test` builds a separate `com.joynik.mackeep.testing` application. The scheme
+sets `MACKEEP_TESTING=1`: unit tests use injected or disabled CLI discovery and
+temporary paths, while UI tests launch a fake CLI in their own temporary HOME.
+UI tests terminate only their test instance. For direct `xcodebuild test`, also
+set `MACKEEP_BUNDLE_IDENTIFIER=com.joynik.mackeep.testing`. Never give a test CLI
+access to production definitions or backups.
 
 For a local ad-hoc Release build:
 

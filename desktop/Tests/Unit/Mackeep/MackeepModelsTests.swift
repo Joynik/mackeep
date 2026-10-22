@@ -74,7 +74,7 @@ final class MackeepModelsTests: XCTestCase {
         // directory
         let json: String = """
         {
-          "schema_version": 1,
+          "schema_version": 4,
           "version": "0.13.0",
           "config_file": "/Users/user/.mackeep.cfg",
           "custom_apps_dirs": [],
@@ -128,9 +128,9 @@ final class MackeepModelsTests: XCTestCase {
 
     func testTheEventsAreDecoded() throws {
         let lines: [String] = [
-            #"{"schema_version": 1, "event": "start", "app": "demo", "action": "backup"}"#,
-            #"{"schema_version": 1, "event": "file", "app": "demo", "action": "copy", "src": "/a", "dst": "/b", "size_bytes": 3}"#,
-            #"{"schema_version": 1, "event": "done", "app": "demo", "action": "backup", "files": 1, "bytes": 3, "skipped": 0}"#,
+            #"{"schema_version": 4, "event": "start", "app": "demo", "action": "backup"}"#,
+            #"{"schema_version": 4, "event": "file", "app": "demo", "action": "copy", "src": "/a", "dst": "/b", "size_bytes": 3}"#,
+            #"{"schema_version": 4, "event": "done", "app": "demo", "action": "backup", "files": 1, "bytes": 3, "skipped": 0}"#,
         ]
         let decoder: JSONDecoder = JSONDecoder()
         var events: [MackeepEvent] = []

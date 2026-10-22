@@ -189,4 +189,10 @@ TRANSLATION: dict[str, str] = {
     "settings.security.externalPaths.help": '默认关闭。外部文件单独备份，并恢复到配置的绝对路径。需要兼容的 CLI。',
     "backup.action.removeStale": '删除过期备份',
     "settings.storage.unconfigured": '未配置',
+    "error.dismiss": "好",
+    "editor.reload.overwrite": "覆盖",
+    "backup.cancelled": "已取消",
+    "backup.stopping": "当前应用完成后停止…",
+    "backup.plan.truncated": "仅显示部分计划。",
+    "editor.exclusions.rule": "排除规则：%@",
 }

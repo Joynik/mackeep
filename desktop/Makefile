@@ -57,7 +57,8 @@ package: release
 ## Run the tests
 test: project
 	xcodebuild -project $(PROJECT) -scheme $(SCHEME) \
-		-destination $(DESTINATION) -derivedDataPath $(DERIVED_DATA) test
+		-destination $(DESTINATION) -derivedDataPath $(DERIVED_DATA) \
+		MACKEEP_BUNDLE_IDENTIFIER=com.joynik.mackeep.testing test
 
 ## Run the application
 run: build

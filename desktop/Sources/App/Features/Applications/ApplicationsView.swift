@@ -37,6 +37,7 @@ struct ApplicationsView: View {
             list
         }
         .navigationTitle(L10n.string("section.applications.title"))
+        .appError($model.presentedError)
         .sheet(item: $sheet) { presented in
             switch presented {
             case .creator(let creator):
@@ -45,10 +46,11 @@ struct ApplicationsView: View {
                     existing: Set(model.applications.map(\.name)),
                     onCreate: { name in
                         sheet = nil
-                        model.load()
-                        if let editor: ApplicationEditorModel = model.editor(for: name) {
-                            openWindow(value: name)
-                            _ = editor
+                        Task {
+                            if await model.reload() {
+                                model.selection = name
+                                openWindow(value: name)
+                            }
                         }
                     }
                 )
@@ -129,6 +131,7 @@ struct ApplicationsView: View {
                     )
                 }
                 .help(L10n.string("applications.create.add"))
+                .accessibilityIdentifier("applications.create.button")
 
                 Button {
                     copySelected()

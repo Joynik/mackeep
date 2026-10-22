@@ -77,12 +77,18 @@ final class BackupModel {
 
     /// The token of the running command.
     private var cancellation: CommandCancellation?
+    private(set) var plannedCommand: String?
+    private(set) var canCancel = false
+    private(set) var isStopping = false
+    private let prepare: @MainActor () async throws -> Void
 
     init(
         command: MackeepCommand?,
-        historyStore: HistoryStore = HistoryStore()
+        historyStore: HistoryStore = HistoryStore(),
+        prepare: @escaping @MainActor () async throws -> Void = {}
     ) {
         self.command = command
+        self.prepare = prepare
         self.historyStore = historyStore
         self.history = historyStore.load()
     }
@@ -124,38 +130,31 @@ final class BackupModel {
     ///   - action: The action of the command, "backup" or "restore".
     ///   - application: The application, when there is one.
     private func computePlan(of action: String, application: String?) {
-        guard let command else { return }
-
-        var arguments: [String] = ["--json", action]
+        guard var command, !isRunning else { return }
+        let token = CommandCancellation()
+        command.cancellation = token
+        cancellation = token
+        isRunning = true
+        presentedError = nil
+        canCancel = true
+        isStopping = false
+        plan = nil
+        plannedCommand = nil
+        log = []
+        filter = .all
+        var arguments = ["--json", action]
         if let application { arguments.append(application) }
         arguments.append("--dry-run")
-
-        isRunning = true
-
-        Task { [weak self] in
-            let result: Result<MackeepPlan, Error> = await Task.detached(
-                priority: .userInitiated
-            ) {
-                do {
-                    return .success(
-                        try command.runJSON(arguments, as: MackeepPlan.self)
-                    )
-                } catch {
-                    return .failure(error)
-                }
-            }.value
-
-            self?.isRunning = false
-
-            switch result {
-            case .success(let plan):
-                self?.plan = plan
-            case .failure(let error):
-                self?.presentedError = AppError(
-                    title: L10n.string("error.backup.title"),
-                    message: "\(error)"
-                )
-            }
+        Task {
+            defer { isRunning = false; canCancel = false; cancellation = nil }
+            do {
+                try await prepare()
+                try Task.checkCancellation()
+                let plan = try await Task.detached(priority: .userInitiated) {
+                    try command.runJSON(arguments, as: MackeepPlan.self)
+                }.value
+                if !token.isCancelled { self.plan = plan; plannedCommand = action }
+            } catch is CancellationError {} catch { present(error) }
         }
     }
 
@@ -175,88 +174,90 @@ final class BackupModel {
 
     /// Stop the command that is running.
     func cancel() {
+        guard canCancel else { return }
+        isStopping = true
         cancellation?.cancel()
     }
 
-    /// Run a command of Mackeep, and follow its progress.
-    private func run(command name: String, application: String?) {
-        guard let command, !isRunning else { return }
-
-        var arguments: [String] = ["--json", name]
-        if let application { arguments.append(application) }
-
-        let token: CommandCancellation = CommandCancellation()
-        cancellation = token
-        isRunning = true
-        log = []
-
-        Task { [weak self] in
-            let counters: Counters = Counters()
-            var message: String?
-
-            do {
-                try await Task.detached { [weak self] in
-                    var command: MackeepCommand = command
-                    command.cancellation = token
-                    try command.streamEvents(arguments) { event in
-                        if event.event == "done" {
-                            counters.files += event.files ?? 0
-                            counters.bytes += event.bytes ?? 0
-                        }
-                        Task { @MainActor in
-                            self?.handle(event)
-                        }
-                    }
-                }.value
-            } catch {
-                message = "\(error)"
-            }
-
-            let succeeded: Bool = message == nil
-            let record: RunRecord = RunRecord(
-                command: name,
-                application: application,
-                succeeded: succeeded,
-                files: counters.files,
-                bytes: counters.bytes,
-                message: message
-            )
-
-            await MainActor.run {
-                self?.isRunning = false
-                self?.cancellation = nil
-                self?.historyStore.append(record)
-                self?.loadHistory()
-                if let message {
-                    self?.presentedError = AppError(
-                        title: L10n.string("error.backup.title"),
-                        message: message
-                    )
-                }
-            }
-
-            Notifier.notify(
-                title: succeeded
-                    ? L10n.string("backup.done.title")
-                    : L10n.string("backup.failed.title"),
-                message: succeeded
-                    ? L10n.string("backup.done.message")
-                    : (message ?? "")
-            )
-        }
+    private func present(_ error: Error) {
+        presentedError = AppError(
+            title: L10n.string("error.backup.title"), message: error.localizedDescription)
     }
 
-    /// The counters of a run.
-    final class Counters: @unchecked Sendable {
-        /// The number of files that were copied.
-        var files: Int = 0
-
-        /// The number of bytes that were copied.
-        var bytes: Int = 0
+    /// Persist selection first; a failed save must never launch filesystem work.
+    private func run(command name: String, application: String?) {
+        guard let command, !isRunning else { return }
+        if name == "restore", plannedCommand != "restore" || plan == nil { return }
+        isRunning = true
+        presentedError = nil
+        isStopping = false
+        canCancel = false
+        log = []
+        Task {
+            defer { isRunning = false; canCancel = false; cancellation = nil }
+            do {
+                try await prepare()
+                let config = try await Task.detached {
+                    try command.runJSON(["--json", "config"], as: MackeepConfig.self)
+                }.value
+                let token = CommandCancellation(signal: SIGUSR1)
+                cancellation = token
+                canCancel = config.supportsSafeCancellation == true
+                var arguments = ["--json", name]
+                if let application { arguments.append(application) }
+                // The user has confirmed replacement in the restore sheet.
+                if name == "restore" { arguments.append("--force") }
+                let allowEmpty =
+                    application == nil && config.appsToSync.isEmpty
+                    && (try? MainConfig.load(from: URL(fileURLWithPath: config.configFile)))?
+                        .document.hasSection("applications_to_sync") == true
+                let (events, continuation) = AsyncStream<MackeepEvent>.makeStream(
+                    bufferingPolicy: .bufferingNewest(256))
+                let updates = Task {
+                    for await event in events { handle(event) }
+                }
+                let result = await Task.detached { () -> (Int, Int, String?) in
+                    var files = 0
+                    var bytes = 0
+                    defer { continuation.finish() }
+                    do {
+                        var command = command
+                        command.cancellation = token
+                        try command.streamEvents(arguments, allowEmpty: allowEmpty) { event in
+                            if event.event == "done" {
+                                files += event.files ?? 0; bytes += event.bytes ?? 0
+                            }
+                            continuation.yield(event)
+                        }
+                        return (files, bytes, nil)
+                    } catch is CancellationError { return (files, bytes, "cancelled") } catch {
+                        return (files, bytes, error.localizedDescription)
+                    }
+                }.value
+                await updates.value
+                let message = token.isCancelled ? L10n.string("backup.cancelled") : result.2
+                let record = RunRecord(
+                    command: name, application: application,
+                    succeeded: message == nil, files: result.0, bytes: result.1, message: message)
+                historyStore.append(record)
+                loadHistory()
+                if let message, !token.isCancelled {
+                    presentedError = AppError(
+                        title: L10n.string("error.backup.title"), message: message)
+                }
+                Notifier.notify(
+                    title: L10n.string(
+                        result.2 == nil ? "backup.done.title" : "backup.failed.title"),
+                    message: message ?? L10n.string("backup.done.message"))
+                plannedCommand = nil
+                plan = nil
+            } catch { present(error) }
+        }
     }
 
     /// Take an event of the running command.
     private func handle(_ event: MackeepEvent) {
+        if log.count >= 2000 { log.removeFirst(256) }
         switch event.event {
         case "start":
             log.append(L10n.string("backup.log.start", event.app ?? ""))

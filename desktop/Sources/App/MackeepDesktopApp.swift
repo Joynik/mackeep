@@ -12,6 +12,17 @@ struct MackeepDesktopApp: App {
                 .environment(environment)
                 .environment(\.locale, environment.language.resolvedLocale)
                 .preferredColorScheme(environment.appearance.colorScheme)
+                .onReceive(
+                    NotificationCenter.default.publisher(
+                        for: NSApplication.willTerminateNotification)
+                ) { _ in
+                    if EditorPath.isTesting,
+                        let home = EditorPath.testValue("MACKEEP_TEST_HOME"),
+                        home.hasPrefix("/private/tmp/mackeep-ui-")
+                    {
+                        try? FileManager.default.removeItem(atPath: home)
+                    }
+                }
         }
         .defaultSize(width: 1100, height: 720)
         .windowResizability(.contentMinSize)

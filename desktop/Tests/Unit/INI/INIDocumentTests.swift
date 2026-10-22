@@ -164,4 +164,63 @@ final class INIDocumentTests: XCTestCase {
         XCTAssertTrue(document.hasSection("xdg_exclude"))
         XCTAssertEqual(document.sectionNames.count, 5)
     }
+    func testCommentsAtEitherEndOfAValueAreSafe() {
+        for marker in ["#", ";"] {
+            let leading = INIDocument(
+                text: "[s]\npath = \(marker)comment\n", stripsInlineComments: true)
+            XCTAssertEqual(leading.value(forKey: "path", inSection: "s"), "")
+            let trailing = INIDocument(
+                text: "[s]\npath = /tmp/store \(marker)\n", stripsInlineComments: true)
+            XCTAssertEqual(trailing.value(forKey: "path", inSection: "s"), "/tmp/store")
+        }
+    }
+
+    func testInvalidStructureHasLineDiagnostics() {
+        for text in [
+            "name = App", "[application]\nname = App\n[application]",
+            "[application]\nname = A\nname = B", "[application]\n[broken",
+        ] {
+            XCTAssertFalse(INIDocument(text: text).diagnostics.isEmpty, text)
+        }
+    }
+
+    func testMainConfigOptionCaseAndNoValueCommentsFollowCLI() {
+        let text =
+            "[storage]\nPATH = /tmp/store # comment\n[applications_to_sync]\nVIM # comment\n[exclude]\nLibrary/Cache # comment\n"
+        var document = INIDocument(text: text, stripsInlineComments: true)
+        XCTAssertEqual(document.value(forKey: "path", inSection: "storage"), "/tmp/store")
+        XCTAssertEqual(document.optionKeys(inSection: "applications_to_sync"), ["vim"])
+        XCTAssertEqual(document.values(inSection: "exclude"), ["Library/Cache"])
+        document.setValue("/new", forKey: "path", inSection: "storage")
+        XCTAssertEqual(document.optionKeys(inSection: "storage"), ["path"])
+        XCTAssertTrue(document.diagnostics.isEmpty)
+    }
+
+    func testMultilineValuesReadAndReplaceWithoutOrphanedLines() {
+        var document = INIDocument(text: "[application]\nname = First\n  Second\n  Third\n")
+        XCTAssertEqual(
+            document.value(forKey: "name", inSection: "application"), "First\nSecond\nThird")
+        XCTAssertTrue(document.diagnostics.isEmpty)
+        document.setValue("New", forKey: "name", inSection: "application")
+        XCTAssertEqual(document.text, "[application]\nname = New\n")
+        XCTAssertFalse(INIDocument(text: "[s]\nno-value\n  continuation\n").diagnostics.isEmpty)
+    }
+
+    func testSettingAValueOnAValuelessOptionWritesADelimiter() {
+        var document = INIDocument(text: "[storage]\npath\n")
+        document.setValue("/tmp", forKey: "path", inSection: "storage")
+        XCTAssertEqual(
+            INIDocument(text: document.text).value(forKey: "path", inSection: "storage"), "/tmp")
+    }
+
+    func testWindowsLineEndingsArePreserved() {
+        let text = "[application]\r\nname = App\r\n\r\n[configuration_files]\r\n.config/demo\r\n"
+        var document = INIDocument(text: text)
+        XCTAssertEqual(document.text, text)
+        XCTAssertEqual(document.value(forKey: "name", inSection: "application"), "App")
+        XCTAssertTrue(document.diagnostics.isEmpty)
+        document.setValue("New", forKey: "name", inSection: "application")
+        XCTAssertTrue(document.text.contains("name = New\r\n"))
+    }
+
 }

@@ -5,61 +5,51 @@ import XCTest
 /// The tests of the state shared by the windows.
 @MainActor
 final class AppEnvironmentTests: XCTestCase {
-    /// The value that was in the preferences before the test.
-    private var savedAppearance: String?
-
+    private var preferences: UserDefaults!
+    private var suite: String!
     override func setUpWithError() throws {
-        try super.setUpWithError()
-        savedAppearance = UserDefaults.standard.string(forKey: "appearance")
+        suite = "com.joynik.mackeep.test.\(UUID().uuidString)"
+        preferences = UserDefaults(suiteName: suite)
     }
-
-    override func tearDownWithError() throws {
-        if let savedAppearance {
-            UserDefaults.standard.set(savedAppearance, forKey: "appearance")
-        } else {
-            UserDefaults.standard.removeObject(forKey: "appearance")
-        }
-
-        try super.tearDownWithError()
-    }
+    override func tearDownWithError() throws { preferences.removePersistentDomain(forName: suite) }
 
     func testTheAppearanceIsKeptBetweenTheRuns() {
-        let environment: AppEnvironment = AppEnvironment()
+        let environment: AppEnvironment = AppEnvironment(defaults: preferences, discover: false)
 
         environment.appearance = .dark
 
         // The choice is in the preferences
-        XCTAssertEqual(UserDefaults.standard.string(forKey: "appearance"), "dark")
+        XCTAssertEqual(preferences.string(forKey: "appearance"), "dark")
 
         // And it is read again by the next run
-        let next: AppEnvironment = AppEnvironment()
+        let next: AppEnvironment = AppEnvironment(defaults: preferences, discover: false)
         XCTAssertEqual(next.appearance, .dark)
     }
 
     func testTheAppearanceOfTheSystemIsUsedByDefault() {
-        UserDefaults.standard.removeObject(forKey: "appearance")
+        preferences.removeObject(forKey: "appearance")
 
-        let environment: AppEnvironment = AppEnvironment()
+        let environment: AppEnvironment = AppEnvironment(defaults: preferences, discover: false)
 
         XCTAssertEqual(environment.appearance, .system)
     }
 
     func testTheLanguageIsKeptBetweenTheRuns() {
-        let previous: String? = UserDefaults.standard.string(forKey: "language")
+        let previous: String? = preferences.string(forKey: "language")
         defer {
             if let previous {
-                UserDefaults.standard.set(previous, forKey: "language")
+                preferences.set(previous, forKey: "language")
             } else {
-                UserDefaults.standard.removeObject(forKey: "language")
+                preferences.removeObject(forKey: "language")
             }
         }
 
-        let environment: AppEnvironment = AppEnvironment()
+        let environment: AppEnvironment = AppEnvironment(defaults: preferences, discover: false)
         environment.language = .ukrainian
 
-        XCTAssertEqual(UserDefaults.standard.string(forKey: "language"), "uk")
+        XCTAssertEqual(preferences.string(forKey: "language"), "uk")
 
-        let next: AppEnvironment = AppEnvironment()
+        let next: AppEnvironment = AppEnvironment(defaults: preferences, discover: false)
         XCTAssertEqual(next.language, .ukrainian)
     }
 }

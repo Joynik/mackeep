@@ -49,13 +49,17 @@ struct MackeepCommand: Sendable {
     /// - Parameters:
     ///   - path: The path of the binary.
     ///   - home: The home directory of the user.
-    init(path: String, home: String = NSHomeDirectory()) {
+    init(path: String, home: String = EditorPath.homeDirectory.path, xdgHome: String? = nil) {
         self.path = path
         self.home = home
         self.environment = [
             "HOME": home,
             "PATH": Self.searchPaths.joined(separator: ":"),
             "LANG": "en_US.UTF-8",
+            "XDG_CONFIG_HOME": xdgHome
+                ?? (home == EditorPath.homeDirectory.path
+                    ? EditorPath.xdgDirectory.path
+                    : URL(fileURLWithPath: home).appendingPathComponent(".config").path)
         ]
     }
 
@@ -74,13 +78,7 @@ struct MackeepCommand: Sendable {
     /// - Returns: The output of the command.
     func run(_ arguments: [String]) throws -> String {
         let result: (output: String, error: String, code: Int32) = try execute(arguments)
-        guard result.code == 0 else {
-            throw MackeepCommandError.failed(
-                path: path,
-                code: result.code,
-                message: result.error.isEmpty ? result.output : result.error
-            )
-        }
+        try checkStatus(result)
         return result.output
     }
 
@@ -96,6 +94,15 @@ struct MackeepCommand: Sendable {
             throw MackeepCommandError.invalidAnswer(path: path, message: "Not UTF-8")
         }
         do {
+            let object = try JSONSerialization.jsonObject(with: data)
+            let objects =
+                (object as? [[String: Any]]) ?? (object as? [String: Any]).map { [$0] } ?? []
+            for object in objects {
+                guard object["schema_version"] as? Int == MackeepSchema.version else {
+                    throw MackeepCommandError.invalidAnswer(
+                        path: path, message: "Unsupported JSON schema")
+                }
+            }
             return try JSONDecoder().decode(type, from: data)
         } catch {
             throw MackeepCommandError.invalidAnswer(
@@ -112,59 +119,65 @@ struct MackeepCommand: Sendable {
     ///   - onEvent: The callback called for every event.
     func streamEvents(
         _ arguments: [String],
-        onEvent: (MackeepEvent) -> Void
+        allowEmpty: Bool = false,
+        onEvent: @escaping (MackeepEvent) -> Void
     ) throws {
-        let process: Process = Process()
-        process.executableURL = URL(fileURLWithPath: path)
-        process.arguments = arguments
-        process.environment = environment
-
-        let output: Pipe = Pipe()
-        let errors: Pipe = Pipe()
-        process.standardOutput = output
-        process.standardError = errors
-
-        cancellation?.attach(process)
-
-        do {
-            try process.run()
-        } catch {
-            throw MackeepCommandError.cannotRun(path: path, error: error)
-        }
-
-        let handle: FileHandle = output.fileHandleForReading
-        var buffer: String = ""
-        while true {
-            let data: Data = handle.availableData
-            if data.isEmpty { break }
-            buffer += String(decoding: data, as: UTF8.self)
-            var lines: [String] = buffer.components(separatedBy: "\n")
-            buffer = lines.popLast() ?? ""
-            for line in lines {
-                guard let event: MackeepEvent = Self.decodeEvent(line) else { continue }
+        var buffer = Data()
+        var invalid: String?
+        var active: Set<String> = []
+        var completed = 0
+        var sawError = false
+        func consume(_ data: Data) {
+            guard !data.isEmpty, invalid == nil else { return }
+            do {
+                let event = try JSONDecoder().decode(MackeepEvent.self, from: data)
+                guard event.schemaVersion == MackeepSchema.version else {
+                    throw MackeepCommandError.invalidAnswer(
+                        path: path, message: "Unsupported event schema")
+                }
+                switch event.event {
+                case "start":
+                    guard let app = event.app, active.insert(app).inserted else {
+                        throw MackeepCommandError.invalidAnswer(
+                            path: path, message: "Invalid application start")
+                    }
+                case "done":
+                    guard let app = event.app, active.remove(app) != nil else {
+                        throw MackeepCommandError.invalidAnswer(
+                            path: path, message: "Completion without start")
+                    }
+                    completed += 1
+                case "error": sawError = true
+                case "file", "skip": break
+                default:
+                    throw MackeepCommandError.invalidAnswer(
+                        path: path, message: "Unknown event: \(event.event)")
+                }
                 onEvent(event)
+            } catch {
+                struct Failure: Decodable { let error: MackeepError }
+                invalid =
+                    (try? JSONDecoder().decode(Failure.self, from: data))?.error.message
+                    ?? error.localizedDescription
             }
         }
-        if !buffer.isEmpty, let event: MackeepEvent = Self.decodeEvent(buffer) {
-            onEvent(event)
+        let result = try execute(arguments) { chunk in
+            buffer.append(chunk)
+            while let newline = buffer.firstIndex(of: 10) {
+                consume(Data(buffer[..<newline]))
+                buffer.removeSubrange(...newline)
+            }
         }
-
-        let errorData: Data = errors.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-        cancellation?.forget()
-        guard process.terminationStatus == 0 else {
-            throw MackeepCommandError.failed(
-                path: path,
-                code: process.terminationStatus,
-                message: String(decoding: errorData, as: UTF8.self)
-            )
+        consume(buffer)
+        if result.code != 0, result.error.isEmpty, let invalid {
+            throw MackeepCommandError.failed(path: path, code: result.code, message: invalid)
         }
-    }
-
-    /// Stop the tool that is running.
-    func terminate() {
-        // The processes are terminated by the system when they exit, the
-        // cancellation is handled by the caller.
+        try checkStatus(result)
+        if let invalid { throw MackeepCommandError.invalidAnswer(path: path, message: invalid) }
+        guard active.isEmpty, !sawError, completed > 0 || allowEmpty else {
+            throw MackeepCommandError.invalidAnswer(
+                path: path, message: "Missing successful completion")
+        }
     }
 
     /// The version of the tool.
@@ -183,66 +196,70 @@ struct MackeepCommand: Sendable {
     /// The tool is asked what it can do, so an old version of Mackeep, that
     /// has no JSON and no exclusion rules, is detected.
     func capabilities() -> MackeepCapabilities {
-        let version: String = self.version() ?? ""
-        let supportsJSON: Bool = (try? runJSON(["--json", "config"], as: MackeepConfig.self)) != nil
-        var supportsExclusions: Bool = false
-        if supportsJSON,
-           let output: String = try? run(["--json", "list"]),
-           let data: Data = output.data(using: .utf8),
-           let object: Any = try? JSONSerialization.jsonObject(with: data),
-           let applications: [Any] = object as? [Any],
-           let first: [String: Any] = applications.first as? [String: Any]
-        {
-            supportsExclusions = first["exclude"] != nil
-        }
+        let config = try? runJSON(["--json", "config"], as: MackeepConfig.self)
         return MackeepCapabilities(
-            version: version,
-            supportsJSON: supportsJSON,
-            supportsExclusions: supportsExclusions
+            version: config?.version ?? version() ?? "",
+            supportsJSON: config != nil,
+            supportsExclusions: config?.schemaVersion == MackeepSchema.version
         )
     }
 
     // MARK: - Private
 
     /// Run the tool and collect its output.
+    /// Both pipes must be drained while the child is running.
     private func execute(
-        _ arguments: [String]
+        _ arguments: [String],
+        onOutput: ((Data) -> Void)? = nil
     ) throws -> (output: String, error: String, code: Int32) {
-        let process: Process = Process()
+        let process = Process()
         process.executableURL = URL(fileURLWithPath: path)
         process.arguments = arguments
         process.environment = environment
-
-        let output: Pipe = Pipe()
-        let errors: Pipe = Pipe()
+        process.standardInput = FileHandle.nullDevice
+        let output = Pipe()
+        let errors = Pipe()
         process.standardOutput = output
         process.standardError = errors
-
         do {
-            try process.run()
-        } catch {
+            if let cancellation { try cancellation.launch(process) } else { try process.run() }
+        } catch is CancellationError { throw CancellationError() } catch {
             throw MackeepCommandError.cannotRun(path: path, error: error)
         }
-
-        let outputData: Data = output.fileHandleForReading.readDataToEndOfFile()
-        let errorData: Data = errors.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-
-        return (
-            String(decoding: outputData, as: UTF8.self),
-            String(decoding: errorData, as: UTF8.self),
-            process.terminationStatus
-        )
-    }
-
-    /// Decode a JSON event.
-    private static func decodeEvent(_ line: String) -> MackeepEvent? {
-        let trimmed: String = line.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let data: Data = trimmed.data(using: .utf8) else {
-            return nil
+        defer { cancellation?.forget() }
+        let diagnostics = PipeData()
+        let group = DispatchGroup()
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            diagnostics.data = errors.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
         }
-        return try? JSONDecoder().decode(MackeepEvent.self, from: data)
+        var data = Data()
+        while true {
+            let chunk = output.fileHandleForReading.availableData
+            if chunk.isEmpty { break }
+            if let onOutput { onOutput(chunk) } else { data.append(chunk) }
+        }
+        process.waitUntilExit()
+        group.wait()
+        if cancellation?.isCancelled == true { throw CancellationError() }
+        guard let text = String(data: data, encoding: .utf8) else {
+            throw MackeepCommandError.invalidAnswer(path: path, message: "Output is not UTF-8")
+        }
+        return (text, String(decoding: diagnostics.data, as: UTF8.self), process.terminationStatus)
     }
+
+    /// Read only after the dispatch group has synchronized the pipe reader.
+    private final class PipeData: @unchecked Sendable { var data = Data() }
+
+    private func checkStatus(_ result: (output: String, error: String, code: Int32)) throws {
+        if result.code != 0 {
+            throw MackeepCommandError.failed(
+                path: path, code: result.code,
+                message: result.error.isEmpty ? result.output : result.error)
+        }
+    }
+
 }
 
 /// The capabilities of the tool of Mackeep.

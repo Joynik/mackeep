@@ -119,7 +119,7 @@ final class ApplicationEditorModel {
     private var onSave: (() -> Void)?
 
     /// The date when the config file was written the last time.
-    private var lastModification: Date?
+    private var savedText: String?
 
     /// Create the editor.
     ///
@@ -140,7 +140,7 @@ final class ApplicationEditorModel {
         self.document = document
         self.mainConfig = mainConfig
         self.onSave = onSave
-        self.lastModification = Self.modificationDate(of: url)
+        self.savedText = try? String(contentsOf: url, encoding: .utf8)
     }
 
     /// The name of the application, for the title of the window.
@@ -253,9 +253,16 @@ final class ApplicationEditorModel {
             ?? mainConfig.allowExternalPaths
     }
 
+    func globalExcludes(isXDG: Bool) -> [String] {
+        guard let mainConfig else { return [] }
+        let config = (try? MainConfig.load(from: mainConfig.url)) ?? mainConfig
+        return config.document.values(inSection: isXDG ? "xdg_exclude" : "exclude")
+    }
+
     /// Check the config file of the application.
     func validate() {
-        var issues: [ValidationIssue] = []
+        var issues = document.diagnostics.map { ValidationIssue(severity: .error, message: $0) }
+        let allowsExternal = allowsExternalPaths
 
         if displayName.trimmingCharacters(in: .whitespaces).isEmpty {
             issues.append(
@@ -269,7 +276,7 @@ final class ApplicationEditorModel {
         let allPaths: [EditorPath] = paths + xdgPaths
         var seen: Set<String> = []
         for path: EditorPath in allPaths {
-            if !seen.insert(path.path).inserted {
+            if !seen.insert(path.id).inserted {
                 issues.append(
                     ValidationIssue(
                         severity: .error,
@@ -277,7 +284,7 @@ final class ApplicationEditorModel {
                     )
                 )
             }
-            if !allowsExternalPaths,
+            if !allowsExternal,
                path.path.hasPrefix("/") || path.path.split(separator: "/").contains("..") {
                 issues.append(
                     ValidationIssue(
@@ -321,23 +328,15 @@ final class ApplicationEditorModel {
     ///
     /// The name of the application goes to the main config file of Mackeep when
     /// only the checked applications are synced.
-    func save() throws {
-        guard canSave else { return }
+    func save(overwrite: Bool = false) throws {
+        validate()
+        guard canSave else { throw CocoaError(.fileWriteInapplicableStringEncoding) }
+        if !overwrite && hasChangedOutside() { throw CocoaError(.fileWriteFileExists) }
 
         try INIFile.save(document, to: url)
-        lastModification = Self.modificationDate(of: url)
+        savedText = try? String(contentsOf: url, encoding: .utf8)
         hasUnsavedChanges = false
         history.removeAll()
-
-        // The application is added to the applications to sync
-        if let mainConfig {
-            var names: Set<String> = Set(mainConfig.appsToSync)
-            names.insert(appName)
-            var ignored: Set<String> = Set(mainConfig.appsToIgnore)
-            ignored.remove(appName)
-            mainConfig.setSyncedApplications(Array(names), ignored: Array(ignored))
-            try mainConfig.save()
-        }
 
         // The list of the applications is read again, the new files of the
         // application are shown in the details
@@ -346,27 +345,16 @@ final class ApplicationEditorModel {
 
     /// Whether the config file was changed by something else.
     func hasChangedOutside() -> Bool {
-        guard let last: Date = lastModification else { return false }
-        guard let current: Date = Self.modificationDate(of: url) else { return false }
-        return current > last
+        (try? String(contentsOf: url, encoding: .utf8)) != savedText
     }
 
     /// Read the config file again.
     func reload() throws {
         document = try INIFile.load(from: url)
-        lastModification = Self.modificationDate(of: url)
+        savedText = try? String(contentsOf: url, encoding: .utf8)
         hasUnsavedChanges = false
         history.removeAll()
         validate()
     }
 
-    /// The date when a file was written the last time.
-    ///
-    /// - Parameter url: The path of the file.
-    /// - Returns: The date, nil when the file does not exist.
-    static func modificationDate(of url: URL) -> Date? {
-        let attributes: [FileAttributeKey: Any] = (try? FileManager.default
-            .attributesOfItem(atPath: url.path)) ?? [:]
-        return attributes[.modificationDate] as? Date
-    }
 }

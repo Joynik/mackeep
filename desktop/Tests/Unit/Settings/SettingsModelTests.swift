@@ -53,9 +53,9 @@ final class SettingsModelTests: XCTestCase {
     ) throws -> MackeepCommand {
         try makeTool(config: """
         {
-          "schema_version": 2,
+          "schema_version": 4,
           "version": "0.15.1",
-          "config_file": "/Users/user/.mackeep.cfg",
+          "config_file": "\(self.directory.path)/.mackeep.cfg",
           "custom_apps_dir": "/Users/user/.mackeep",
           "custom_apps_dirs": ["/Users/user/.mackeep"],
           "storage": {
@@ -93,16 +93,16 @@ final class SettingsModelTests: XCTestCase {
         XCTAssertEqual(model.directory, "Mackeep")
         XCTAssertEqual(model.storagePath, "/Users/user/dotfiles")
         XCTAssertEqual(model.globalExclude, ["**/.DS_Store"])
-        XCTAssertEqual(model.configFilePath, "/Users/user/.mackeep.cfg")
+        XCTAssertEqual(model.configFilePath, "\(self.directory.path)/.mackeep.cfg")
         XCTAssertEqual(model.customAppsDir, "/Users/user/.mackeep")
     }
 
     func testTheCustomAppsDirIsTakenFromTheOldAnswer() async throws {
         let command: MackeepCommand = try makeTool(config: """
         {
-          "schema_version": 1,
+          "schema_version": 4,
           "version": "0.15.1",
-          "config_file": "/Users/user/.mackeep.cfg",
+          "config_file": "\(self.directory.path)/.mackeep.cfg",
           "custom_apps_dirs": ["/Users/user/.mackeep"],
           "storage": {
             "engine": "file_system",
@@ -136,7 +136,7 @@ final class SettingsModelTests: XCTestCase {
         // The tool answers the config file, the model writes it
         let command: MackeepCommand = try makeTool(config: """
         {
-          "schema_version": 2,
+          "schema_version": 4,
           "version": "0.20.0",
           "config_file": "\(configURL.path)",
           "custom_apps_dir": "/Users/user/.mackeep",
@@ -235,7 +235,7 @@ final class SettingsModelTests: XCTestCase {
         XCTAssertTrue(StorageEngine.fileSystem.isAvailable)
 
         // The folder of Dropbox is not there on a Mac without Dropbox
-        let home: String = NSHomeDirectory()
+        let home: String = EditorPath.homeDirectory.path
         XCTAssertFalse(
             StorageEngine.dropbox.isAvailable
                 && !FileManager.default.fileExists(

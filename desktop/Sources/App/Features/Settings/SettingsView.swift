@@ -43,6 +43,7 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .labeledContentStyle(CenteredSettingsRowStyle())
         .navigationTitle(L10n.string("section.settings.title"))
+        .appError($model.presentedError)
         // The controls of the window have the same height, so they line up.
         .appControlSize()
         .disabled(model.isLoading)
@@ -348,7 +349,7 @@ struct SettingsView: View {
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
-        panel.directoryURL = URL(fileURLWithPath: NSHomeDirectory())
+        panel.directoryURL = URL(fileURLWithPath: EditorPath.homeDirectory.path)
         if panel.runModal() == .OK, let url: URL = panel.url {
             model.storagePath = url.path
             model.save()

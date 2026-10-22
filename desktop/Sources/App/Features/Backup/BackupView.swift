@@ -21,6 +21,7 @@ struct BackupView: View {
             content
         }
         .navigationTitle(L10n.string("section.backup.title"))
+        .appError($model.presentedError)
         // The controls of the window have the same height, so they line up.
         .appControlSize()
         .sheet(isPresented: $showsRestoreConfirmation) {
@@ -63,12 +64,14 @@ struct BackupView: View {
             }
             .disabled(model.isRunning)
 
-            if model.isRunning {
+            if model.isRunning && model.canCancel {
                 Button(role: .destructive) {
                     model.cancel()
                 } label: {
                     Label(L10n.string("backup.cancel"), systemImage: "stop.circle")
                 }
+                .disabled(model.isStopping)
+                if model.isStopping { Text(L10n.string("backup.stopping")).font(.caption) }
             }
 
             Spacer(minLength: 12)
@@ -273,6 +276,10 @@ struct RestoreConfirmationView: View {
                 .font(.callout)
             }
 
+            if model.isRunning { ProgressView() }
+            if model.summary?.truncated == true {
+                Text(L10n.string("backup.plan.truncated")).foregroundStyle(.orange)
+            }
             PlanTableView(actions: model.visibleActions)
                 .frame(minHeight: 260)
 
@@ -286,8 +293,11 @@ struct RestoreConfirmationView: View {
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
+                .disabled(model.isRunning || model.plannedCommand != "restore" || model.plan == nil)
             }
         }
+        .appError($model.presentedError)
+        .onDisappear { if model.plannedCommand == nil { model.cancel() } }
         .padding(20)
         .frame(width: 720, height: 560)
         .onAppear {

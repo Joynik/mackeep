@@ -60,3 +60,19 @@ struct AppFieldStyle: TextFieldStyle {
             }
     }
 }
+
+/// Present persistence and command failures at the view that owns them.
+extension View {
+    func appError(_ error: Binding<AppError?>) -> some View {
+        alert(
+            error.wrappedValue?.title ?? "",
+            isPresented: Binding(
+                get: { error.wrappedValue != nil }, set: { if !$0 { error.wrappedValue = nil } }
+            )
+        ) {
+            Button(L10n.string("error.dismiss"), role: .cancel) { error.wrappedValue = nil }
+        } message: {
+            Text(error.wrappedValue?.message ?? "")
+        }
+    }
+}
