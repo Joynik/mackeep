@@ -418,6 +418,22 @@ engine = dropbox
 **/Thumbs.db
 ```
 
+### The broken rules
+
+A rule that cannot be used, e.g. an absolute path in an `[exclude]` section,
+is skipped: the other rules of the file are still used and the rest of
+Mackeep keeps working. The problem is reported, with the name of the file it
+is in:
+
+```text
+Warning: Invalid exclusion pattern in /home/user/.mackeep/vscode.cfg: unsupported absolute path: /home/user/foo
+```
+
+The warnings are written to `stderr`, so the other output is not disturbed.
+In the JSON answers, the problems of the config file of an application are in
+its `error` field, and the problems of the `.mackeep.cfg` file are in the
+`errors` field of the configuration.
+
 ### The link mode cannot exclude anything
 
 A symlink cannot exclude anything: the excluded files would be synced with
@@ -440,7 +456,7 @@ built on top of it. Use the `--json` option, before the command:
 mackeep-cli --json list
 ```
 
-Every answer holds a `schema_version` field, currently `2`. In this mode,
+Every answer holds a `schema_version` field, currently `3`. In this mode,
 only JSON is written to `stdout`, the human-readable output is written to
 `stderr` and no question is asked: the `--force-no` option is implied,
 unless `--force` is given.
@@ -451,13 +467,17 @@ Mackup, they are not used any more: `config_file_is_legacy`,
 field `custom_apps_dir` was added, it is the main directory of the custom
 applications.
 
+The version `3` of the schema added the field `error` to the applications
+and the field `errors` to the configuration. They tell what is not used of
+the config files, see [the broken rules](#the-broken-rules).
+
 ### `mackeep-cli --json config`
 
 Describes the configuration of Mackeep:
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "version": "0.12.1",
   "config_file": "/home/user/.mackeep.cfg",
   "custom_apps_dir": "/home/user/.mackeep",
@@ -474,7 +494,8 @@ Describes the configuration of Mackeep:
   },
   "apps_to_sync": ["vim"],
   "apps_to_ignore": [],
-  "global_exclude": ["**/.DS_Store"]
+  "global_exclude": ["**/.DS_Store"],
+  "errors": []
 }
 ```
 
@@ -485,7 +506,7 @@ Describes the configuration of Mackeep:
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "name": "vscode",
   "display_name": "VS Code",
   "source": "custom",
@@ -501,7 +522,8 @@ Describes the configuration of Mackeep:
   ],
   "xdg_files": [],
   "exclude": ["**/.DS_Store"],
-  "xdg_exclude": []
+  "xdg_exclude": [],
+  "error": null
 }
 ```
 
@@ -512,13 +534,17 @@ the ones of the user.
 The `sensitive` tells if the path holds secrets, the `sensitive_reason` says
 why. See [the sensitive files](#the-sensitive-files).
 
+The `error` tells why the config file of the application is not used
+entirely, it is `null` when there is no problem. See
+[the broken rules](#the-broken-rules).
+
 ### `mackeep-cli --json backup` and `mackeep-cli --json restore`
 
 With `--dry-run`, the operations that would be done are described:
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "actions": [
     {
       "app": "vscode",
@@ -563,7 +589,7 @@ the config file it comes from:
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "app": "vscode",
   "action": "skip_excluded",
   "src": "/home/user/Library/Application Support/Code/User/cache",
@@ -586,7 +612,7 @@ limit, and the summary is always computed on the whole plan:
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "actions": [],
   "summary": {
     "apps": ["vscode"],
@@ -604,9 +630,9 @@ Without `--dry-run`, the operations are streamed, one JSON document per
 line, so a front-end can show the progress:
 
 ```json
-{"schema_version": 2, "event": "start", "app": "vscode", "action": "backup"}
-{"schema_version": 2, "event": "file", "app": "vscode", "action": "copy", "src": "...", "dst": "...", "size_bytes": 4096}
-{"schema_version": 2, "event": "done", "app": "vscode", "action": "backup", "files": 1, "bytes": 4096, "skipped": 0}
+{"schema_version": 3, "event": "start", "app": "vscode", "action": "backup"}
+{"schema_version": 3, "event": "file", "app": "vscode", "action": "copy", "src": "...", "dst": "...", "size_bytes": 4096}
+{"schema_version": 3, "event": "done", "app": "vscode", "action": "backup", "files": 1, "bytes": 4096, "skipped": 0}
 ```
 
 ### The errors
@@ -616,7 +642,7 @@ written as a JSON document:
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "error": {"code": "unsupported_application", "message": "Unsupported application: nope"}
 }
 ```
@@ -708,7 +734,7 @@ With `--json`, the plan and the result are written as JSON:
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "actions": [
     {
       "action": "copy",

@@ -171,6 +171,15 @@ graphical front-ends built on top of Mackeep.
 - Single JSON document or NDJSON stream of events
 - Errors are reported as a JSON document, with a non-zero exit code
 
+### 10. INI Files (`inifile.py`)
+
+Reads the config files of the applications and the config file of Mackeep.
+
+A broken rule does not stop Mackeep from working: the rule is skipped and the
+problem is reported, with the name of the file it is in. The problems of the
+config file of an application are attached to that application, and the
+problems of the `.mackeep.cfg` file are attached to the configuration.
+
 ## Data Flow
 
 ### Backup Flow
@@ -290,6 +299,10 @@ Symlinks in home: ~/.config → ~/Dropbox/Mackeep/.config
 - **The checkbox is manual**: the applications that are checked are the ones
   that are backed up, the list of the applications to sync is the one that
   tells what is backed up
+- **The search of the files**: the editor of an application can look for the
+  files and the folders of the application, in the folders of its config, in
+  the standard places of macOS and in the whole disk with Spotlight, and add
+  the ones that are found to the application
 
 ### 3. Storage Abstraction
 
@@ -319,6 +332,8 @@ Symlinks in home: ~/.config → ~/Dropbox/Mackeep/.config
   section that applies to every application
 - **Copy mode only**: A symlink cannot exclude anything, so the link mode
   skips the entries that are impacted by the exclusion rules
+- **Broken rules are skipped**: A rule that cannot be used does not stop
+  Mackeep from working, it is reported with the name of its file
 
 ### 6. XDG Support
 
@@ -336,6 +351,7 @@ src/
 │   ├── appsdb.py       # Application database
 │   ├── application.py  # Per-application operations
 │   ├── excludes.py     # Exclusion rules (gitignore-like matcher)
+│   ├── inifile.py      # Reading of the INI config files
 │   ├── migrate.py      # Migration of the legacy Mackup files
 │   ├── jsonapi.py      # Machine-readable JSON output
 │   ├── utils.py        # Utility functions
@@ -362,8 +378,24 @@ desktop/
 │   │   ├── Core/      # The INI parser, the models, the runner of the tool
 │   │   └── Features/  # The sections: Applications, Editor, Backup, Settings
 │   └── Resources/     # The strings of the interface
+├── Tools/
+│   ├── Translations.py  # The names of the languages and the loader
+│   └── languages/      # One file per language, they can be changed alone
 └── Tests/             # The unit tests and the UI tests
 ```
+
+### The languages of the interface
+
+The strings of the interface live in the string catalog of the application
+(`Sources/App/Resources/Localizable.xcstrings`). The translation of every
+language lives in its own file, in `Tools/languages`, named after the code of
+the language: `uk.py`, `de.py`, `es.py`… A language can be added or changed
+without touching the other ones, so a translator can work on one language and
+push it alone.
+
+The script `Tools/apply_translations.py` pours the files of the languages into
+the string catalog, which is what Xcode reads to build the `.lproj` folders
+of the application.
 
 ## Extension Points
 
