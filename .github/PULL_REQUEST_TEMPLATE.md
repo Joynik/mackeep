@@ -1,19 +1,19 @@
-### All submissions
+## Change
 
-- [ ] I have followed the [Contributing Guidelines](https://github.com/Joynik/mackeep/blob/master/.github/CONTRIBUTING.md)
-- [ ] I have checked to ensure there aren't other open [Pull Requests](https://github.com/Joynik/mackeep/pulls) for the same update/change
+Describe the problem and resulting behavior.
 
-### Adding/updating Application X Support
+## Validation
 
-- [ ] This PR is only for one application
-- [ ] It has been added to the list of supported applications in the [README](https://github.com/Joynik/mackeep/blob/master/README.md)
-- [ ] The configuration syncs the minimal set of data
-- [ ] No file specific to the local workstation is synced
-- [ ] No sensitive data is synced
+- [ ] `make check` passes
+- [ ] Relevant regression tests are included
+- [ ] Documentation matches changed behavior
 
-### Improving the Mackeep codebase
+For application definitions:
 
-- [ ] My submission passes the [tests](https://github.com/Joynik/mackeep/tree/master/tests)
-- [ ] I have linted the code locally prior to submission
-- [ ] I have written new tests as applicable
-- [ ] I have added an explanation of what the changes do
+- [ ] The change is focused on one application
+- [ ] Only portable settings are selected; caches and sensitive data are omitted
+- [ ] Backup and restore were checked with disposable data
+
+For JSON contract changes:
+
+- [ ] Schema version, documentation, and desktop consumers are consistent

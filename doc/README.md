@@ -1,907 +1,426 @@
-# Mackeep configuration
+# Configuration and CLI reference
 
-> 💡 **New to Mackeep?** Check out the
-> [Architecture Guide](ARCHITECTURE.md) to understand how Mackeep works
-> under the hood.
-
-All the configuration is done in a file named `.mackeep.cfg` stored at the
-root of your home folder. This location can be overridden via environment
-variables or the `--config-file` command-line option.
-
-To configure Mackeep, create a file named `.mackeep.cfg` in your home
-directory.
-
-```bash
-vi ~/.mackeep.cfg
-```
+Start with the [quickstart](../README.md#quickstart) or
+[installation guide](../INSTALL.md). This page describes the files and behavior
+shared by the CLI and desktop application.
 
 ## Configuration file location
 
-Config files are searched in the following order. If none is found, Mackeep
-creates the default config location of `~/.mackeep.cfg`:
+`--config-file` selects an existing file explicitly; relative paths are relative
+to HOME. The config must be inside HOME. Without that option, the first existing
+file in this order wins:
 
-- `~/.mackeep.cfg`
-- `$MACKEEP_CONFIG`
-- `$XDG_CONFIG_HOME/mackeep/mackeep.cfg` or `~/.config/mackeep/mackeep.cfg`
+1. `~/.mackeep.cfg`
+2. `$MACKEEP_CONFIG`
+3. `$XDG_CONFIG_HOME/mackeep/mackeep.cfg` (default `~/.config/mackeep/mackeep.cfg`)
 
-The config file of Mackup is not used, the legacy file of Mackup can be
-copied with [mackeep-cli migrate](#mackeep-cli-migrate).
+An ordinary first run creates `~/.mackeep.cfg` and `~/.mackeep/`. The new config
+uses `engine = unconfigured`; backup storage waits for the user to choose it.
+Backup and restore with `--dry-run` do not create configuration, data, or
+ownership records. `config` reports the active config path and resolved storage.
 
-You can also specify a custom config file location using the `--config-file`
-command-line option:
-
-```bash
-mackeep-cli --config-file ~/.mackeep-custom.cfg backup
-```
-
-The path can be absolute or relative to your home directory. Note that the
-config file must be located within your home directory for security reasons.
+See the [sample config](.mackeep.cfg). Config paths containing spaces do not
+need shell escaping or quotes inside the INI file.
 
 ## Storage
 
-You can specify the storage type Mackeep will use to store your configuration
-files.
+The storage engine determines the base folder. `directory`, default `Mackeep`,
+is appended to it. The base folder must exist before backup; Mackeep asks to
+create its backup subdirectory when needed.
 
-For now, you have 4 options: `dropbox`, `google_drive`, `icloud` and `file_system`.
-
-A fresh configuration uses `unconfigured` until storage is selected.
-Existing configurations that omit the engine retain the legacy `dropbox`
-default. An empty file-system path also waits for configuration.
-With the `dropbox` storage engine, Mackeep will automatically figure out your
-Dropbox folder.
-
-### Dropbox
-
-```ini
-[storage]
-engine = dropbox
-```
-
-### Google Drive
-
-If you choose the `google_drive` storage engine instead, Mackeep will figure out
-where your Google Drive is and store your configuration files in it.
-
-```ini
-[storage]
-engine = google_drive
-```
-
-### iCloud
-
-If you choose the `iCloud` storage engine, Mackeep will store your
-configuration files in the `~/Library/Mobile\ Documents/com\~apple\~CloudDocs/`
-folder.
-
-```ini
-[storage]
-engine = icloud
-```
-
-You can check if your files are synced using:
-
-```sh
-brctl monitor com.apple.CloudDocs
-```
-
-### File System
-
-If you want to specify another directory, you can use the `file_system` engine
-and Mackeep won't try to detect any path for you: it will store your files where
-you explicitly told it to, using the `path` setting.
-The `path` can be absolute (from the `/` of your drive) or relative to your
-home directory.
-The `path` setting is mandatory when using the `file_system` engine.
-
-```ini
-[storage]
-engine = file_system
-path = some/folder/in/your/home
-# or path = /some/folder/in/your/root
-```
-
-Note: you don't need to escape spaces or wrap the path in quotes.
-For example, the following paths are valid:
-
-```ini
-path = some/path in your/home
-path = /some path/in/your/root
-```
-
-### Custom Directory Name
-
-You can customize the directory name in which Mackeep stores your files. By
-default, if not specified, Mackeep creates a `Mackeep` directory in the storage
-engine you chose, e.g. `~/Dropbox/Mackeep`.
-
-```ini
-[storage]
-engine = unconfigured
-directory = Mackeep
-```
-
-For example:
+| Engine | Base folder |
+| --- | --- |
+| `unconfigured` | No storage selected; backup/restore cannot run |
+| `file_system` | Explicit `path`, absolute or relative to HOME |
+| `dropbox` | Detected from the local Dropbox configuration |
+| `google_drive` | Detected from the supported local Google Drive database |
+| `icloud` | `~/Library/Mobile Documents/com~apple~CloudDocs` |
 
 ```ini
 [storage]
 engine = file_system
 path = dotfiles
-directory = backup
-```
-
-This will store your files in the `~/dotfiles/backup` directory in your home.
-
-You can also select a subfolder:
-
-```ini
-[storage]
-engine = icloud
-directory = .config/mackeep
-```
-
-### Switching Storage
-
-If you ever change your mind and switch storage solutions after Mackeep is
-already setup (ex: from `dropbox` to `icloud`), complete the following steps.
-
-1. Run `mackeep-cli uninstall` on all computers
-2. Copy your Mackeep files to the new storage location
-3. Change the storage provider details in your `.mackeep.cfg` file (see above)
-4. Run `mackeep-cli backup` on the main computer and `mackeep-cli restore` on all others
-
-## Applications
-
-### Only sync one or two applications
-
-In your home folder, create a file named `.mackeep.cfg` and add the application
-names to allow in the `[applications_to_sync]` section, one per line.
-
-```ini
-# Example, to only sync SSH and Adium:
-[applications_to_sync]
-ssh
-adium
-```
-
-When the section is there, only the applications of it are backed up, even
-when it is empty. Without the section, every application of the database is
-backed up.
-
-Use `mackeep-cli list` to get a list of valid application names. Don't use fancy
-names (with spaces) here.
-
-A [sample](.mackeep.cfg) of this file is available in this folder. Just copy it
-to your home folder:
-
-```bash
-cp mackeep/doc/.mackeep.cfg ~/
-```
-
-### Don't sync an application
-
-In your home folder, create a file named `.mackeep.cfg` and add the application
-names to ignore in the `[applications_to_ignore]` section, one per line.
-
-```ini
-# Example, to not sync SSH and Adium:
-[applications_to_ignore]
-ssh
-adium
-```
-
-Use `mackeep-cli list` to get a list of valid application names. Don't use fancy
-names (with spaces) here.
-
-A [sample](.mackeep.cfg) of this file is available in this folder. Just copy it
-to your home folder:
-
-```bash
-cp mackeep/doc/.mackeep.cfg ~/
-```
-
-### Get official support for an application
-
-Open a [new issue](https://github.com/Joynik/mackeep/issues) and ask for it, or
-fork Mackeep and open a
-[Pull Request](https://help.github.com/articles/using-pull-requests).
-The stock application configs are in the `mackeep/applications` directory.
-
-Remember to follow the guidelines in [CONTRIBUTING.md](https://github.com/Joynik/mackeep/blob/master/.github/CONTRIBUTING.md)
-to get your Pull Request merged faster.
-
-### Add support for an application or (almost) any file or directory
-
-You can customize the Mackeep engine and add support for unsupported
-applications or just custom files and directories you'd like to sync.
-
-NOTE: Files and directories to be synced should be rooted at $HOME.
-
-Let's say that you'd like to add support for Nethack (config file:
-`.nethackrc`), for the `bin` and `.hidden` directories and for the
-`.gitignore` file you keep in your home.
-
-In your home, create a `.mackeep` directory and add a config file for the
-application you'd like to support:
-
-```bash
-mkdir ~/.mackeep
-touch ~/.mackeep/nethack.cfg
-touch ~/.mackeep/my-files.cfg
-```
-
-#### Custom applications directory location
-
-Custom application configs are searched in the following order:
-
-1. `~/.mackeep/` (legacy location, takes priority)
-2. `$XDG_CONFIG_HOME/mackeep/applications/` or `~/.config/mackeep/applications/`
-
-If the same application config exists in both locations, the legacy location
-(`~/.mackeep/`) takes priority.
-
-For XDG-compliant setups, you can use:
-
-```bash
-mkdir -p ~/.config/mackeep/applications
-touch ~/.config/mackeep/applications/nethack.cfg
-```
-
-Edit those files:
-
-```bash
-$ nano ~/.mackeep/nethack.cfg
-[application]
-name = Nethack
-
-[configuration_files]
-.nethackrc
-```
-
-```bash
-$ nano ~/.mackeep/my-files.cfg
-[application]
-name = My personal synced files and dirs
-
-[configuration_files]
-bin
-.hidden
-.gitignore
-```
-
-Note that Mackeep assumes the file paths listed here are relative to your home
-directory.
-
-You can run mackeep-cli to see if they are listed:
-
-```bash
-$ mackeep-cli list
-Supported applications:
-[...]
- - my-files
- - nethack
-[...]
-```
-
-All good, you can now sync your newly configured files:
-
-```bash
-mackeep-cli backup
-```
-
-If you override an application config that is already supported by Mackeep, your
-new config for this application will replace the one provided by Mackeep.
-
-You can find some sample configs in this directory.
-
-### Locally test an application before submitting a Pull Request
-
-You can add and test an application by following these steps:
-
-- fork this project
-- create a branch _(usually containing the name of the application)_
-- add the appropriate application config file in the `mackeep/applications` folder
-- from the top-most folder _(mackeep-cli)_ run `make develop` that replaces the
-  currently installed mackeep-cli with the local modified one
-- simply run `mackeep-cli backup` to test if everything is ok
-- if everything works as expected:
-  - run `make undevelop` to revert to the official version
-  - commit and push the change to your fork and then create the Pulls Request
-
-### Add support for an application using the XDG directory
-
-For applications storing their configuration under the `~/.config` folder, you
-should not hardcode it. The `.config` folder is the default location but it can
-be named differently on other users' systems by setting the `XDG_CONFIG_HOME`
-environment variable.
-
-See <https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html>
-
-Mackeep supports this mechanism and provides a dedicated `xdg_configuration_files`
-section for those applications.
-
-If any path starts with `.config`, remove the `.config` part and move the path
-to a dedicated `xdg_configuration_files` section.
-
-Instead of:
-
-```ini
-[application]
-name = Git
-
-[configuration_files]
-.gitconfig
-.config/git/config
-.config/git/ignore
-.config/git/attributes
-```
-
-Use this:
-
-```ini
-[application]
-name = Git
-
-[configuration_files]
-.gitconfig
-
-[xdg_configuration_files]
-git/config
-git/ignore
-git/attributes
-```
-
-## Exclusions
-
-Some files of an application should never be backed up: caches, lock files,
-temporary files, machine specific settings... Mackeep lets you exclude them
-with the `[exclude]` and `[xdg_exclude]` sections of the application config
-files.
-
-```ini
-[application]
-name = VS Code
-
-[configuration_files]
-Library/Application Support/Code/User
-
-[exclude]
-Library/Application Support/Code/User/workspaceStorage
-Library/Application Support/Code/User/globalStorage/**
-**/.DS_Store
-*.log
-```
-
-The excluded files are not backed up and not restored. The excluded
-directories are not even walked, so the backup is fast.
-
-### The exclusion patterns
-
-The patterns follow the same semantics as the ones of `.gitignore`:
-
-- `*` matches anything but a slash, `?` matches a single character but a
-  slash and `**` matches anything, slashes included.
-- A pattern without any slash matches a _name_, at any depth. `*.log` matches
-  every `*.log` file of the application.
-- A pattern with a slash is relative to the root of the tree. A pattern
-  starting with a slash is relative to the root too.
-- A pattern ending with a slash only matches directories.
-- A pattern starting with `!` re-includes a path that a previous pattern
-  excluded. The last matching pattern wins.
-- The matching is case sensitive: `.DS_Store` does not match `.ds_store`.
-
-A pattern may also be written as a value, e.g. `*.log = the log files`.
-
-The paths of the `[exclude]` section are relative to your home directory,
-like the paths of the `[configuration_files]` section. The paths of the
-`[xdg_exclude]` section are relative to `$XDG_CONFIG_HOME`, like the paths of
-the `[xdg_configuration_files]` section.
-
-```ini
-[application]
-name = VS Code
-
-[xdg_configuration_files]
-Code/User
-
-[xdg_exclude]
-Code/User/workspaceStorage
-```
-
-### Exclude the same files for every application
-
-The `.mackeep.cfg` file may hold an `[exclude]` section too. It applies to
-every application, which is handy to always skip the junk files:
-
-```ini
-[storage]
-engine = dropbox
-
-[exclude]
-**/.DS_Store
-**/Thumbs.db
-```
-
-### The broken rules
-
-A rule that cannot be used, e.g. an absolute path in an `[exclude]` section,
-is skipped: the other rules of the file are still used and the rest of
-Mackeep keeps working. The problem is reported, with the name of the file it
-is in:
-
-```text
-Warning: Invalid exclusion pattern in /home/user/.mackeep/vscode.cfg: unsupported absolute path: /home/user/foo
-```
-
-The warnings are written to `stderr`, so the other output is not disturbed.
-In the JSON answers, the problems of the config file of an application are in
-its `error` field, and the problems of the `.mackeep.cfg` file are in the
-`errors` field of the configuration.
-
-### The link mode cannot exclude anything
-
-A symlink cannot exclude anything: the excluded files would be synced with
-the rest of the folder. So, in the link mode, an entry that contains
-excluded files is skipped, with a warning:
-
-```text
-Skipping .config/Code/User, it contains excluded files and a symlink cannot exclude them
-```
-
-A successful backup now replaces each application with its current allowed
-files. Previously backed-up files that are now excluded or removed from the
-application definition are removed, unless another application owns them.
-Use `mackeep-cli backup --dry-run` to inspect stale entries before replacement.
-Restore leaves excluded local files unchanged.
-
-## JSON interface
-
-Mackeep can write a machine-readable answer, so a graphical front-end can be
-built on top of it. Use the `--json` option, before the command:
-
-```bash
-mackeep-cli --json list
-```
-
-Every answer holds a `schema_version` field, currently `4`. In this mode,
-only JSON is written to `stdout`, the human-readable output is written to
-`stderr` and no question is asked: the `--force-no` option is implied,
-unless `--force` is given.
-
-The version `2` of the schema removed the fields about the legacy paths of
-Mackup, they are not used any more: `config_file_is_legacy`,
-`legacy_custom_apps_dirs` and `storage.using_legacy_directory` are gone. The
-field `custom_apps_dir` was added, it is the main directory of the custom
-applications.
-
-The version `3` of the schema added the field `error` to the applications
-and the field `errors` to the configuration. They tell what is not used of
-the config files, see [the broken rules](#the-broken-rules).
-
-Version `4` adds `allow_external_paths` and `storage_configured` to the
-configuration answer. A `stale_in_backup` action with `will_remove: true`
-now means deletion after successful replacement; older schema versions
-reported stale files without deleting them. Clients must check this flag
-before presenting a removal. Fresh storage answers can use the engine
-`unconfigured`, and an empty path never implies HOME as a chosen storage. Existing field names are retained.
-
-### `mackeep-cli --json config`
-
-Describes the configuration of Mackeep:
-
-```json
-{
-  "schema_version": 4,
-  "version": "0.12.1",
-  "config_file": "/home/user/.mackeep.cfg",
-  "custom_apps_dir": "/home/user/.mackeep",
-  "custom_apps_dirs": [
-    "/home/user/.mackeep",
-    "/home/user/.config/mackeep/applications"
-  ],
-  "storage": {
-    "engine": "file_system",
-    "path": "/home/user/dotfiles",
-    "directory": "Mackeep",
-    "resolved_backup_dir": "/home/user/dotfiles/Mackeep",
-    "exists": true
-  },
-  "apps_to_sync": ["vim"],
-  "apps_to_ignore": [],
-  "global_exclude": ["**/.DS_Store"],
-  "allow_external_paths": false,
-  "storage_configured": true,
-  "errors": []
-}
-```
-
-### `mackeep-cli --json list` and `mackeep-cli --json show <application>`
-
-`list` writes an array with the description of every supported application,
-`show` writes the description of a single one:
-
-```json
-{
-  "schema_version": 4,
-  "name": "vscode",
-  "display_name": "VS Code",
-  "source": "custom",
-  "cfg_path": "/home/user/.mackeep/vscode.cfg",
-  "files": [
-    {
-      "path": "Library/Application Support/Code/User",
-      "exists": true,
-      "is_dir": true,
-      "sensitive": false,
-      "sensitive_reason": null
-    }
-  ],
-  "xdg_files": [],
-  "exclude": ["**/.DS_Store"],
-  "xdg_exclude": [],
-  "error": null
-}
-```
-
-The `name` is the identifier of the application, as shown by `mackeep-cli list`.
-The `source` is `builtin` for the applications of Mackeep and `custom` for
-the ones of the user.
-
-The `sensitive` tells if the path holds secrets, the `sensitive_reason` says
-why. See [the sensitive files](#the-sensitive-files).
-
-The `error` tells why the config file of the application is not used
-entirely, it is `null` when there is no problem. See
-[the broken rules](#the-broken-rules).
-
-### `mackeep-cli --json backup` and `mackeep-cli --json restore`
-
-With `--dry-run`, the operations that would be done are described:
-
-```json
-{
-  "schema_version": 4,
-  "actions": [
-    {
-      "app": "vscode",
-      "action": "copy",
-      "src": "/home/user/Library/Application Support/Code/User",
-      "dst": "/home/user/dotfiles/Mackeep/Library/Application Support/Code/User",
-      "size_bytes": 4096,
-      "sensitive": false,
-      "sensitive_reason": null
-    }
-  ],
-  "summary": {
-    "apps": ["vscode"],
-    "actions": {"copy": 1, "skip_excluded": 2},
-    "total_actions": 3,
-    "total_bytes": 4096
-  }
-}
-```
-
-The `action` of an operation is one of `copy`, `skip_excluded`,
-`skip_missing`, `conflict` or `stale_in_backup`.
-
-Every operation has a `sensitive` field and a `sensitive_reason` field, they
-tell if the file holds secrets. See [the sensitive files](#the-sensitive-files).
-
-### The detail levels of the dry-run
-
-The `--detail` option tells how detailed the plan of the dry-run is:
-
-- `entries` (the default): one entry per top level path, a folder is
-  described by a single entry.
-- `files`: one entry per file, so a graphical front-end can show exactly
-  what is copied and what is skipped.
-
-```bash
-mackeep-cli --json backup --dry-run --detail files
-```
-
-The excluded paths tell which pattern excluded them, and the section and
-the config file it comes from:
-
-```json
-{
-  "schema_version": 4,
-  "app": "vscode",
-  "action": "skip_excluded",
-  "src": "/home/user/Library/Application Support/Code/User/cache",
-  "dst": "/home/user/dotfiles/Mackeep/Library/Application Support/Code/User/cache",
-  "reason": {
-    "pattern": "Library/Application Support/Code/User/cache",
-    "section": "exclude",
-    "file": "/home/user/.mackeep/vscode.cfg"
-  }
-}
-```
-
-An excluded directory stays a single entry, as it is not walked. A file
-that already exists in the destination is reported as a `conflict`, with
-the `would_overwrite` flag, and not as a `copy`.
-
-The `--max-actions` option limits the number of actions of the plan (5000
-by default). The retained action list is bounded during traversal, and the summary is
-always computed on the whole plan. The limit bounds action-list memory,
-not traversal time:
-
-```json
-{
-  "schema_version": 4,
-  "actions": [],
-  "summary": {
-    "apps": ["vscode"],
-    "actions": {"copy": 12000},
-    "total_actions": 12000,
-    "total_bytes": 4096,
-    "files": 12000,
-    "truncated": true,
-    "limit": 5000
-  }
-}
-```
-
-Without `--dry-run`, the operations are streamed, one JSON document per
-line, so a front-end can show the progress:
-
-```json
-{"schema_version": 4, "event": "start", "app": "vscode", "action": "backup"}
-{"schema_version": 4, "event": "file", "app": "vscode", "action": "copy", "src": "...", "dst": "...", "size_bytes": 4096}
-{"schema_version": 4, "event": "done", "app": "vscode", "action": "backup", "files": 1, "bytes": 4096, "skipped": 0}
-```
-
-### The errors
-
-When something goes wrong, the exit code is not zero and the error is
-written as a JSON document:
-
-```json
-{
-  "schema_version": 4,
-  "error": {"code": "unsupported_application", "message": "Unsupported application: nope"}
-}
-```
-
-## Compatibility with Mackup
-
-Mackeep is a fork of [Mackup](https://github.com/lra/mackup). The files of
-Mackup are not used, but they can be copied to their new location with
-`mackeep-cli migrate`.
-
-### The config file
-
-The config file of Mackup is not used. When there is no `~/.mackeep.cfg`,
-Mackeep creates one with the default backup folder:
-
-```ini
-[storage]
 directory = Mackeep
 ```
 
-The `mackeep-cli migrate` command copies the config file of Mackup to
-`~/.mackeep.cfg`.
+This stores backups under `~/dotfiles/Mackeep`. The file-system `path` option
+is required; an empty value is unconfigured, not HOME. Older configs without
+an engine retain the implicit Dropbox behavior. Provider detection depends on
+the local client layout; use `file_system` when detection cannot find the
+folder. Mackeep copies files locally; the storage provider handles remote sync.
 
-### The custom applications
+### Switching storage
 
-The custom application configs are read from:
+For copy mode, wait for active operations to finish, copy the entire backup
+folder (including `.mackeep-state`) to the new storage, and update `[storage]`
+on each machine. Preview the next operation before running it. Keep the old
+folder until you verify the new one. Restore only when you want to replace
+local settings with the stored version.
+
+For legacy link mode, first run `mackeep-cli link uninstall` on each machine
+while the old storage is accessible. Change storage, then use copy mode or
+explicitly reinstall links. Changing the config alone does not retarget links.
+
+## Applications
+
+Use identifiers from `mackeep-cli list`, not display names:
+
+```ini
+[applications_to_sync]
+git
+vim
+
+[applications_to_ignore]
+vim
+```
+
+- An absent `[applications_to_sync]` means all supported applications.
+- A present but empty section means none.
+- Ignored applications are removed from the selection.
+- Naming an application, such as `mackeep-cli backup vim`, overrides both lists
+  for that command. An unsupported name fails before backup data is changed.
+- Disabling an application does not delete its existing backup.
+
+### Custom applications
+
+Create `~/.mackeep/my-editor.cfg`:
+
+```ini
+[application]
+name = My editor
+
+[configuration_files]
+.my-editorrc
+
+[xdg_configuration_files]
+my-editor
+
+[xdg_exclude]
+my-editor/cache/
+```
+
+`my-editor` becomes the CLI identifier. `[configuration_files]` paths are
+relative to HOME; `[xdg_configuration_files]` paths are relative to
+`$XDG_CONFIG_HOME`, default `~/.config`. Prefer XDG entries to hardcoded `.config`.
+Directories are recursive; shell glob expansion is not applied to file entries.
+
+Definition precedence for a matching filename is:
 
 1. `~/.mackeep/`
 2. `$XDG_CONFIG_HOME/mackeep/applications/`
+3. Built-in `src/mackeep/applications/`
 
-The legacy directories of Mackup are not read any more. The custom
-applications they hold are ignored, and Mackeep warns about them once, so
-they can be migrated with `mackeep-cli migrate`.
+A custom definition replaces the built-in file entirely; it is not merged.
+Inspect it with `mackeep-cli show my-editor`, then preview
+`mackeep-cli --dry-run backup my-editor`. Examples are in [.mackeep/](.mackeep/).
 
-An application of the first directory wins over the one of the second, when
-they have the same name.
+## Exclusions
 
-### The storage folder
-
-When the config file does not set a `directory`, the `Mackeep` folder of
-the storage is used. A `directory` that is explicitly set in the config file
-is never replaced.
-
-The legacy `Mackup` folder is not used any more. When the backup of Mackup
-is still there, the `mackeep-cli migrate` command writes its name in the new
-config file, so the backup stays in the same place.
-
-### The warnings
-
-When a legacy path is found, Mackeep warns about it once, in `stderr`, and
-tells how to migrate. The `stdout` stays clean, so the output of `--json`
-can be piped.
-
-A legacy custom application config is only warned about when it has to be
-migrated: a file that is shadowed by a new one with the same name is not
-used at all, and a file that is the same as the default config of the
-application does not have to be copied.
-
-### `mackeep-cli migrate`
-
-The `migrate` command copies the legacy config file and the custom
-application configs to their new location:
-
-```bash
-# See what would be done
-mackeep-cli migrate --dry-run
-
-# Do it
-mackeep-cli migrate
-```
-
-The files are **copied**, never moved nor deleted, so the old ones stay
-where they are until you remove them. The files that already exist in
-their new location are never overwritten, they are skipped.
-
-When the storage folder of Mackup is used, the name of that folder is
-written in the new config file:
+Use `[exclude]` for HOME-relative patterns and `[xdg_exclude]` for XDG-relative
+patterns. Both sections work globally in `.mackeep.cfg` and per application;
+global rules precede application rules within each matcher.
 
 ```ini
-[storage]
-directory = Mackup
+[exclude]
+**/.DS_Store
+*.log
+
+[xdg_exclude]
+my-editor/cache/
 ```
 
-Without it, the backup would move to a new folder and the files of the old
-one would look like they were lost. A config file that already has a
-`directory` option is never changed.
+| Pattern feature | Meaning |
+| --- | --- |
+| `*` | Any characters except `/` |
+| `?` | One character except `/` |
+| `**` | Any characters, including `/` |
+| No slash, such as `*.log` | Match a name at any depth |
+| A slash, such as `my-editor/cache` | Match relative to the section's root |
+| Trailing `/` | Match directories only |
+| Leading `!` | Re-include a path excluded by an earlier rule |
 
-With `--json`, the plan and the result are written as JSON:
+Matching is case-sensitive. The last matching rule within a matcher wins.
+An excluded parent directory is not walked: re-include the directory before
+trying to re-include its children. A HOME exclusion still excludes a path even
+if an XDG rule would re-include it. Leading absolute-path patterns are rejected
+by the config loader. Do not assume all Git pattern features are supported.
 
-```json
-{
-  "schema_version": 4,
-  "actions": [
-    {
-      "action": "copy",
-      "src": "/home/user/.mackup.cfg",
-      "dst": "/home/user/.mackeep.cfg"
-    },
-    {
-      "action": "set_directory",
-      "src": "/home/user/.mackup.cfg",
-      "dst": "/home/user/.mackeep.cfg",
-      "directory": "Mackup"
-    }
-  ],
-  "summary": {
-    "copied": 1,
-    "skipped": 0,
-    "updated": 1,
-    "total_actions": 2,
-    "dry_run": false
-  }
-}
-```
+Patterns normally appear as bare lines. If an INI entry has a value, that value
+is the pattern: `cache_rule = my-editor/cache/`. Text after `=` is not a
+comment describing the pattern.
 
-## The sensitive files
+Backup omits excluded files and cleans their previous tracked backup entries
+after successful replacement. Restore preserves excluded local files.
+Link mode skips entries containing excluded files because a link cannot filter
+the contents of its target.
 
-Some of the files of Mackeep hold secrets: the private keys of SSH, the
-keys of GnuPG, the credentials of AWS, the keychain of macOS... They are
-copied in plain text to the backup, like every other file.
+Malformed definitions and duplicate or unsupported rules produce warnings in
+`stderr`. Other usable rules can still be loaded; invalid application paths
+block an operation selecting that application. JSON exposes application
+problems in `error` and main-config problems in `errors`.
 
-Mackeep knows a list of such paths and tells about them:
+## External paths
 
-- in the JSON interface, every file has a `sensitive` field and a
-  `sensitive_reason` field, see [`--json list`](#mackeep-cli---json-list-and-mackeep-cli---json-show-application)
-  and the [dry-run](#mackeep-cli---json-backup-and-mackeep-cli---json-restore);
-- in the human-readable output, the backup warns about them once.
-
-The list of the paths is in `SENSITIVE_PATTERNS`, in
-`src/mackeep/constants.py`. The paths are relative to the home directory
-(or to the XDG config home), the keys are the patterns and the values are
-the reason why the path is sensitive.
-
-The public keys (`.pub`) are not secrets, they are never marked.
-
-## The desktop application
-
-The desktop application of Mackeep is written in SwiftUI for macOS 15 and
-above. It is released with the tool, they share the same version. The disk
-image is in the releases of the repository:
-
-```text
-Mackeep-0.21.0-macos-arm64.dmg
-```
-
-The image holds the application and a link to the `Applications` folder, so the
-application is dragged there. It is signed ad-hoc and not notarized yet, so
-macOS asks to confirm the first time the application is opened: right-click on
-the application, then "Open".
-
-The application is built from the `desktop/` folder of the repository:
-
-```bash
-cd desktop
-make project   # The project of XcodeGen is generated
-make build     # The application is built
-make release   # The application is built for the release
-make package   # The disk image of the release is built
-make test      # The unit tests and the UI tests are run
-```
-
-The application does not keep its own copy of the configuration: it edits
-`~/.mackeep.cfg` and the files of `~/.mackeep/` and it drives the terminal
-version through the JSON interface. The terminal version must be installed
-and found in `/opt/homebrew/bin` or `/usr/local/bin`, the path can be set in
-the settings of the application.
-
-## Safe replacement and backup ownership
-
-Copy-mode backup and restore prepare fresh replacements beside their
-respective destinations before changing existing files. If preparation
-fails, the previous destination remains. If a commit fails, Mackeep attempts
-to restore every previous destination of that application. Other applications
-can still run, but any failed application makes the final exit code nonzero.
-JSON reports the failure as an error event and a final error document.
-
-The previous version is used only for rollback and is removed after success.
-An updated backup does not inherit obsolete files from the previous version.
-Files owned by another backed-up application are retained. During restore,
-excluded local entries are retained as well. Existing conflicts still require
-confirmation, or `--force`; declining a replacement retains its ownership.
-
-Ownership is stored in `Mackeep/.mackeep-state/owners.json` and updated in the
-same replacement transaction as the application data. A later successful
-backup of that application removes its tracked paths that are no longer in
-its definition. A still-listed top-level source that is missing is skipped,
-not deleted from backup. Empty obsolete parent directories are pruned. Unrecognized
-files outside the replaced paths are never guessed to belong to an application.
-On the first tracked backup, existing entries of currently listed applications
-are used to infer shared ownership, including ignored applications. Paths
-removed before that first tracked backup cannot be
-identified automatically and require manual inspection. Disabling an
-application does not delete its backup.
-
-If the index is malformed, cleanup is refused. Do not edit ownership records
-by hand. Simultaneous writers to the same storage are not supported. The
-replacement rollback protects against handled errors and interruptions; it
-is not a power-loss recovery journal. If rollback itself fails, temporary
-previous versions are retained and the error names their locations.
-
-Source and destination paths must not overlap or refer to the same file.
-All selected entries are checked before backup data is changed. The storage
-root cannot itself be a source. Nested symbolic links are stored as links,
-including dangling links and directory cycles; their targets are not walked
-or chmodded. Explicit top-level links continue to copy their target when the
-path policy allows it. A link already installed by legacy link mode is skipped
-by backup. Restoring a preserved absolute link does not rewrite it for a
-new machine.
-
-Copied files retain timestamps and owner execution: ordinary files use `0600`,
-owner-executable files use `0700`, and copied directories use `0700`. Group and
-other access is removed. This does not promise preservation of every ACL or
-extended attribute across filesystems.
-
-## Initialization and external paths
-
-An ordinary first run creates `~/.mackeep.cfg` and `~/.mackeep/`. The new config uses `engine = unconfigured`, and `config` reports
-`storage_configured: false` until the user chooses a storage engine and path.
-Existing configs with an implicit Dropbox engine retain their old behavior. The backup directory is created only by an actual backup or
-link install after a usable storage has been chosen. No command with
-`--dry-run` creates configuration files, custom-application directories, backup
-directories, or ownership records. Missing required storage produces a
-read-only error.
-
-Application paths are relative to HOME or XDG by default. Absolute entries,
-parent traversal (`..`), and sources resolving outside HOME are rejected unless
-explicitly enabled:
+By default, absolute application entries, parent traversal (`..`), and sources
+resolving outside HOME are rejected. To explicitly allow them:
 
 ```ini
 [security]
 allow_external_paths = true
 ```
 
-Desktop exposes the same setting under Security, disabled by default. The
-control is unavailable with older CLI versions that do not advertise it.
-The editor preserves the absolute text of external paths and rejects saving
-them while the option is off; it never silently redirects them into HOME.
+Desktop exposes the same setting under Security. It is unavailable when an
+older CLI does not advertise the capability. It does not grant OS permissions
+or bypass source/destination overlap checks.
 
-External paths are stored inside the backup, under
-`.mackeep-external/<absolute-path-without-leading-slash>`. Restore maps them
-back to the configured absolute local location, so the destination may differ
-between machines. The setting does not grant filesystem permissions. External
-XDG roots are allowed only with this setting; their exclusion rules remain
-relative to that XDG root. The `.mackeep-external` and `.mackeep-state` names
-are reserved inside the backup. Path overlap checks remain mandatory even
-when external paths are enabled.
+Paths outside HOME map into
+`.mackeep-external/<absolute-path-without-leading-slash>` inside storage.
+Restore uses the absolute local path from the active definition; verify it on
+each machine. External XDG roots require this permission, too. Their exclusion
+patterns remain relative to XDG. `.mackeep-external` and `.mackeep-state` are
+reserved backup namespaces.
+
+## Backup and restore behavior
+
+Copy mode prepares fresh replacements beside the destinations before replacing
+existing data. A preparation failure leaves previous destinations intact. A
+commit failure attempts to roll back changes for that application. Ordinary
+I/O failures allow other applications to run, but the command exits nonzero
+when any application fails. Backup is not incremental: selected entries are
+copied again even if their contents have not changed.
+
+Existing destinations require confirmation. `--force` accepts replacements;
+`--force-no` declines them. Declining preserves the old data and ownership.
+Both options together are invalid. CLI rejects superuser execution unless
+`--root` is explicitly provided.
+
+### Cleanup and ownership
+
+Ownership is recorded in `.mackeep-state/owners.json` inside the backup. Data
+and the index are updated in the same application transaction. A successful
+backup removes that application's previously tracked leaves that are now
+excluded or no longer listed. Another application's owned leaves are retained
+when a shared directory is replaced. A still-listed but missing top-level
+source is skipped and its previous backup retained.
+
+An old backup without an index is initialized from currently listed definitions,
+including configured ignored applications. Paths removed before ownership was
+recorded cannot be identified automatically. Files outside replaced paths are
+not guessed to belong to an application. Inspect old backups manually when
+upgrading. Keep the ownership index with the data and do not edit it by hand;
+a malformed index refuses cleanup.
+
+### Links, metadata, and limits
+
+Nested symlinks are copied as links, including dangling and cyclic links;
+their targets are not traversed. Explicit top-level symlinks copy their target
+when allowed by path policy. Backup skips a link already installed by legacy
+link mode. Restoring an absolute symlink does not rewrite its target for a new
+machine.
+
+Copies retain timestamps and owner execution: ordinary files use `0600`,
+owner-executable files use `0700`, and directories use `0700`. This does not
+promise preservation of every ACL or extended attribute across filesystems.
+
+Only one writer to a storage folder is supported. Transactions are per
+application, not for the entire command, and are not a power-loss recovery
+journal. If rollback fails, temporary previous versions are kept and the error
+reports their locations. Successful replacement removes the rollback copy;
+there is no version history. Leave enough free space for old and staged data.
+
+### Legacy link mode
+
+| Command | Behavior |
+| --- | --- |
+| `link install [application]` | Back up local data and replace it with links to storage |
+| `link [application]` | Create local links to existing stored data |
+| `link uninstall [application]` | Restore copies in place of installed links; keep storage |
+
+Use copy mode for macOS 14+ because symlinked application preferences can fail.
+An application-specific uninstall skips the global uninstall confirmation and
+acts only on that application's installed links.
+
+## Compatibility with Mackup
+
+Mackup's `.mackup.cfg` and `.mackup/` definitions are not read automatically.
+Preview migration before creating a fresh Mackeep config if you intend to
+preserve the old configuration:
+
+```bash
+mackeep-cli migrate --dry-run
+mackeep-cli migrate
+```
+
+Migration copies the first legacy main config found and legacy custom configs
+to their Mackeep locations. It never deletes the originals or overwrites an
+existing destination. If the detected old storage uses `Mackup` and no directory
+is explicitly set, migration writes `directory = Mackup` into the new copy to
+keep that storage location. Review the result before backup or restore.
+
+Migration preview does not copy legacy files. Reading a legacy storage config
+can still initialize `~/.mackeep/`; it is not the same read-only initialization
+path as backup/restore dry-run.
+
+## Sensitive files
+
+Backups are unencrypted. Known sensitive HOME/XDG paths are marked by
+`sensitive` and `sensitive_reason` in JSON; text output warns once when copying
+a known sensitive file. Public-key `.pub` files are not marked. Detection is
+advisory and does not discover arbitrary secrets inside file contents.
+
+Review the selected paths and storage permissions. See the
+[private-key example](syncing-private-keys.md) before overriding key definitions.
+
+## JSON interface
+
+`--json` is supported for `config`, `list`, `show`, `backup`, `restore`, and
+`migrate`. Stdout contains JSON only; diagnostics go to stderr. No prompts are
+asked. `--force-no` is implied unless `--force` is supplied. Check both JSON
+errors and process exit status.
+
+### Schema and configuration
+
+Current `schema_version` is **4**. Consumers must handle unsupported schema
+versions rather than assume deletion semantics from an older response.
+
+```bash
+mackeep-cli --json config
+```
+
+```json
+{
+  "schema_version": 4,
+  "version": "0.22.1",
+  "config_file": "/home/user/.mackeep.cfg",
+  "custom_apps_dir": "/home/user/.mackeep",
+  "custom_apps_dirs": ["/home/user/.mackeep", "/home/user/.config/mackeep/applications"],
+  "errors": [],
+  "storage": {
+    "engine": "file_system",
+    "path": "/home/user/storage",
+    "directory": "Mackeep",
+    "resolved_backup_dir": "/home/user/storage/Mackeep",
+    "exists": true
+  },
+  "apps_to_sync": ["vim"],
+  "apps_to_ignore": [],
+  "allow_external_paths": false,
+  "storage_configured": true,
+  "global_exclude": [],
+  "global_xdg_exclude": []
+}
+```
+
+`storage_configured` means a nonempty storage path was resolved, not that the
+folder exists or is writable. Check `storage.exists` for the backup directory.
+New configurations use `unconfigured` with an empty resolved backup path.
+
+### Application descriptions
+
+`--json list` returns an array; `--json show vim` returns one object:
+
+```json
+{
+  "schema_version": 4,
+  "name": "vim",
+  "display_name": "Vim",
+  "source": "builtin",
+  "cfg_path": "/path/to/mackeep/applications/vim.cfg",
+  "files": [
+    {"path": ".vimrc", "exists": true, "is_dir": false, "sensitive": false, "sensitive_reason": null}
+  ],
+  "xdg_files": [],
+  "exclude": [],
+  "xdg_exclude": [],
+  "error": null
+}
+```
+
+The example is shortened; actual definitions may select more paths.
+`source` is `builtin` or `custom`; `files` is HOME-relative, `xdg_files` is
+XDG-relative unless external entries are explicitly enabled. `error` is null
+when the definition has no reported problems.
+
+### Dry-run plans
+
+```bash
+mackeep-cli --json --dry-run backup vim --detail files --max-actions 5000
+```
+
+`--detail entries` (default) summarizes each top-level entry; `files` describes
+individual files. Excluded directories remain a single action and are not
+walked.
+
+```json
+{
+  "schema_version": 4,
+  "actions": [
+    {"app": "vim", "action": "copy", "src": "/home/user/.vimrc", "dst": "/home/user/storage/Mackeep/.vimrc", "size_bytes": 128, "sensitive": false, "sensitive_reason": null}
+  ],
+  "summary": {
+    "apps": ["vim"],
+    "actions": {"copy": 1},
+    "total_actions": 1,
+    "total_bytes": 128,
+    "files": 1
+  }
+}
+```
+
+| Action | Meaning |
+| --- | --- |
+| `copy` | Planned copy |
+| `conflict` | Destination exists or replacement was declined |
+| `skip_missing` | Source is missing |
+| `skip_excluded` | Exclusion prevented copying |
+| `stale_in_backup` | Stale backup data; `will_remove: true` marks planned cleanup |
+| `error` | Application operation failed |
+
+Detailed exclusion actions can include `reason` with `pattern`, `section`, and
+`file`. In file detail, an existing destination is a `conflict` with
+`would_overwrite: true` instead of `copy`. Entry detail may report a copy and a
+conflict for the same entry; its bytes contribute once to the summary.
+`summary.files` counts copy actions, not all files in the filesystem.
+
+`--max-actions` is a positive retained-action limit, default 5000. If exceeded,
+`summary` adds `truncated: true` and `limit`. Totals cover all visited actions;
+the limit does not stop traversal or bound all memory used by planning.
+Dry-run does not predict what a later interactive confirmation will accept.
+
+### Execution events and errors
+
+Without `--dry-run`, backup and restore emit NDJSON, one object per line:
+
+```json
+{"schema_version": 4, "event": "start", "app": "vim", "action": "backup"}
+{"schema_version": 4, "event": "file", "app": "vim", "action": "copy", "src": "/home/user/.vimrc", "dst": "/home/user/storage/Mackeep/.vimrc", "size_bytes": 128, "sensitive": false, "sensitive_reason": null}
+{"schema_version": 4, "event": "done", "app": "vim", "action": "backup", "files": 1, "bytes": 128, "skipped": 0}
+```
+
+Committed file events are emitted after the application's transaction commits,
+not as a byte-by-byte transfer stream. `done` counters are per application;
+consumers sum them for a run. `done` alone does not prove success: a failed
+application can emit an error event and then `done`, followed by a final error
+document and a nonzero process exit.
+
+```json
+{"schema_version": 4, "error": {"code": "unsupported_application", "message": "Unsupported application: unknown-app"}}
+```
+
+Error codes include `unsupported_application`, `config_error`, and `error`.
+Unexpected exceptions also produce a traceback in stderr.
+
+`--json migrate` returns a single object with `schema_version`, `actions`, and
+`summary`. Actions are `copy`, `skip`, or `set_directory`, with `src` and `dst`
+(and `directory` for the latter). Summary fields are `copied`, `skipped`,
+`updated`, `total_actions`, and `dry_run`; counts in a preview describe the
+plan, while `copied` remains zero.
+
+### Schema changes
+
+- **4:** Adds `allow_external_paths` and `storage_configured`; permits
+  `unconfigured` storage; `stale_in_backup` can now mean deletion when
+  `will_remove: true`. Clients must check the flag before presenting removal.
+- **3:** Adds application `error` and configuration `errors`.
+- **2:** Removes `config_file_is_legacy`, `legacy_custom_apps_dirs`, and
+  `storage.using_legacy_directory`; adds `custom_apps_dir`.

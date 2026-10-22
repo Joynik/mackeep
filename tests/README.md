@@ -1,25 +1,27 @@
 # Tests
 
-Tests are put in this folder.
-
-Feel free to add more, the more the better!
-
-## How to run the tests
+Run from the repository root:
 
 ```bash
-brew install uv
 make test
+uv run python -m pytest tests/test_audit_regressions.py -q
+make coverage
 ```
 
-And you should see
+`make check` also runs Markdown linting, Ruff, mypy, and ty. Coverage requires
+at least 80%; use `htmlcov/index.html` for the generated report.
 
-```text
-.
-----------------------------------------------------------------------
-Ran 1 test in 0.016s
+Use pytest's `home` fixture from `conftest.py` for filesystem integration tests.
+It sets temporary HOME/XDG paths and resets confirmation flags. Use `tmp_path`
+and `monkeypatch` for additional isolation. No test should need the network,
+real user settings, live application processes, or an installed cloud client.
+Mock subprocess interactions such as process detection and attribute utilities.
 
-OK
-```
+Key suites cover application operations, exclusion matching, configuration,
+JSON, legacy migration, and audit regressions. When changing filesystem logic,
+check failed staging/commit rollback, shared ownership, symlinks, permissions,
+and dry-run's no-write guarantee. Compare resulting files and events rather
+than only asserting implementation-specific call sequences.
 
-Yeah, I wrote this file when there was only 1 test, I hope there will be more
-when you read it!
+Desktop unit and UI tests live in `desktop/Tests/`; see the
+[desktop guide](../desktop/README.md#build-and-test).

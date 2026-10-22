@@ -1,93 +1,83 @@
 # Release
 
-Releasing is automated. Pushing a version tag triggers the
-[`release` workflow](../.github/workflows/release.yaml), which builds the
-package and creates the GitHub release with the artifacts.
+CLI and desktop share a version and are released together. Distribution is
+through GitHub release artifacts and Homebrew, not PyPI.
 
-To cut a release, run one command. The version is `X.Y.Z`
-(`major.minor.patch`), and the `BUMP` you choose increments one number and
-resets the numbers to its right to `0`:
+## Before publishing
 
-```sh
-make release              # patch: 0.12.1 -> 0.12.2 (small changes)
-make release BUMP=minor   # minor: 0.12.1 -> 0.13.0  (big changes)
-make release BUMP=major   # major: 0.12.1 -> 1.0.0   (breaking changes)
-make release VERSION=0.13.0  # pin an exact version, no arithmetic
-```
+- Commit the intended changes, including new files; keep the working tree clean.
+- Run `make check` and obtain green CI for the commit being released.
+- Validate desktop builds/tests when desktop or the JSON contract changed.
+- Check migration notes for storage, cleanup, configuration, or schema changes.
 
-Preview a bump without changing anything with `uv version --bump <level>
---dry-run`.
+Do not run the root `make release` just to create a local build: it commits,
+tags, and pushes.
 
-This runs the checks, bumps the version, syncs the lockfile, then commits, tags
-and pushes. The workflow takes over from the tag push:
+## Publish
 
-- Builds the standalone binary with [Nuitka](https://nuitka.net), one per
-  platform (macOS and Linux)
-- Builds the desktop application for macOS and packs it in a disk image
-- Creates the GitHub release with auto-generated notes and the artifacts
-
-The application of the desktop is released with the tool, they share the same
-version. The `make release` command writes the version of the release in
-`desktop/project.yml`, so the version of the application is always the one of
-the release, in the "About" window too.
-
-The release workflow builds the application on macOS and packs it in a disk
-image, so the release holds the tool and the application of the desktop. The
-image is signed ad-hoc: there is no certificate of the developer in the
-workflow, and macOS asks to confirm the first time the application is opened.
-
-The application is built from the `desktop/` folder of the repository:
+From the repository root:
 
 ```bash
-cd desktop
-make release   # The application is built in the Release configuration
-make package   # The disk image of the release is built
+make release                    # Increment patch
+make release BUMP=minor          # Increment minor, reset patch
+make release BUMP=major          # Increment major, reset minor/patch
+make release VERSION=0.23.0      # Use an exact version
 ```
 
-The built application is in `desktop/build/Build/Products/Release/Mackeep.app`,
-the disk image is in `dist/`.
-
-The releases hold one package per platform, and the disk image of the
-application:
-
-```text
-mackeep-cli-0.14.0-macos-arm64.tar.gz
-mackeep-cli-0.14.0-linux-x86_64.tar.gz
-Mackeep-0.14.0-macos-arm64.dmg
-```
-
-Each package holds the `mackeep-cli` folder with the binary and the runtime
-it needs, so Python is not required to run it. The binary is a folder and
-not a single file on purpose: a single file has to unpack itself on every
-run, that takes seconds. The binary can also be built locally, with
-`make binary`.
-
-## The versioning scheme
-
-Mackeep is young, so the version numbers stay low:
-
-- `0.12.X` for the small changes: bug fixes, documentation, refactoring,
-  small features.
-- `0.13.0` for the big changes: a new feature that changes the behaviour of
-  the tool, a new configuration format, a new command.
-- `1.0.0` when the format of the configuration files and the behaviour of
-  the tool are frozen.
-
-The first release of Mackeep is `0.12.1`.
-
-## The distribution
-
-Mackeep is distributed with [Homebrew](https://brew.sh/), it is not published
-on PyPI. The formula lives in the
-[homebrew tap](https://github.com/Joynik/homebrew-tap) and points to the
-release of the matching version:
+Preview the version calculation without changing files:
 
 ```bash
-# Install
-brew install Joynik/tap/mackeep-cli
+uv version --bump minor --dry-run
 ```
 
-The formula is updated automatically: the
-[homebrew tap](https://github.com/Joynik/homebrew-tap) runs a workflow that
-checks the latest release, updates the version, the URL and the checksum of
-the formula, and commits the result.
+The target runs checks, changes the Python version, synchronizes dependencies
+and the lockfile, updates `desktop/project.yml`, commits tracked changes, creates
+a version tag, and pushes the branch and tag. It runs `uv sync -U`, which can
+also update dependencies; review that behavior before using it for a release
+requiring a fixed dependency set. It does not automatically stage untracked files.
+
+The [release workflow](../.github/workflows/release.yaml) checks tag/version
+agreement, builds and tests archives, builds the desktop disk image, and creates
+the GitHub release with generated notes after both build jobs succeed.
+A plain branch push runs validation workflows but does not create a release.
+
+## Artifacts
+
+| Artifact | Platform |
+| --- | --- |
+| `mackeep-cli-<version>-macos-arm64.tar.gz` | macOS Apple Silicon |
+| `mackeep-cli-<version>-linux-x86_64.tar.gz` | Linux x86-64 |
+| `mackeep-cli-<version>-linux-arm64.tar.gz` | Linux ARM64 |
+| `Mackeep-<version>-macos-arm64.dmg` | Desktop, macOS 15+ on Apple Silicon |
+
+CLI archives contain a directory with the executable and runtime files; keep
+them together. Python is not required on the target machine. macOS artifacts
+are signed ad-hoc, not notarized.
+
+The Homebrew formula in the separate
+[homebrew tap](https://github.com/Joynik/homebrew-tap) is updated by its own
+release-monitoring automation. The formula is not maintained in this repository.
+Verify the published version and installation after that update completes.
+
+## Build without publishing
+
+`make binary` at the root builds the standalone CLI using Nuitka, installs build
+tools in `.build-venv`, and writes `dist-bin/mackeep-cli/`.
+
+For the desktop disk image, run from the root:
+
+```bash
+make -C desktop package XCODEBUILD_FLAGS="CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="
+```
+
+This builds Release and writes the image into `dist/`; it does not publish it.
+See the [desktop guide](../desktop/README.md) for signing and tests.
+
+## Versioning
+
+- `0.0.X`: small fixes, documentation, or refactoring.
+- `0.X.0`: substantial features or behavior/configuration changes.
+- `X.0.0`: a frozen public configuration and behavior contract.
+
+JSON schema versions are separate from release versions. Breaking schema
+changes need a schema bump and matching desktop/documentation updates.
