@@ -112,7 +112,10 @@ jobs:
           path: dist/*.tar.gz
 
   desktop:
-    runs-on: macos-15
+    # The image with the newest Xcode is used: an application built with an
+    # old SDK keeps the old design of macOS, even on a new system. The image
+    # is a preview, so the build can be slow.
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
