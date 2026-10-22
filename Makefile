@@ -2,22 +2,22 @@ lint:
 	uv run rumdl check .
 
 ruff:
-	uv run ruff check .
+	uv run python -m ruff check .
 
 ty:
-	uv run ty check
+	uv run python -m ty check
 
 test:
-	uv run pytest
+	uv run python -m pytest
 
 coverage:
-	uv run pytest --cov=mackeep --cov=mackeep_cli --cov-report=term --cov-report=html --cov-report=xml --cov-fail-under=80
+	uv run python -m pytest --cov=mackeep --cov=mackeep_cli --cov-report=term --cov-report=html --cov-report=xml --cov-fail-under=80
 
 coverage-report:
-	uv run coverage report
+	uv run python -m coverage report
 
 mypy:
-	uv run mypy src/mackeep src/mackeep_cli
+	uv run python -m mypy src/mackeep src/mackeep_cli
 
 check: lint ruff mypy ty test
 	@echo "All checks passed!"

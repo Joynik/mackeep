@@ -31,3 +31,9 @@ coverage.xml
 .pytest_cache/
 .rumdl_cache/
 .ruff_cache/
+
+# Local verification logs and artifacts
+/logs/
+
+# Local audit report
+/AUDIT.md

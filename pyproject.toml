@@ -66,7 +66,6 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
-show_error_codes = true
 
 [tool.coverage.run]
 source = ["src/mackeep", "src/mackeep_cli"]
@@ -139,7 +138,7 @@ select = [
     "SIM",   # flake8-simplify
     "SLF",   # flake8-self
     "SLOT",  # flake8-slots
-    "TCH",   # flake8-type-checking
+    "TC",    # flake8-type-checking
     "TID",   # flake8-tidy-imports
     "UP",    # pyupgrade
     "W",     # pycodestyle warning
