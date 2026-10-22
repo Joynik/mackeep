@@ -15,6 +15,7 @@ DIST_DIR := ../dist
 
 ## The folder where the disk image is built
 STAGE_DIR := $(DERIVED_DATA)/package
+DISK_IMAGE := $(DIST_DIR)/Mackeep-$(VERSION)-macos-arm64.dmg
 
 .PHONY: project build release package test run clean
 
@@ -50,9 +51,15 @@ package: release
 	mkdir -p $(STAGE_DIR)
 	ditto $(RELEASE_PRODUCTS_DIR)/Mackeep.app $(STAGE_DIR)/Mackeep.app
 	ln -s /Applications $(STAGE_DIR)/Applications
-	hdiutil create -volname Mackeep -srcfolder $(STAGE_DIR) -ov -format UDZO \
-		$(DIST_DIR)/Mackeep-$(VERSION)-macos-arm64.dmg
-	hdiutil verify $(DIST_DIR)/Mackeep-$(VERSION)-macos-arm64.dmg
+	rm -f "$(DISK_IMAGE)"
+	@if diskutil image create from --help >/dev/null 2>&1; then \
+		diskutil image create from --volumeName Mackeep --format UDZO \
+			"$(abspath $(STAGE_DIR))" "$(abspath $(DISK_IMAGE))"; \
+	else \
+		hdiutil create -volname Mackeep -srcfolder "$(STAGE_DIR)" -ov -format UDZO \
+			"$(DISK_IMAGE)"; \
+	fi
+	hdiutil verify "$(DISK_IMAGE)"
 
 ## Run the tests
 test: project
