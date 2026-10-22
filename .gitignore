@@ -10,6 +10,9 @@
 # Ignore Claude stuff
 /.claude/
 
+# The local settings of the editor
+/.vscode/
+
 # The local rules of the agents
 /AGENTS.md
 
