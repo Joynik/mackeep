@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from mackeep import utils
+from mackeep.appsdb import ApplicationsDatabase
 from mackeep.mackeep import Mackeep
 
 # The content of the main config file
@@ -138,3 +139,31 @@ def test_nothing_is_backed_up_with_an_empty_list(home):
     mackeep = Mackeep()
 
     assert mackeep.get_apps_to_backup() == set()
+
+
+def test_selection_reuses_database_without_mutating_it(home):
+    """Selecting from a loaded catalog must not parse it again or alter it."""
+    write_config(
+        home, home / ".mackeep.cfg",
+        MAIN_CONFIG + "\n[applications_to_ignore]\nzsh\n",
+    )
+    mackeep = Mackeep()
+    database = ApplicationsDatabase()
+    names = database.get_app_names()
+    with patch("mackeep.mackeep.appsdb.ApplicationsDatabase") as constructor:
+        assert mackeep.get_apps_to_backup(database) == names - {"zsh"}
+        constructor.assert_not_called()
+    assert database.get_app_names() == names
+
+
+def test_explicit_selection_does_not_load_catalog(home):
+    """A configured list needs no catalog until the caller validates its names."""
+    write_config(
+        home, home / ".mackeep.cfg",
+        MAIN_CONFIG + "\n[applications_to_sync]\nzsh\n"
+        "\n[applications_to_ignore]\nvim\n",
+    )
+    mackeep = Mackeep()
+    with patch("mackeep.mackeep.appsdb.ApplicationsDatabase") as constructor:
+        assert mackeep.get_apps_to_backup() == {"zsh"}
+        constructor.assert_not_called()

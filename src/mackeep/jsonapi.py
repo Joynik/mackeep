@@ -18,7 +18,8 @@ from typing import Any, TextIO
 # Version 3 added the field "error" to the applications and the field
 # "errors" to the configuration, they tell what is not used of the config
 # files.
-SCHEMA_VERSION: int = 3
+# Version 4 makes stale cleanup explicit with will_remove and adds path policy.
+SCHEMA_VERSION: int = 4
 
 
 def dumps(obj: Any) -> str:

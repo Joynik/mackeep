@@ -492,27 +492,12 @@ class TestApplicationProfile(unittest.TestCase):
         # Create the home file as a symbolic link pointing to the mackeep file
         os.symlink(mackeep_filepath, home_filepath)
 
-        # Patch utils.delete and utils.copy
-        with patch("mackeep.application.utils.delete") as mock_delete, \
-             patch("mackeep.application.utils.copy") as mock_copy:
-            # Capture stdout
-            captured_output = StringIO()
-            sys.stdout = captured_output
-
-            # Call the method
-            self.app_profile.link_uninstall()
-
-            # Restore stdout
-            sys.stdout = sys.__stdout__
-
-            # Verify that delete and copy WERE called (normal operation)
-            mock_delete.assert_called_once_with(home_filepath)
-            mock_copy.assert_called_once_with(mackeep_filepath, home_filepath)
-
-            # Verify that the reverting message was printed (not warning)
-            output = captured_output.getvalue()
-            assert "Reverting" in output
-            assert "Warning" not in output
+        self.app_profile.link_uninstall()
+        assert not os.path.islink(home_filepath)
+        with open(home_filepath) as restored:
+            assert restored.read() == "mackeep content"
+        with open(mackeep_filepath) as backup:
+            assert backup.read() == "mackeep content"
 
     def test_copy_files_to_mackeep_folder_skips_already_linked_files(self):
         """Test that backup skips files already linked from link install."""
@@ -632,24 +617,10 @@ class TestApplicationProfile(unittest.TestCase):
         # Create the home file as a symbolic link pointing to different location
         os.symlink(other_target, home_filepath)
 
-        # Patch utils.copy (no mackeep file exists, so confirm won't be called)
-        with patch("mackeep.application.utils.copy") as mock_copy:
-            # Capture stdout
-            captured_output = StringIO()
-            sys.stdout = captured_output
-
-            # Call the method
-            self.app_profile.copy_files_to_mackeep_folder()
-
-            # Restore stdout
-            sys.stdout = sys.__stdout__
-
-            # Verify that copy WAS called (should backup symlinks to other locations)
-            mock_copy.assert_called_once_with(home_filepath, mackeep_filepath)
-
-            # Verify that the backing up message was printed
-            output = captured_output.getvalue()
-            assert "Backing up" in output
+        self.app_profile.copy_files_to_mackeep_folder()
+        with open(mackeep_filepath) as backup:
+            assert backup.read() == "other content"
+        assert not os.path.islink(mackeep_filepath)
 
 
 if __name__ == "__main__":

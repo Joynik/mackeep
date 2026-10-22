@@ -424,9 +424,13 @@ class TestMackeep(unittest.TestCase):
             assert utils.get_google_drive_folder_location() == expected_path
 
     def test_is_process_running(self):
-        # A pgrep that has one letter and a wildcard will always return id 1
-        assert utils.is_process_running("a*")
-        assert not utils.is_process_running("some imaginary process")
+        with patch.object(utils.os.path, "isfile", return_value=True):
+            with patch.object(utils.subprocess, "call", return_value=0):
+                assert utils.is_process_running("application")
+            with patch.object(utils.subprocess, "call", return_value=1):
+                assert not utils.is_process_running("application")
+            with patch.object(utils.subprocess, "call", return_value=2):
+                assert not utils.is_process_running("application")
 
     def test_can_file_be_synced_on_current_platform(self):
         # Any file path will do, even if it doesn't exist

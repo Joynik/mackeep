@@ -6,12 +6,18 @@ Mackeep. Name, files, ...
 """
 
 import os
+import shutil
 from collections.abc import Callable, Iterator
+from functools import partial
 from typing import Any
 
 from . import utils
+from .backupstate import BackupState
+from .config import ConfigError
 from .excludes import Matcher, Pattern
 from .mackeep import Mackeep
+from .paths import entry_paths, inside, validate_pair
+from .transaction import Transaction
 
 # The type of the callback used to report the operations of an application.
 Reporter = Callable[[str, dict[str, Any]], None]
@@ -55,6 +61,12 @@ class ApplicationProfile:
 
         # The detail level of the dry-run: "entries" or "files"
         self.detail: str = "entries"
+        self.failed = False
+        self._pending_events: list[tuple[str, dict[str, Any]]] | None = None
+        self._staged_paths: dict[str, str] = {}
+        self._restoring = False
+        self._active_source = ""
+        self.ownership_baseline: dict[str, list[str]] = {}
 
         # The XDG config home, relative to the home directory
         self._xdg_home: str | None = self._get_xdg_home()
@@ -100,11 +112,10 @@ class ApplicationProfile:
         """
         home: str = os.environ["HOME"]
         xdg_config_home: str = os.environ.get(
-            "XDG_CONFIG_HOME", os.path.join(home, ".config"),
+            "XDG_CONFIG_HOME",
+            os.path.join(home, ".config"),
         )
-        if not os.path.isabs(xdg_config_home) or not xdg_config_home.startswith(
-            home,
-        ):
+        if not os.path.isabs(xdg_config_home) or not inside(xdg_config_home, home):
             return None
         return os.path.relpath(xdg_config_home, home)
 
@@ -118,10 +129,40 @@ class ApplicationProfile:
         Returns:
             home_filepath, mackeep_filepath (str, str)
         """
-        return (
-            os.path.join(os.environ["HOME"], filename),
-            os.path.join(self.mackeep.mackeep_folder, filename),
+        return entry_paths(
+            filename,
+            self.mackeep.mackeep_folder,
+            allow_external=self.mackeep.config.allow_external_paths is True,
         )
+
+    def preflight(self, action: str) -> None:
+        """Check every entry before any application changes its data."""
+        for filename in self.files:
+            local, backup = self.get_filepaths(filename)
+            # Already installed legacy links are expected, not a replacement.
+            if (
+                os.path.islink(local)
+                and os.path.exists(backup)
+                and os.path.exists(local)
+                and os.path.samefile(local, backup)
+            ):
+                continue
+            if self.mackeep.config.allow_external_paths is not True and not inside(
+                os.path.realpath(local),
+                os.path.realpath(os.environ["HOME"]),
+            ):
+                raise ConfigError(f"External paths are disabled: {local}")
+            validate_pair(local, self.mackeep.mackeep_folder)
+            if action in {"copy_files_to_mackeep_folder", "link_install"}:
+                validate_pair(local, backup)
+            else:
+                validate_pair(backup, local)
+            root = self.mackeep.mackeep_folder
+            if not inside(
+                os.path.realpath(os.path.dirname(backup)),
+                os.path.realpath(root),
+            ):
+                raise ValueError(f"Backup destination parent escapes storage: {backup}")
 
     def _xdg_relative(self, home_relative: str) -> str | None:
         """
@@ -134,12 +175,27 @@ class ApplicationProfile:
             str or None: None when the path is not in the XDG config home.
         """
         if self._xdg_home is None:
-            return None
-        if home_relative == self._xdg_home:
+            if self.mackeep.config.allow_external_paths is not True:
+                return None
+            root = os.path.abspath(
+                os.path.expanduser(
+                    os.environ.get(
+                        "XDG_CONFIG_HOME",
+                        os.path.join(os.environ["HOME"], ".config"),
+                    ),
+                ),
+            )
+            path = os.path.abspath(os.path.join(os.environ["HOME"], home_relative))
+            return os.path.relpath(path, root) if inside(path, root) else None
+        path = os.path.relpath(
+            os.path.abspath(os.path.join(os.environ["HOME"], home_relative)),
+            os.environ["HOME"],
+        )
+        if path == self._xdg_home:
             return ""
         prefix: str = f"{self._xdg_home}/"
-        if home_relative.startswith(prefix):
-            return home_relative[len(prefix) :]
+        if path.startswith(prefix):
+            return path[len(prefix) :]
         return None
 
     def is_excluded(self, home_relative: str, is_dir: bool = False) -> bool:
@@ -156,6 +212,8 @@ class ApplicationProfile:
         if self.exclude.is_excluded(home_relative, is_dir):
             return True
 
+        if not self.xdg_exclude:
+            return False
         xdg_relative: str | None = self._xdg_relative(home_relative)
         return bool(
             xdg_relative and self.xdg_exclude.is_excluded(xdg_relative, is_dir),
@@ -180,6 +238,8 @@ class ApplicationProfile:
         if pattern is not None and not pattern.negated:
             return self._reason(pattern)
 
+        if not self.xdg_exclude:
+            return None
         xdg_relative: str | None = self._xdg_relative(home_relative)
         if xdg_relative:
             pattern = self.xdg_exclude.match(xdg_relative, is_dir)
@@ -216,8 +276,21 @@ class ApplicationProfile:
             action (str): The action, e.g. "copy" or "skip_excluded".
             details: The details of the operation.
         """
-        relative: str = self._home_relative(str(details.get("src", "")))
-        reason: str | None = utils.sensitive_reason(relative) if relative else None
+        for staged, destination in self._staged_paths.items():
+            path = str(details.get("dst", ""))
+            if inside(path, staged):
+                details["dst"] = (
+                    os.path.join(destination, os.path.relpath(path, staged))
+                    if path != staged
+                    else destination
+                )
+                break
+        if self._pending_events is not None:
+            self._pending_events.append((action, details))
+            return
+        local = str(details.get("dst" if self._restoring else "src", ""))
+        relative: str = self._home_relative(local)
+        reason = utils.sensitive_path_reason(local)
         details["sensitive"] = reason is not None
         details["sensitive_reason"] = reason
 
@@ -271,19 +344,14 @@ class ApplicationProfile:
             tuple of (str, str, bool): The path, the path relative to the home
             directory and whether the path is a directory.
         """
-        try:
-            names: list[str] = sorted(os.listdir(src))
-        except OSError:
-            return
-
-        for name in names:
+        for name in sorted(os.listdir(src)):
             path: str = os.path.join(src, name)
             relative_path: str = f"{relative}/{name}" if relative else name
             is_dir: bool = os.path.isdir(path)
 
             yield path, relative_path, is_dir
 
-            if is_dir:
+            if is_dir and not os.path.islink(path):
                 yield from self._walk(path, relative_path)
 
     def _report_excluded(
@@ -325,29 +393,33 @@ class ApplicationProfile:
             destination: str = os.path.join(dst, name)
 
             reason: dict[str, str] | None = self.exclusion_reason(
-                relative_path, is_dir,
+                relative_path,
+                is_dir,
             )
             if reason is not None:
                 # An excluded directory is not walked.
                 self._report_excluded(path, relative_path, destination, reason)
                 continue
 
-            if is_dir:
+            if is_dir and not os.path.islink(path):
                 copied += self._copy_tree(path, destination, relative_path)
                 continue
 
-            utils.copy(path, destination)
-            size: int = os.path.getsize(path)
+            utils.copy(path, destination, preserve_link=True)
+            size: int = self._file_size(path)
             copied += size
             self._report("copy", src=path, dst=destination, size_bytes=size)
 
         # Set the good mode to the file or folder recursively
+        shutil.copystat(src, dst)
         utils.chmod(dst)
 
         return copied
 
     def _plan_tree(
-        self, src: str, relative: str,
+        self,
+        src: str,
+        relative: str,
     ) -> tuple[int, list[tuple[str, str, dict[str, str]]]]:
         """
         Compute what would be copied, without copying anything.
@@ -361,7 +433,7 @@ class ApplicationProfile:
             the excluded paths, as (path, relative path, reason) tuples.
         """
         if not os.path.isdir(src):
-            return (os.path.getsize(src) if os.path.isfile(src) else 0), []
+            return os.path.getsize(src), []
 
         size: int = 0
         excluded: list[tuple[str, str, dict[str, str]]] = []
@@ -372,18 +444,19 @@ class ApplicationProfile:
             is_dir: bool = os.path.isdir(path)
 
             reason: dict[str, str] | None = self.exclusion_reason(
-                relative_path, is_dir,
+                relative_path,
+                is_dir,
             )
             if reason is not None:
                 excluded.append((path, relative_path, reason))
                 continue
 
-            if is_dir:
+            if is_dir and not os.path.islink(path):
                 sub_size, sub_excluded = self._plan_tree(path, relative_path)
                 size += sub_size
                 excluded.extend(sub_excluded)
             else:
-                size += os.path.getsize(path)
+                size += self._file_size(path)
 
         return size, excluded
 
@@ -418,7 +491,7 @@ class ApplicationProfile:
             relative (str): The path, relative to the home directory.
         """
         if not os.path.isdir(src):
-            self._report_file(src, dst)
+            self._report_file(src, dst, follow_link=True)
             return
 
         for name in sorted(os.listdir(src)):
@@ -428,20 +501,21 @@ class ApplicationProfile:
             is_dir: bool = os.path.isdir(path)
 
             reason: dict[str, str] | None = self.exclusion_reason(
-                relative_path, is_dir,
+                relative_path,
+                is_dir,
             )
             if reason is not None:
                 # An excluded directory is not walked.
                 self._report_excluded(path, relative_path, destination, reason)
                 continue
 
-            if is_dir:
+            if is_dir and not os.path.islink(path):
                 self._plan_files(path, destination, relative_path)
                 continue
 
             self._report_file(path, destination)
 
-    def _report_file(self, src: str, dst: str) -> None:
+    def _report_file(self, src: str, dst: str, *, follow_link: bool = False) -> None:
         """
         Report a file that would be copied.
 
@@ -452,7 +526,7 @@ class ApplicationProfile:
             src (str): The path of the file.
             dst (str): The path of the destination.
         """
-        size: int = os.path.getsize(src)
+        size = os.path.getsize(src) if follow_link else self._file_size(src)
         if os.path.lexists(dst):
             self._report(
                 "conflict",
@@ -494,18 +568,24 @@ class ApplicationProfile:
         Returns:
             bool: True when the directory contains an excluded path.
         """
+        if not self.exclude and not self.xdg_exclude:
+            return False
         for _path, relative_path, is_dir in self._walk(src, relative):
             if self.is_excluded(relative_path, is_dir):
                 return True
         return False
 
     def _report_stale(
-        self, relative: str, home_filepath: str, mackeep_filepath: str,
+        self,
+        relative: str,
+        home_filepath: str,
+        mackeep_filepath: str,
+        protected: set[str] | None = None,
     ) -> None:
         """
         Report the files of the backup that are now excluded.
 
-        Those files are not deleted, they are only reported.
+        The plan reports removal after successful replacement.
 
         Args:
             relative (str): The path of the entry, relative to the home
@@ -517,17 +597,25 @@ class ApplicationProfile:
         if not os.path.isdir(mackeep_filepath):
             return
 
-        for path, relative_path, is_dir in self._walk(mackeep_filepath, relative):
-            if not self.is_excluded(relative_path, is_dir):
+        for name in sorted(os.listdir(mackeep_filepath)):
+            path = os.path.join(mackeep_filepath, name)
+            source = os.path.join(home_filepath, name)
+            relative_path = f"{relative}/{name}"
+            is_dir = os.path.isdir(path)
+            if protected and path in protected:
                 continue
-            source: str = os.path.join(
-                home_filepath, os.path.relpath(path, mackeep_filepath),
-            )
-            print(
-                f"Note: {relative_path} is excluded but still in the backup,"
-                " it is not deleted.",
-            )
-            self._report("stale_in_backup", src=source, dst=path)
+            if (
+                protected
+                and is_dir
+                and not os.path.islink(path)
+                and any(inside(other, path) for other in protected)
+            ):
+                self._report_stale(relative_path, source, path, protected)
+            elif self.is_excluded(relative_path, is_dir):
+                print(f"Note: {relative_path} will be removed from the backup.")
+                self._report("stale_in_backup", src=source, dst=path, will_remove=True)
+            elif is_dir and not os.path.islink(path):
+                self._report_stale(relative_path, source, path, protected)
 
     def _link_skip_reason(
         self, relative: str, entry_filepath: str, source_filepath: str,
@@ -566,218 +654,289 @@ class ApplicationProfile:
 
         return None
 
-    def copy_files_to_mackeep_folder(self) -> None:
-        """
-        Backup the application config files to the Mackeep folder.
+    @staticmethod
+    def _file_size(path: str) -> int:
+        """Measure a link itself rather than following a possibly broken target."""
+        return os.lstat(path).st_size
 
-        Algorithm:
-            for config_file
-                if config_file is excluded
-                    skip it
-                if config_file exists and is a real file/folder
-                    if home/file is a symlink pointing to mackeep/file
-                        skip (already backed up via link install)
-                    if exists mackeep/file
-                        are you sure?
-                        if sure
-                            rm mackeep/file
-                    cp home/file mackeep/file
-        """
-        for filename in self.files:
-            (home_filepath, mackeep_filepath) = self.get_filepaths(filename)
+    @staticmethod
+    def _inventory(root: str) -> set[str]:
+        """List leaf entries, including symbolic links and empty directories."""
+        if os.path.islink(root) or not os.path.isdir(root):
+            return {""}
+        entries: set[str] = set()
+        for name in os.listdir(root):
+            path = os.path.join(root, name)
+            entries.update(
+                os.path.join(name, child) if child else name
+                for child in ApplicationProfile._inventory(path)
+            )
+        return entries or {""}
 
-            # If config_file exists and is a real file/folder
-            if not (os.path.isfile(home_filepath) or os.path.isdir(home_filepath)):
-                self._report(
-                    "skip_missing", src=home_filepath, dst=mackeep_filepath,
-                )
-                continue
+    def _preserve_local_exclusions(
+        self,
+        existing: str,
+        staged: str,
+        relative: str,
+    ) -> None:
+        """Keep excluded local entries when replacing a restored directory."""
+        if (
+            not (self.exclude or self.xdg_exclude)
+            or os.path.islink(existing)
+            or not os.path.isdir(existing)
+        ):
+            return
+        for name in os.listdir(existing):
+            old = os.path.join(existing, name)
+            new = os.path.join(staged, name)
+            entry = f"{relative}/{name}"
+            if self.is_excluded(entry, os.path.isdir(old)):
+                if not os.path.lexists(new):
+                    utils.copy(old, new, preserve_link=True)
+            elif os.path.isdir(old) and not os.path.islink(old):
+                self._preserve_local_exclusions(old, new, entry)
 
-            is_dir: bool = os.path.isdir(home_filepath)
+    def _stage_copy(
+        self,
+        source: str,
+        destination: str,
+        relative: str,
+        staged: str,
+    ) -> None:
+        """Build a fresh replacement without borrowing the old backup contents."""
+        self._active_source = source
+        self._staged_paths[staged] = destination
+        if os.path.isdir(source):
+            self._copy_tree(source, staged, relative)
+            if self._restoring:
+                self._preserve_local_exclusions(destination, staged, relative)
+        else:
+            utils.copy(source, staged)
+            self._report(
+                "copy",
+                src=source,
+                dst=destination,
+                size_bytes=os.path.getsize(source),
+            )
 
-            # Is the file excluded by the exclusion rules?
-            if self.is_excluded(filename, is_dir):
-                self._report(
-                    "skip_excluded", src=home_filepath, dst=mackeep_filepath,
-                )
-                print(f"Skipping {filename} (excluded)")
-                continue
-
-            # Check if home file is a symlink pointing to mackeep file
-            # (already backed up via link install)
-            if (
-                os.path.islink(home_filepath)
-                and os.path.exists(mackeep_filepath)
-                and os.path.samefile(home_filepath, mackeep_filepath)
-            ):
-                if self.verbose:
-                    print(
-                        f"Skipping {home_filepath}\n"
-                        f"  already linked to\n  {mackeep_filepath}",
-                    )
-                continue
-
+    def _prepare_entry(
+        self,
+        filename: str,
+        transaction: Transaction,
+        state: BackupState | None,
+        owned: set[str],
+        changed_roots: list[str],
+    ) -> None:
+        """Plan or stage one entry, retaining ownership of declined replacements."""
+        local, backup = self.get_filepaths(filename)
+        if any(inside(backup, root) for root in changed_roots):
+            return
+        source, destination = (backup, local) if self._restoring else (local, backup)
+        if not os.path.exists(source):
+            self._report("skip_missing", src=source, dst=destination)
+            if state:
+                state.keep_previous(self.app_name, backup, owned)
+            return
+        if self.is_excluded(filename, os.path.isdir(source)):
+            self._report("skip_excluded", src=source, dst=destination)
+            return
+        linked = (
+            os.path.islink(local)
+            and os.path.exists(local)
+            and os.path.exists(backup)
+            and os.path.samefile(local, backup)
+        )
+        if linked and not self._restoring:
             if self.verbose:
-                print(
-                    f"Backing up\n  {home_filepath}\n  to\n  {mackeep_filepath} ...",
+                print(f"Skipping {local}, already linked to {backup}")
+            if state:
+                state.keep_previous(self.app_name, backup, owned)
+            return
+        print(f"{'Recovering' if self._restoring else 'Backing up'} {filename} ...")
+        if self.dry_run:
+            self._plan_copy(source, destination, filename)
+            if state:
+                self._report_stale(
+                    filename,
+                    local,
+                    backup,
+                    {
+                        os.path.join(state.root, path)
+                        for path in state.others(self.app_name)
+                    },
                 )
-            else:
-                print(f"Backing up {filename} ...")
+                owned.update(
+                    state.relative(os.path.join(destination, leaf))
+                    for leaf in self._inventory_filtered(
+                        os.path.realpath(source),
+                        filename,
+                    )
+                )
+            changed_roots.append(backup)
+            return
+        if os.path.lexists(destination) and not utils.confirm(
+            f"A file or folder named {destination} already exists. Replace it?",
+        ):
+            self._report(
+                "conflict",
+                src=source,
+                dst=destination,
+                size_bytes=self._plan_tree(source, filename)[0],
+            )
+            if state:
+                state.keep_previous(self.app_name, backup, owned)
+            return
 
-            if self.dry_run:
-                self._plan_copy(home_filepath, mackeep_filepath, filename)
-                # The files of the backup that are now excluded are not
-                # deleted, they are only reported.
-                self._report_stale(filename, home_filepath, mackeep_filepath)
+        def build(staged: str) -> None:
+            self._stage_copy(source, destination, filename, staged)
+            if state:
+                owned.update(
+                    state.relative(os.path.join(destination, leaf))
+                    for leaf in self._inventory(staged)
+                )
+                state.preserve_shared(self.app_name, destination, staged)
+
+        transaction.prepare(destination, build)
+        changed_roots.append(backup)
+
+    def _prepare_cleanup(
+        self,
+        state: BackupState,
+        transaction: Transaction,
+        owned: set[str],
+        changed_roots: list[str],
+    ) -> None:
+        """Stage only obsolete leaves that have no remaining owner."""
+        obsolete_paths = (
+            set(state.owners.get(self.app_name, []))
+            - owned
+            - state.others(self.app_name)
+        )
+        for path in sorted(obsolete_paths):
+            obsolete = os.path.join(state.root, path)
+            if any(inside(obsolete, root) for root in changed_roots):
                 continue
+            if not os.path.lexists(obsolete):
+                continue
+            if not inside(
+                os.path.realpath(os.path.dirname(obsolete)),
+                os.path.realpath(state.root),
+            ):
+                raise ValueError(f"Cleanup path escapes storage: {obsolete}")
+            if (
+                os.path.isdir(obsolete)
+                and not os.path.islink(obsolete)
+                and os.listdir(obsolete)
+            ):
+                continue
+            if not self.dry_run and not utils.confirm(
+                f"Remove obsolete backup entry {obsolete}?",
+            ):
+                owned.add(path)
+                self._report("conflict", src=obsolete, dst=obsolete)
+                continue
+            self._report(
+                "stale_in_backup",
+                src=obsolete,
+                dst=obsolete,
+                will_remove=True,
+            )
+            if not self.dry_run:
+                transaction.prepare(obsolete, None)
+        if not self.dry_run:
+            state.save(transaction, self.app_name, owned)
 
-            # If exists mackeep/file
-            if os.path.lexists(mackeep_filepath):
-                # Name it right
-                file_type: str
-                if os.path.isfile(mackeep_filepath):
-                    file_type = "file"
-                elif os.path.isdir(mackeep_filepath):
-                    file_type = "folder"
-                elif os.path.islink(mackeep_filepath):
-                    file_type = "link"
-                else:
-                    raise ValueError(f"Unsupported file: {mackeep_filepath}")
-                # Ask the user if he really wants to replace it
-                if utils.confirm(
-                    f"A {file_type} named {mackeep_filepath} already exists in the"
-                    " Mackeep folder.\nAre you sure that you want to"
-                    " replace it? (use --force to skip this prompt)",
-                ):
-                    # If confirmed, delete the file in Mackeep
-                    utils.delete(mackeep_filepath)
-                else:
-                    self._report(
-                        "conflict",
-                        src=home_filepath,
-                        dst=mackeep_filepath,
-                        size_bytes=self._plan_tree(home_filepath, filename)[0],
-                    )
-                    continue
+    def _copy_entries(self, *, to_backup: bool) -> None:
+        """Stage an application's replacements, cleanup, and ownership together."""
+        self._restoring = not to_backup
+        self.preflight(
+            "copy_files_to_mackeep_folder"
+            if to_backup
+            else "copy_files_from_mackeep_folder",
+        )
+        state = (
+            BackupState(self.mackeep.mackeep_folder)
+            if to_backup and self.app_name
+            else None
+        )
+        if state and not state.owners:
+            state.owners.update(self.ownership_baseline)
+        transaction = Transaction()
+        owned: set[str] = set()
+        changed_roots: list[str] = []
+        self._pending_events = [] if not self.dry_run else None
+        try:
+            for filename in self.files:
+                self._prepare_entry(filename, transaction, state, owned, changed_roots)
+            if state:
+                self._prepare_cleanup(state, transaction, owned, changed_roots)
+            if not self.dry_run:
+                transaction.commit()
+                events = self._pending_events or []
+                self._pending_events = None
+                for event, details in events:
+                    self._report(event, **details)
+        except OSError as exc:
+            self.failed = True
+            self._pending_events = None
+            qualifier = (
+                "permission issue" if isinstance(exc, PermissionError) else "I/O error"
+            )
+            print(
+                f"Error: Unable to copy file for application {self.app_name} "
+                f"from {self._active_source} ({qualifier}): {exc}",
+            )
+            self._report("error", message=str(exc))
+        finally:
+            self._pending_events = None
+            self._staged_paths.clear()
+            transaction.close()
+        if state and not self.dry_run and not self.failed:
+            state.prune_empty_parents(self.app_name, owned)
 
-            # Copy the file
-            try:
-                if is_dir:
-                    self._copy_tree(home_filepath, mackeep_filepath, filename)
-                else:
-                    utils.copy(home_filepath, mackeep_filepath)
-                    self._report(
-                        "copy",
-                        src=home_filepath,
-                        dst=mackeep_filepath,
-                        size_bytes=os.path.getsize(home_filepath),
-                    )
-            except PermissionError as e:
-                print(
-                    f"Error: Unable to copy file from {home_filepath} to "
-                    f"{mackeep_filepath} due to permission issue: {e}",
-                )
-                self._report(
-                    "error", src=home_filepath, dst=mackeep_filepath, message=str(e),
-                )
+    def _inventory_filtered(self, source: str, relative: str) -> set[str]:
+        """Inventory the dry-run without following nested directory links."""
+        if os.path.islink(source) or not os.path.isdir(source):
+            return {""}
+        entries: set[str] = set()
+        for name in os.listdir(source):
+            path = os.path.join(source, name)
+            entry = f"{relative}/{name}"
+            if self.is_excluded(entry, os.path.isdir(path)):
+                continue
+            entries.update(
+                os.path.join(name, leaf) if leaf else name
+                for leaf in self._inventory_filtered(path, entry)
+            )
+        return entries or {""}
+
+    def copy_files_to_mackeep_folder(self) -> None:
+        """Replace this application's backup after preparing all its copies."""
+        self._copy_entries(to_backup=True)
 
     def copy_files_from_mackeep_folder(self) -> None:
-        """
-        Recover the application config files from the Mackeep folder.
+        """Restore this application while retaining excluded local entries."""
+        self._copy_entries(to_backup=False)
 
-        Algorithm:
-            for config_file
-                if config_file is excluded
-                    skip it
-                if config_file exists in mackeep and is a real file/folder
-                    if exists home/file
-                        are you sure?
-                        if sure
-                            rm home/file
-                    cp mackeep/file home/file
-        """
-        for filename in self.files:
-            (home_filepath, mackeep_filepath) = self.get_filepaths(filename)
+    def _install_link(self, local: str, backup: str) -> None:
+        """Stage both backup data and the local link before replacing either."""
+        transaction = Transaction()
+        try:
+            transaction.prepare(backup, lambda staged: utils.copy(local, staged))
+            transaction.prepare(local, lambda staged: os.symlink(backup, staged))
+            transaction.commit()
+        finally:
+            transaction.close()
 
-            # If config_file exists in mackeep and is a real file/folder
-            if not (
-                os.path.isfile(mackeep_filepath)
-                or os.path.isdir(mackeep_filepath)
-            ):
-                self._report(
-                    "skip_missing", src=mackeep_filepath, dst=home_filepath,
-                )
-                continue
-
-            is_dir: bool = os.path.isdir(mackeep_filepath)
-
-            # Is the file excluded by the exclusion rules?
-            if self.is_excluded(filename, is_dir):
-                self._report(
-                    "skip_excluded", src=mackeep_filepath, dst=home_filepath,
-                )
-                print(f"Skipping {filename} (excluded)")
-                continue
-
-            if self.verbose:
-                print(
-                    f"Recovering\n  {mackeep_filepath}\n  to\n  {home_filepath} ...",
-                )
-            else:
-                print(f"Recovering {filename} ...")
-
-            if self.dry_run:
-                self._plan_copy(mackeep_filepath, home_filepath, filename)
-                continue
-
-            # If exists home/file
-            if os.path.lexists(home_filepath):
-                # Name it right
-                if os.path.isfile(home_filepath):
-                    file_type = "file"
-                elif os.path.isdir(home_filepath):
-                    file_type = "folder"
-                elif os.path.islink(home_filepath):
-                    file_type = "link"
-                else:
-                    raise ValueError(f"Unsupported file: {home_filepath}")
-                # Ask the user if he really wants to replace it
-                if utils.confirm(
-                    f"A {file_type} named {home_filepath} already exists in your"
-                    " home folder.\nAre you sure that you want to"
-                    " replace it?",
-                ):
-                    # If confirmed, delete the existing home file
-                    utils.delete(home_filepath)
-                else:
-                    self._report(
-                        "conflict",
-                        src=mackeep_filepath,
-                        dst=home_filepath,
-                        size_bytes=self._plan_tree(mackeep_filepath, filename)[0],
-                    )
-                    continue
-
-            # Copy the file
-            try:
-                if is_dir:
-                    self._copy_tree(mackeep_filepath, home_filepath, filename)
-                else:
-                    utils.copy(mackeep_filepath, home_filepath)
-                    self._report(
-                        "copy",
-                        src=mackeep_filepath,
-                        dst=home_filepath,
-                        size_bytes=os.path.getsize(mackeep_filepath),
-                    )
-            except PermissionError as e:
-                print(
-                    f"Error: Unable to copy file from {mackeep_filepath} to "
-                    f"{home_filepath} due to permission issue: {e}",
-                )
-                self._report(
-                    "error", src=mackeep_filepath, dst=home_filepath, message=str(e),
-                )
+    @staticmethod
+    def _replace_with_link(backup: str, local: str) -> None:
+        """Create a link before replacing an existing local entry."""
+        transaction = Transaction()
+        try:
+            transaction.prepare(local, lambda staged: utils.link(backup, staged))
+            transaction.commit()
+        finally:
+            transaction.close()
 
     def link_install(self) -> None:
         """
@@ -803,12 +962,16 @@ class ApplicationProfile:
             # A symlink cannot exclude anything, so the entries that are
             # impacted by the exclusion rules are skipped.
             reason: str | None = self._link_skip_reason(
-                filename, home_filepath, home_filepath,
+                filename,
+                home_filepath,
+                home_filepath,
             )
             if reason:
                 print(f"Skipping {filename}, {reason}")
                 self._report(
-                    "skip_excluded", src=home_filepath, dst=mackeep_filepath,
+                    "skip_excluded",
+                    src=home_filepath,
+                    dst=mackeep_filepath,
                 )
                 continue
 
@@ -816,8 +979,7 @@ class ApplicationProfile:
             if (os.path.isfile(home_filepath) or os.path.isdir(home_filepath)) and not (
                 os.path.islink(home_filepath)
                 and (
-                    os.path.isfile(mackeep_filepath)
-                    or os.path.isdir(mackeep_filepath)
+                    os.path.isfile(mackeep_filepath) or os.path.isdir(mackeep_filepath)
                 )
                 and os.path.samefile(home_filepath, mackeep_filepath)
             ):
@@ -845,26 +1007,12 @@ class ApplicationProfile:
                         raise ValueError(f"Unsupported file: {mackeep_filepath}")
 
                     # Ask the user if he really wants to replace it
-                    if utils.confirm(
-                        f"A {file_type} named {mackeep_filepath} already exists in the"
-                        " backup.\nAre you sure that you want to"
-                        " replace it?",
+                    if not utils.confirm(
+                        f"A {file_type} named {mackeep_filepath} already exists "
+                        "in the backup. Replace it?",
                     ):
-                        # Delete the file in Mackeep
-                        utils.delete(mackeep_filepath)
-                        # Copy the file
-                        utils.copy(home_filepath, mackeep_filepath)
-                        # Delete the file in the home
-                        utils.delete(home_filepath)
-                        # Link the backuped file to its original place
-                        utils.link(mackeep_filepath, home_filepath)
-                else:
-                    # Copy the file
-                    utils.copy(home_filepath, mackeep_filepath)
-                    # Delete the file in the home
-                    utils.delete(home_filepath)
-                    # Link the backuped file to its original place
-                    utils.link(mackeep_filepath, home_filepath)
+                        continue
+                self._install_link(home_filepath, mackeep_filepath)
             elif self.verbose:
                 if os.path.exists(home_filepath):
                     print(
@@ -900,22 +1048,25 @@ class ApplicationProfile:
             # A symlink cannot exclude anything, so the entries that are
             # impacted by the exclusion rules are skipped.
             reason: str | None = self._link_skip_reason(
-                filename, mackeep_filepath, mackeep_filepath,
+                filename,
+                mackeep_filepath,
+                mackeep_filepath,
             )
             if reason:
                 print(f"Skipping {filename}, {reason}")
                 self._report(
-                    "skip_excluded", src=mackeep_filepath, dst=home_filepath,
+                    "skip_excluded",
+                    src=mackeep_filepath,
+                    dst=home_filepath,
                 )
                 continue
 
             # If the file exists and is not already pointing to the mackeep file
             # and the folder makes sense on the current platform (Don't sync
             # any subfolder of ~/Library on GNU/Linux)
-            file_or_dir_exists: bool = (
-                os.path.isfile(mackeep_filepath)
-                or os.path.isdir(mackeep_filepath)
-            )
+            file_or_dir_exists: bool = os.path.isfile(
+                mackeep_filepath,
+            ) or os.path.isdir(mackeep_filepath)
             pointing_to_mackeep: bool = (
                 os.path.islink(home_filepath)
                 and os.path.exists(mackeep_filepath)
@@ -951,10 +1102,9 @@ class ApplicationProfile:
                         f"You already have a {file_type} at {home_filepath}.\n"
                         "Do you want to replace it with your backup?",
                     ):
-                        utils.delete(home_filepath)
-                        utils.link(mackeep_filepath, home_filepath)
+                        self._replace_with_link(mackeep_filepath, home_filepath)
                 else:
-                    utils.link(mackeep_filepath, home_filepath)
+                    self._replace_with_link(mackeep_filepath, home_filepath)
             elif self.verbose:
                 if os.path.exists(home_filepath):
                     print(
@@ -993,7 +1143,8 @@ class ApplicationProfile:
                     # If the home file is not a link or does not point to the
                     # mackeep file, display a warning and skip it.
                     if not os.path.islink(home_filepath) or not os.path.samefile(
-                        home_filepath, mackeep_filepath,
+                        home_filepath,
+                        mackeep_filepath,
                     ):
                         print(
                             f'Warning: the file in your home "{home_filepath}" '
@@ -1011,11 +1162,14 @@ class ApplicationProfile:
                     if self.dry_run:
                         continue
 
-                    # If there is, delete it as we are gonna copy the Dropbox
-                    # one there
-                    utils.delete(home_filepath)
-
-                    # Copy the Dropbox file to the home folder
-                    utils.copy(mackeep_filepath, home_filepath)
+                    transaction = Transaction()
+                    try:
+                        transaction.prepare(
+                            home_filepath,
+                            partial(utils.copy, mackeep_filepath),
+                        )
+                        transaction.commit()
+                    finally:
+                        transaction.close()
             elif self.verbose:
                 print(f"Doing nothing, {mackeep_filepath} does not exist")

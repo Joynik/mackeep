@@ -44,7 +44,9 @@ files.
 
 For now, you have 4 options: `dropbox`, `google_drive`, `icloud` and `file_system`.
 
-If none is specified, Mackeep will try to use the default: `dropbox`.
+A fresh configuration uses `unconfigured` until storage is selected.
+Existing configurations that omit the engine retain the legacy `dropbox`
+default. An empty file-system path also waits for configuration.
 With the `dropbox` storage engine, Mackeep will automatically figure out your
 Dropbox folder.
 
@@ -114,6 +116,7 @@ engine you chose, e.g. `~/Dropbox/Mackeep`.
 
 ```ini
 [storage]
+engine = unconfigured
 directory = Mackeep
 ```
 
@@ -444,8 +447,11 @@ excluded files is skipped, with a warning:
 Skipping .config/Code/User, it contains excluded files and a symlink cannot exclude them
 ```
 
-The files that are already in the backup and that are now excluded are not
-deleted. They are only reported, e.g. with `mackeep-cli backup --dry-run`.
+A successful backup now replaces each application with its current allowed
+files. Previously backed-up files that are now excluded or removed from the
+application definition are removed, unless another application owns them.
+Use `mackeep-cli backup --dry-run` to inspect stale entries before replacement.
+Restore leaves excluded local files unchanged.
 
 ## JSON interface
 
@@ -456,7 +462,7 @@ built on top of it. Use the `--json` option, before the command:
 mackeep-cli --json list
 ```
 
-Every answer holds a `schema_version` field, currently `3`. In this mode,
+Every answer holds a `schema_version` field, currently `4`. In this mode,
 only JSON is written to `stdout`, the human-readable output is written to
 `stderr` and no question is asked: the `--force-no` option is implied,
 unless `--force` is given.
@@ -471,13 +477,20 @@ The version `3` of the schema added the field `error` to the applications
 and the field `errors` to the configuration. They tell what is not used of
 the config files, see [the broken rules](#the-broken-rules).
 
+Version `4` adds `allow_external_paths` and `storage_configured` to the
+configuration answer. A `stale_in_backup` action with `will_remove: true`
+now means deletion after successful replacement; older schema versions
+reported stale files without deleting them. Clients must check this flag
+before presenting a removal. Fresh storage answers can use the engine
+`unconfigured`, and an empty path never implies HOME as a chosen storage. Existing field names are retained.
+
 ### `mackeep-cli --json config`
 
 Describes the configuration of Mackeep:
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "version": "0.12.1",
   "config_file": "/home/user/.mackeep.cfg",
   "custom_apps_dir": "/home/user/.mackeep",
@@ -495,6 +508,8 @@ Describes the configuration of Mackeep:
   "apps_to_sync": ["vim"],
   "apps_to_ignore": [],
   "global_exclude": ["**/.DS_Store"],
+  "allow_external_paths": false,
+  "storage_configured": true,
   "errors": []
 }
 ```
@@ -506,7 +521,7 @@ Describes the configuration of Mackeep:
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "name": "vscode",
   "display_name": "VS Code",
   "source": "custom",
@@ -544,7 +559,7 @@ With `--dry-run`, the operations that would be done are described:
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "actions": [
     {
       "app": "vscode",
@@ -589,7 +604,7 @@ the config file it comes from:
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "app": "vscode",
   "action": "skip_excluded",
   "src": "/home/user/Library/Application Support/Code/User/cache",
@@ -607,12 +622,13 @@ that already exists in the destination is reported as a `conflict`, with
 the `would_overwrite` flag, and not as a `copy`.
 
 The `--max-actions` option limits the number of actions of the plan (5000
-by default). The plan is truncated when there are more actions than the
-limit, and the summary is always computed on the whole plan:
+by default). The retained action list is bounded during traversal, and the summary is
+always computed on the whole plan. The limit bounds action-list memory,
+not traversal time:
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "actions": [],
   "summary": {
     "apps": ["vscode"],
@@ -630,9 +646,9 @@ Without `--dry-run`, the operations are streamed, one JSON document per
 line, so a front-end can show the progress:
 
 ```json
-{"schema_version": 3, "event": "start", "app": "vscode", "action": "backup"}
-{"schema_version": 3, "event": "file", "app": "vscode", "action": "copy", "src": "...", "dst": "...", "size_bytes": 4096}
-{"schema_version": 3, "event": "done", "app": "vscode", "action": "backup", "files": 1, "bytes": 4096, "skipped": 0}
+{"schema_version": 4, "event": "start", "app": "vscode", "action": "backup"}
+{"schema_version": 4, "event": "file", "app": "vscode", "action": "copy", "src": "...", "dst": "...", "size_bytes": 4096}
+{"schema_version": 4, "event": "done", "app": "vscode", "action": "backup", "files": 1, "bytes": 4096, "skipped": 0}
 ```
 
 ### The errors
@@ -642,7 +658,7 @@ written as a JSON document:
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "error": {"code": "unsupported_application", "message": "Unsupported application: nope"}
 }
 ```
@@ -734,7 +750,7 @@ With `--json`, the plan and the result are written as JSON:
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "actions": [
     {
       "action": "copy",
@@ -809,3 +825,83 @@ The application does not keep its own copy of the configuration: it edits
 version through the JSON interface. The terminal version must be installed
 and found in `/opt/homebrew/bin` or `/usr/local/bin`, the path can be set in
 the settings of the application.
+
+## Safe replacement and backup ownership
+
+Copy-mode backup and restore prepare fresh replacements beside their
+respective destinations before changing existing files. If preparation
+fails, the previous destination remains. If a commit fails, Mackeep attempts
+to restore every previous destination of that application. Other applications
+can still run, but any failed application makes the final exit code nonzero.
+JSON reports the failure as an error event and a final error document.
+
+The previous version is used only for rollback and is removed after success.
+An updated backup does not inherit obsolete files from the previous version.
+Files owned by another backed-up application are retained. During restore,
+excluded local entries are retained as well. Existing conflicts still require
+confirmation, or `--force`; declining a replacement retains its ownership.
+
+Ownership is stored in `Mackeep/.mackeep-state/owners.json` and updated in the
+same replacement transaction as the application data. A later successful
+backup of that application removes its tracked paths that are no longer in
+its definition. A still-listed top-level source that is missing is skipped,
+not deleted from backup. Empty obsolete parent directories are pruned. Unrecognized
+files outside the replaced paths are never guessed to belong to an application.
+On the first tracked backup, existing entries of currently listed applications
+are used to infer shared ownership, including ignored applications. Paths
+removed before that first tracked backup cannot be
+identified automatically and require manual inspection. Disabling an
+application does not delete its backup.
+
+If the index is malformed, cleanup is refused. Do not edit ownership records
+by hand. Simultaneous writers to the same storage are not supported. The
+replacement rollback protects against handled errors and interruptions; it
+is not a power-loss recovery journal. If rollback itself fails, temporary
+previous versions are retained and the error names their locations.
+
+Source and destination paths must not overlap or refer to the same file.
+All selected entries are checked before backup data is changed. The storage
+root cannot itself be a source. Nested symbolic links are stored as links,
+including dangling links and directory cycles; their targets are not walked
+or chmodded. Explicit top-level links continue to copy their target when the
+path policy allows it. A link already installed by legacy link mode is skipped
+by backup. Restoring a preserved absolute link does not rewrite it for a
+new machine.
+
+Copied files retain timestamps and owner execution: ordinary files use `0600`,
+owner-executable files use `0700`, and copied directories use `0700`. Group and
+other access is removed. This does not promise preservation of every ACL or
+extended attribute across filesystems.
+
+## Initialization and external paths
+
+An ordinary first run creates `~/.mackeep.cfg` and `~/.mackeep/`. The new config uses `engine = unconfigured`, and `config` reports
+`storage_configured: false` until the user chooses a storage engine and path.
+Existing configs with an implicit Dropbox engine retain their old behavior. The backup directory is created only by an actual backup or
+link install after a usable storage has been chosen. No command with
+`--dry-run` creates configuration files, custom-application directories, backup
+directories, or ownership records. Missing required storage produces a
+read-only error.
+
+Application paths are relative to HOME or XDG by default. Absolute entries,
+parent traversal (`..`), and sources resolving outside HOME are rejected unless
+explicitly enabled:
+
+```ini
+[security]
+allow_external_paths = true
+```
+
+Desktop exposes the same setting under Security, disabled by default. The
+control is unavailable with older CLI versions that do not advertise it.
+The editor preserves the absolute text of external paths and rejects saving
+them while the option is off; it never silently redirects them into HOME.
+
+External paths are stored inside the backup, under
+`.mackeep-external/<absolute-path-without-leading-slash>`. Restore maps them
+back to the configured absolute local location, so the destination may differ
+between machines. The setting does not grant filesystem permissions. External
+XDG roots are allowed only with this setting; their exclusion rules remain
+relative to that XDG root. The `.mackeep-external` and `.mackeep-state` names
+are reserved inside the backup. Path overlap checks remain mandatory even
+when external paths are enabled.

@@ -13,6 +13,7 @@ from .constants import (
     ENGINE_FS,
     ENGINE_GDRIVE,
     ENGINE_ICLOUD,
+    ENGINE_UNCONFIGURED,
     MACKEEP_BACKUP_PATH,
     MACKEEP_CONFIG_FILE,
 )
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
 class Config:
     """The Mackeep Config class."""
 
-    def __init__(self, filename: str | None = None) -> None:
+    def __init__(self, filename: str | None = None, *, read_only: bool = False) -> None:
         """
         Create a Config instance.
 
@@ -41,6 +42,8 @@ class Config:
                             defaults to MACKEEP_CONFIG_FILE
         """
         assert isinstance(filename, str) or filename is None
+
+        self.read_only = read_only
 
         # The problems of the config file, they do not stop Mackeep
         self._errors: list[str] = []
@@ -73,6 +76,16 @@ class Config:
         # Get the global exclusion rules, applied to every application
         self._global_exclude = self._parse_exclusions("exclude")
         self._global_xdg_exclude = self._parse_exclusions("xdg_exclude")
+
+    @property
+    def allow_external_paths(self) -> bool:
+        """Whether application entries may leave their HOME/XDG root."""
+        try:
+            return self._parser.getboolean(
+                "security", "allow_external_paths", fallback=False,
+            )
+        except ValueError as exc:
+            raise ConfigError("allow_external_paths must be true or false") from exc
 
     @property
     def engine(self) -> str:
@@ -120,7 +133,7 @@ class Config:
         Returns:
             str
         """
-        return str(os.path.join(self.path, self.directory))
+        return os.path.join(self.path, self.directory) if self.path else ""
 
     @property
     def apps_to_ignore(self) -> set[str]:
@@ -189,7 +202,8 @@ class Config:
         return list(self._errors)
 
     def _setup_parser(
-        self, filename: str | None = None,
+        self,
+        filename: str | None = None,
     ) -> configparser.ConfigParser:
         """
         Configure the ConfigParser instance the way we want it.
@@ -204,7 +218,11 @@ class Config:
 
         # Keep track of the config file that is used
         self._config_path: str = self._best_config_path(filename)
-        if not filename and not Path(self._config_path).is_file():
+        if (
+            not self.read_only
+            and not filename
+            and not Path(self._config_path).is_file()
+        ):
             # The config file is created when it does not exist
             self._create_config_file()
 
@@ -215,6 +233,11 @@ class Config:
             keep_case=False,
         )
 
+        if self.read_only and not file.read:
+            file.parser.add_section("storage")
+            file.parser.set("storage", "engine", ENGINE_UNCONFIGURED)
+        if not self.read_only:
+            (Path.home() / CUSTOM_APPS_DIR).mkdir(mode=0o700, exist_ok=True)
         return file.parser
 
     def _create_config_file(self) -> None:
@@ -225,6 +248,7 @@ class Config:
                 f"# See {DOCUMENTATION_URL} for the options.\n"
                 "\n"
                 "[storage]\n"
+                f"engine = {ENGINE_UNCONFIGURED}\n"
                 f"directory = {MACKEEP_BACKUP_PATH}\n",
                 encoding="utf-8",
             )
@@ -352,6 +376,7 @@ class Config:
         assert isinstance(engine, str)
 
         if engine not in [
+            ENGINE_UNCONFIGURED,
             ENGINE_DROPBOX,
             ENGINE_GDRIVE,
             ENGINE_ICLOUD,
@@ -368,8 +393,15 @@ class Config:
         Returns:
             str
         """
+        if self.engine == ENGINE_UNCONFIGURED:
+            return ""
         if self.engine == ENGINE_DROPBOX:
-            path = get_dropbox_folder_location()
+            try:
+                path = get_dropbox_folder_location()
+            except SystemExit:
+                if self._parser.has_option("storage", "engine"):
+                    raise
+                return ""
         elif self.engine == ENGINE_GDRIVE:
             path = get_google_drive_folder_location()
         elif self.engine == ENGINE_ICLOUD:
@@ -377,6 +409,8 @@ class Config:
         elif self.engine == ENGINE_FS:
             if self._parser.has_option("storage", "path"):
                 cfg_path = self._parser.get("storage", "path")
+                if not cfg_path:
+                    return ""
                 path = os.path.join(os.environ["HOME"], cfg_path)
             else:
                 raise ConfigError(

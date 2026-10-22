@@ -46,6 +46,7 @@ CUSTOM_APPS_DIR: str = ".mackeep"
 CUSTOM_APPS_DIR_XDG: str = "mackeep/applications"
 
 # Supported engines
+ENGINE_UNCONFIGURED: str = "unconfigured"
 ENGINE_DROPBOX: str = "dropbox"
 ENGINE_FS: str = "file_system"
 ENGINE_GDRIVE: str = "google_drive"

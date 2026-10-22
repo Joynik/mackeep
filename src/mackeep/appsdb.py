@@ -23,8 +23,10 @@ from .utils import legacy_warning
 class ApplicationsDatabase:
     """Database containing all the configured applications."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, allow_external_paths: bool = False) -> None:
         """Create a ApplicationsDatabase instance."""
+        self.allow_external_paths = allow_external_paths
+
         # Build the dict that will contain the properties of each application
         self.apps: dict[str, dict[str, str | set[str] | list[str]]] = {}
 
@@ -142,10 +144,16 @@ class ApplicationsDatabase:
         self.apps[app_name]["home_files"] = home_files
         if config.has_section("configuration_files"):
             for path in config.options("configuration_files"):
-                if path.startswith("/"):
+                if not self.allow_external_paths and (
+                    path.startswith("/") or ".." in path.split("/")
+                ):
                     problems.append(
                         f"Invalid path in {config_file}: "
-                        f"unsupported absolute path: {path}",
+                        + (
+                            f"unsupported absolute path: {path}"
+                            if path.startswith("/")
+                            else f"parent traversal is disabled: {path}"
+                        ),
                     )
                     continue
                 config_files.add(path)
@@ -154,8 +162,12 @@ class ApplicationsDatabase:
         # Add the XDG configuration files to sync
         home: str = os.path.expanduser("~/")
         failobj: str = f"{home}.config"
-        xdg_config_home: str = os.environ.get("XDG_CONFIG_HOME", failobj)
-        if not xdg_config_home.startswith(home):
+        xdg_config_home = os.path.abspath(
+            os.path.expanduser(os.environ.get("XDG_CONFIG_HOME", failobj)),
+        )
+        if not self.allow_external_paths and os.path.commonpath(
+            (xdg_config_home, home),
+        ) != home.rstrip(os.sep):
             raise ValueError(
                 f"$XDG_CONFIG_HOME: {xdg_config_home} must be somewhere "
                 f"within your home directory: {home}",
@@ -166,26 +178,37 @@ class ApplicationsDatabase:
         self.apps[app_name]["xdg_files"] = xdg_files
         if config.has_section("xdg_configuration_files"):
             for path in config.options("xdg_configuration_files"):
-                if path.startswith("/"):
+                if not self.allow_external_paths and (
+                    path.startswith("/") or ".." in path.split("/")
+                ):
                     problems.append(
                         f"Invalid path in {config_file}: "
-                        f"unsupported absolute path: {path}",
+                        + (
+                            f"unsupported absolute path: {path}"
+                            if path.startswith("/")
+                            else f"parent traversal is disabled: {path}"
+                        ),
                     )
                     continue
                 xdg_files.add(path)
-                xdg_path = os.path.join(xdg_config_home, path)
-                xdg_path = xdg_path.replace(home, "")
+                xdg_path = os.path.normpath(os.path.join(xdg_config_home, path))
+                if os.path.commonpath((xdg_path, home)) == home.rstrip(os.sep):
+                    xdg_path = os.path.relpath(xdg_path, home)
                 config_files.add(xdg_path)
 
         # Add the exclusion rules
         exclude, exclude_problems = self._parse_exclusions(
-            config, "exclude", config_file,
+            config,
+            "exclude",
+            config_file,
         )
         self.apps[app_name]["exclude"] = exclude
         problems.extend(exclude_problems)
 
         xdg_exclude, xdg_problems = self._parse_exclusions(
-            config, "xdg_exclude", config_file,
+            config,
+            "xdg_exclude",
+            config_file,
         )
         self.apps[app_name]["xdg_exclude"] = xdg_exclude
         problems.extend(xdg_problems)
@@ -519,11 +542,7 @@ class ApplicationsDatabase:
         Returns:
             set of str.
         """
-        app_names: set[str] = set()
-        for name in self.apps:
-            app_names.add(name)
-
-        return app_names
+        return set(self.apps)
 
     def get_pretty_app_names(self) -> set[str]:
         """
@@ -533,11 +552,7 @@ class ApplicationsDatabase:
         Returns:
             set of str.
         """
-        pretty_app_names: set[str] = set()
-        for app_name in self.get_app_names():
-            pretty_app_names.add(self.get_name(app_name))
-
-        return pretty_app_names
+        return {self.get_name(app_name) for app_name in self.apps}
 
 
 def _is_same_file(path: str, other: str) -> bool:

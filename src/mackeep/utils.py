@@ -54,6 +54,23 @@ def sensitive_reason(path: str) -> str | None:
     return None
 
 
+def sensitive_path_reason(path: str) -> str | None:
+    """Classify an absolute local path against HOME and XDG logical roots."""
+    if not path:
+        return None
+    absolute = os.path.abspath(path)
+    home = os.path.abspath(os.environ["HOME"])
+    xdg = os.path.abspath(os.path.expanduser(
+        os.environ.get("XDG_CONFIG_HOME", os.path.join(home, ".config")),
+    ))
+    for root in (home, xdg):
+        if os.path.commonpath((absolute, root)) == root:
+            reason = sensitive_reason(os.path.relpath(absolute, root))
+            if reason:
+                return reason
+    return sensitive_reason(absolute)
+
+
 def warn_sensitive_file(path: str, reason: str) -> None:
     """
     Warn about a file that holds secrets, once per run.
@@ -156,7 +173,7 @@ def delete(filepath: str) -> None:
         shutil.rmtree(filepath)
 
 
-def copy(src: str, dst: str) -> None:
+def copy(src: str, dst: str, *, preserve_link: bool = False) -> None:
     """
     Copy a file or a folder (recursively) from src to dst.
 
@@ -175,7 +192,7 @@ def copy(src: str, dst: str) -> None:
         dst (str): Destination file or folder
     """
     assert isinstance(src, str)
-    assert os.path.exists(src)
+    assert os.path.lexists(src)
     assert isinstance(dst, str)
 
     # Create the path to the dst file if it does not exist
@@ -183,14 +200,21 @@ def copy(src: str, dst: str) -> None:
     if not os.path.isdir(abs_path):
         os.makedirs(abs_path)
 
+    # Nested links are preserved without reading their targets.
+    if preserve_link and os.path.islink(src):
+        os.symlink(os.readlink(src), dst)
+        return
+
     # We need to copy a single file
     if os.path.isfile(src):
         # Copy the src file to dst
-        shutil.copy(src, dst)
+        shutil.copy2(src, dst)
 
     # We need to copy a whole folder
     elif os.path.isdir(src):
-        shutil.copytree(src, dst, dirs_exist_ok=True, copy_function=shutil.copy)
+        shutil.copytree(
+            src, dst, dirs_exist_ok=True, symlinks=True, copy_function=shutil.copy2,
+        )
 
     # What the heck is this?
     else:
@@ -251,8 +275,10 @@ def chmod(target: str) -> None:
     # Remove the immutable attribute recursively if there is one
     remove_immutable_attribute(target)
 
+    if os.path.islink(target):
+        return
     if os.path.isfile(target):
-        os.chmod(target, file_mode)
+        os.chmod(target, file_mode | (os.stat(target).st_mode & stat.S_IXUSR))
 
     elif os.path.isdir(target):
         # chmod the root item
@@ -261,11 +287,18 @@ def chmod(target: str) -> None:
         # chmod recursively in the folder it it's one
         for root, dirs, files in os.walk(target):
             for cur_dir in dirs:
-                os.chmod(os.path.join(root, cur_dir), folder_mode)
+                directory = os.path.join(root, cur_dir)
+                if not os.path.islink(directory):
+                    os.chmod(directory, folder_mode)
             for cur_file in files:
                 fullpath = os.path.join(root, cur_file)
+                if os.path.islink(fullpath):
+                    continue
                 try:
-                    os.chmod(fullpath, file_mode)
+                    os.chmod(
+                        fullpath,
+                        file_mode | (os.stat(fullpath).st_mode & stat.S_IXUSR),
+                    )
                 except FileNotFoundError:
                     # A broken symlink (e.g. a link restored before its
                     # target) is listed by os.walk but can't be followed by

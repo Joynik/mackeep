@@ -7,7 +7,6 @@ from unittest.mock import patch
 import pytest
 
 from mackeep import utils
-from mackeep.config import ConfigError
 from mackeep.jsonapi import SCHEMA_VERSION
 from mackeep_cli import main as main_module
 from mackeep_cli.main import main
@@ -273,7 +272,7 @@ def test_the_config_error_is_raised_in_the_text_mode(home):
     setup(home)
     (home / ".mackeep.cfg").write_text("[storage]\nengine = unknown\n")
 
-    with pytest.raises(ConfigError):
+    with pytest.raises(SystemExit, match="Unknown storage engine"):
         run("config")
 
 

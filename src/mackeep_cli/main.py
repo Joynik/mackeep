@@ -64,6 +64,7 @@ See https://github.com/Joynik/mackeep/tree/master/doc for more information.
 import os
 import re
 import sys
+import traceback
 from dataclasses import dataclass
 from typing import Any, TextIO
 
@@ -72,6 +73,7 @@ from docopt import docopt
 from mackeep import jsonapi, utils
 from mackeep.application import ApplicationProfile, Reporter
 from mackeep.appsdb import ApplicationsDatabase
+from mackeep.backupstate import BackupState
 from mackeep.config import ConfigError
 from mackeep.constants import (
     MACKEEP_APP_NAME,
@@ -175,21 +177,92 @@ def _resolve_apps(app_name: str | None, ctx: _Context) -> set[str]:
         if app_name not in ctx.app_db.get_app_names():
             sys.exit(f"Unsupported application: {app_name}")
         return {app_name}
-    return ctx.mckp.get_apps_to_backup()
+    names = ctx.mckp.get_apps_to_backup(ctx.app_db)
+    unknown = names - ctx.app_db.get_app_names()
+    if unknown:
+        sys.exit(f"Unsupported application: {', '.join(sorted(unknown))}")
+    return names
+
+
+def _preflight(
+    ctx: _Context,
+    app_names: set[str],
+    action: str,
+) -> list[tuple[str, ApplicationProfile]]:
+    """Validate every selected entry before initialization or mutation."""
+    if not ctx.mckp.config.path:
+        utils.error(
+            "Storage is not configured. Choose a storage engine and path first.",
+        )
+    profiles = [(name, _make_profile(ctx, name)) for name in sorted(app_names)]
+    for name, profile in profiles:
+        problem = ctx.app_db.get_error(name)
+        if problem and ("Invalid path" in problem or "parent traversal" in problem):
+            raise ConfigError(problem)
+        profile.preflight(action)
+    return profiles
+
+
+def _ownership_baseline(ctx: _Context, selected: set[str]) -> dict[str, list[str]]:
+    """Infer current shared owners once when upgrading an unindexed backup."""
+    configured = ctx.mckp.config.apps_to_sync | ctx.mckp.config.apps_to_ignore
+    names = selected | configured
+    baseline: dict[str, list[str]] = {}
+    root = ctx.mckp.mackeep_folder
+    for name in sorted(names & ctx.app_db.get_app_names()):
+        profile = _make_profile(ctx, name)
+        entries: set[str] = set()
+        for filename in profile.files:
+            try:
+                _, backup = profile.get_filepaths(filename)
+            except ConfigError:
+                continue
+            if not os.path.lexists(backup):
+                continue
+            if name in selected:
+                leaves = profile._inventory(backup)  # noqa: SLF001
+            elif profile.is_excluded(filename, os.path.isdir(backup)):
+                continue
+            else:
+                leaves = profile._inventory_filtered(backup, filename)  # noqa: SLF001
+            entries.update(
+                os.path.relpath(os.path.join(backup, leaf), root) for leaf in leaves
+            )
+        baseline[name] = sorted(entries)
+    return baseline
 
 
 def _run_action(
-    ctx: _Context, app_names: set[str], action: str, label: str = "",
+    ctx: _Context,
+    app_names: set[str],
+    action: str,
+    label: str = "",
 ) -> None:
     """Run an ApplicationProfile method over each app, in sorted order."""
-    for app_name in sorted(app_names):
-        app = _make_profile(ctx, app_name)
+    profiles = _preflight(ctx, app_names, action)
+    if action == "copy_files_to_mackeep_folder":
+        state = BackupState(ctx.mckp.mackeep_folder)
+        if not state.owners:
+            baseline = _ownership_baseline(ctx, app_names)
+            for _, profile in profiles:
+                profile.ownership_baseline = baseline
+    failed = False
+    for app_name, app in profiles:
         _print_app_header(app_name, ctx.verbose)
         if ctx.reporter is not None:
             ctx.reporter("start", {"app": app_name, "action": label or action})
-        getattr(app, action)()
+        try:
+            getattr(app, action)()
+        except OSError as exc:
+            app.failed = True
+            print(f"Error: {app_name}: {exc}", file=sys.stderr)
+            if ctx.reporter is not None:
+                ctx.reporter("error", {"app": app_name, "message": str(exc)})
         if ctx.reporter is not None:
             ctx.reporter("done", {"app": app_name, "action": label or action})
+        failed = failed or app.failed
+    if failed:
+        sys.exit("One or more applications could not be copied.")
 
 
 def _cmd_list(app_db: ApplicationsDatabase) -> None:
@@ -251,6 +324,7 @@ def _cmd_backup(args: dict[str, Any], ctx: _Context) -> None:
     # unknown application name fails cleanly without creating the Mackeep
     # folder or prompting first.
     app_names = _resolve_apps(args["<application>"], ctx)
+    _preflight(ctx, app_names, "copy_files_to_mackeep_folder")
     if ctx.dry_run:
         # A dry-run does not create anything.
         ctx.mckp.check_for_usable_environment()
@@ -263,6 +337,7 @@ def _cmd_backup(args: dict[str, Any], ctx: _Context) -> None:
 
 def _cmd_restore(args: dict[str, Any], ctx: _Context) -> None:
     app_names = _resolve_apps(args["<application>"], ctx)
+    _preflight(ctx, app_names, "copy_files_from_mackeep_folder")
     if ctx.dry_run:
         # A dry-run does not need the backup folder to exist, the missing
         # files are reported as such.
@@ -276,8 +351,12 @@ def _cmd_restore(args: dict[str, Any], ctx: _Context) -> None:
 
 def _cmd_link_install(args: dict[str, Any], ctx: _Context) -> None:
     app_names = _resolve_apps(args["<application>"], ctx)
+    _preflight(ctx, app_names, "link_install")
     # Check the env where the command is being run
-    ctx.mckp.check_for_usable_backup_env()
+    if ctx.dry_run:
+        ctx.mckp.check_for_usable_environment()
+    else:
+        ctx.mckp.check_for_usable_backup_env()
 
     # Create a link for each application
     _run_action(ctx, app_names, "link_install")
@@ -310,7 +389,7 @@ def _cmd_link_uninstall(args: dict[str, Any], ctx: _Context) -> None:
     ):
         # Uninstall the apps except Mackeep, which we'll uninstall last, to
         # keep the settings as long as possible
-        app_names = ctx.mckp.get_apps_to_backup()
+        app_names = ctx.mckp.get_apps_to_backup(ctx.app_db)
         app_names.discard(MACKEEP_APP_NAME)
 
         _run_action(ctx, app_names, "link_uninstall")
@@ -358,10 +437,12 @@ def _cmd_link(args: dict[str, Any], ctx: _Context) -> None:
     # Initialize again the apps db, as the Mackeep config might have
     # changed it
     ctx.mckp = Mackeep(ctx.config_file)
-    ctx.app_db = ApplicationsDatabase()
+    ctx.app_db = ApplicationsDatabase(
+        allow_external_paths=ctx.mckp.config.allow_external_paths,
+    )
 
     # Restore the rest of the app configs, using the restored Mackeep config
-    app_names = ctx.mckp.get_apps_to_backup()
+    app_names = ctx.mckp.get_apps_to_backup(ctx.app_db)
     # Mackeep has already been done
     app_names.discard(MACKEEP_APP_NAME)
 
@@ -371,7 +452,12 @@ def _cmd_link(args: dict[str, Any], ctx: _Context) -> None:
 class _JsonReporter:
     """Collect or stream the operations of a command as JSON events."""
 
-    def __init__(self, stream: TextIO, collect: bool = False) -> None:
+    def __init__(
+        self,
+        stream: TextIO,
+        collect: bool = False,
+        max_actions: int = DEFAULT_MAX_ACTIONS,
+    ) -> None:
         """
         Create a _JsonReporter instance.
 
@@ -387,6 +473,25 @@ class _JsonReporter:
         self.files: int = 0
         self.bytes: int = 0
         self.skipped: int = 0
+        self.max_actions = max_actions
+        self.counts: dict[str, int] = {}
+        self.total_actions = 0
+        self.total_bytes = 0
+        self.total_files = 0
+        self._last_copy: tuple[Any, Any, Any] | None = None
+
+    def summary(self, app_names: set[str]) -> dict[str, Any]:
+        """Return complete totals while retaining only a bounded action list."""
+        result: dict[str, Any] = {
+            "apps": sorted(app_names),
+            "actions": dict(self.counts),
+            "total_actions": self.total_actions,
+            "total_bytes": self.total_bytes,
+            "files": self.total_files,
+        }
+        if self.total_actions > self.max_actions:
+            result.update(truncated=True, limit=self.max_actions)
+        return result
 
     def __call__(self, action: str, payload: dict[str, Any]) -> None:
         """
@@ -398,7 +503,16 @@ class _JsonReporter:
         """
         if self.collect:
             if action not in {"start", "done"}:
-                self.actions.append(payload)
+                self.total_actions += 1
+                self.counts[action] = self.counts.get(action, 0) + 1
+                key = (payload.get("app"), payload.get("src"), payload.get("dst"))
+                if action != "conflict" or key != self._last_copy:
+                    self.total_bytes += int(payload.get("size_bytes") or 0)
+                if action == "copy":
+                    self.total_files += 1
+                self._last_copy = key if action == "copy" else None
+                if len(self.actions) < self.max_actions:
+                    self.actions.append(payload)
             return
 
         event: str = "file"
@@ -450,7 +564,7 @@ def _app_json(app_db: ApplicationsDatabase, app_name: str) -> dict[str, Any]:
     files: list[dict[str, Any]] = []
     for path in sorted(app_db.get_home_files(app_name)):
         full_path: str = os.path.join(home, path)
-        reason: str | None = utils.sensitive_reason(path)
+        reason: str | None = utils.sensitive_path_reason(full_path)
         files.append(
             {
                 "path": path,
@@ -464,7 +578,7 @@ def _app_json(app_db: ApplicationsDatabase, app_name: str) -> dict[str, Any]:
     xdg_files: list[dict[str, Any]] = []
     for path in sorted(app_db.get_xdg_files(app_name)):
         full_path = os.path.join(xdg_config_home, path)
-        reason = utils.sensitive_reason(path)
+        reason = utils.sensitive_path_reason(full_path)
         xdg_files.append(
             {
                 "path": path,
@@ -517,38 +631,10 @@ def _config_json(ctx: _Context) -> dict[str, Any]:
         },
         "apps_to_sync": sorted(config.apps_to_sync),
         "apps_to_ignore": sorted(config.apps_to_ignore),
+        "allow_external_paths": config.allow_external_paths,
+        "storage_configured": bool(config.path),
         "global_exclude": config.global_exclude,
         "global_xdg_exclude": config.global_xdg_exclude,
-    }
-
-
-def _summary(actions: list[dict[str, Any]], app_names: set[str]) -> dict[str, Any]:
-    """
-    Build the summary of a dry-run.
-
-    Args:
-        actions (list): The actions of the dry-run.
-        app_names (set): The names of the applications.
-
-    Returns:
-        dict
-    """
-    counts: dict[str, int] = {}
-    total_bytes: int = 0
-    files: int = 0
-    for action in actions:
-        name: str = str(action.get("action", "unknown"))
-        counts[name] = counts.get(name, 0) + 1
-        total_bytes += int(action.get("size_bytes") or 0)
-        if name == "copy":
-            files += 1
-
-    return {
-        "apps": sorted(app_names),
-        "actions": counts,
-        "total_actions": len(actions),
-        "total_bytes": total_bytes,
-        "files": files,
     }
 
 
@@ -592,7 +678,12 @@ def _cmd_config(ctx: _Context) -> None:
     print(f"Backup directory: {config.fullpath}")
     sync: list[str] = sorted(config.apps_to_sync)
     ignore: list[str] = sorted(config.apps_to_ignore)
-    print(f"Applications to sync: {', '.join(sync) if sync else 'all'}")
+    sync_label = (
+        ", ".join(sync)
+        if sync
+        else ("none" if config.apps_to_sync_is_explicit else "all")
+    )
+    print(f"Applications to sync: {sync_label}")
     print(f"Applications to ignore: {', '.join(ignore) if ignore else 'none'}")
     if config.global_exclude:
         print("Global exclusions:")
@@ -656,6 +747,7 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
         label: str = "backup" if args["backup"] else "restore"
 
         app_names = _resolve_apps(args["<application>"], ctx)
+        _preflight(ctx, app_names, action)
         if ctx.dry_run:
             # A dry-run does not create anything and does not need the
             # backup folder to exist.
@@ -665,19 +757,13 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
         else:
             ctx.mckp.check_for_usable_restore_env()
 
-        reporter: _JsonReporter = _JsonReporter(stream, ctx.dry_run)
+        reporter: _JsonReporter = _JsonReporter(stream, ctx.dry_run, ctx.max_actions)
         ctx.reporter = reporter
         _run_action(ctx, app_names, action, label)
 
         if ctx.dry_run:
             actions = reporter.actions
-            summary = _summary(actions, app_names)
-            if len(actions) > ctx.max_actions:
-                # The summary is computed on the whole plan, only the
-                # actions are truncated.
-                actions = actions[: ctx.max_actions]
-                summary["truncated"] = True
-                summary["limit"] = ctx.max_actions
+            summary = reporter.summary(app_names)
             jsonapi.emit(
                 {
                     "schema_version": jsonapi.SCHEMA_VERSION,
@@ -739,9 +825,7 @@ def main() -> None:
         print(f"Mackeep {VERSION}")
         sys.exit(0)
 
-    args: dict[str, Any] = docopt(docstring, version=f"Mackeep {VERSION}")
-
-    json_mode: bool = bool(args["--json"])
+    json_mode: bool = "--json" in sys.argv[1:]
     stdout: TextIO = sys.stdout
     if json_mode:
         # In JSON mode, stdout only holds JSON. The human-readable output
@@ -749,6 +833,7 @@ def main() -> None:
         sys.stdout = sys.stderr
 
     try:
+        args: dict[str, Any] = docopt(docstring, version=f"Mackeep {VERSION}")
         _run(args, json_mode, stdout)
     except SystemExit as e:
         _handle_exit(e, json_mode, stdout)
@@ -756,7 +841,14 @@ def main() -> None:
         if json_mode:
             jsonapi.emit_error("config_error", str(e), stdout)
             sys.exit(1)
-        raise
+        sys.exit(str(e))
+    except Exception as exc:
+        if json_mode:
+            jsonapi.emit_error("error", str(exc), stdout)
+            traceback.print_exc(file=sys.stderr)
+            sys.exit(1)
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
     finally:
         utils.print_legacy_warnings()
         sys.stdout = stdout
@@ -853,10 +945,13 @@ def _run(args: dict[str, Any], json_mode: bool, stdout: TextIO) -> None:
         return
 
     config_file: str | None = args.get("--config-file")
+    mckp = Mackeep(config_file, read_only=bool(args["--dry-run"]))
     ctx = _Context(
         config_file=config_file,
-        mckp=Mackeep(config_file),
-        app_db=ApplicationsDatabase(),
+        mckp=mckp,
+        app_db=ApplicationsDatabase(
+            allow_external_paths=mckp.config.allow_external_paths,
+        ),
         dry_run=args["--dry-run"],
         verbose=args["--verbose"],
         detail=_detail_level(args.get("--detail")),

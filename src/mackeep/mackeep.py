@@ -16,9 +16,11 @@ from .config import Config
 class Mackeep:
     """Main Mackeep class."""
 
-    def __init__(self, config_file: str | None = None) -> None:
+    def __init__(
+        self, config_file: str | None = None, *, read_only: bool = False,
+    ) -> None:
         """Mackeep Constructor."""
-        self._config: Config = Config(config_file)
+        self._config: Config = Config(config_file, read_only=read_only)
 
         self.mackeep_folder: str = self._config.fullpath
 
@@ -44,6 +46,10 @@ class Mackeep:
             )
 
         # Do we have a folder set to save Mackeep content into?
+        if not self._config.path:
+            utils.error(
+                "Storage is not configured. Choose a storage engine and path first.",
+            )
         if not os.path.isdir(self._config.path):
             utils.error(
                 f"Unable to find the storage folder: {self._config.path}",
@@ -80,11 +86,13 @@ class Mackeep:
                 " configuration files\n"
                 f"Do you want to create it now? <{self.mackeep_folder}>",
             ):
-                os.makedirs(self.mackeep_folder)
+                os.makedirs(self.mackeep_folder, mode=0o700)
             else:
                 utils.error("Mackeep can't do anything without a home =(")
 
-    def get_apps_to_backup(self) -> set[str]:
+    def get_apps_to_backup(
+        self, app_db: appsdb.ApplicationsDatabase | None = None,
+    ) -> set[str]:
         """
         Get the list of applications that should be backed up by Mackeep.
 
@@ -94,21 +102,22 @@ class Mackeep:
         the applications of it are backed up, even when the list is empty.
         Otherwise every application of the database is backed up.
 
+        Args:
+            app_db: An already loaded catalog, when available.
+
         Returns:
             (set) List of application names to back up
         """
-        # Instantiate the app db
-        app_db: appsdb.ApplicationsDatabase = appsdb.ApplicationsDatabase()
-
         # If a list of apps to sync is specify, we only allow those
         # Or we allow every supported app by default
         if self._config.apps_to_sync_is_explicit:
-            apps_to_backup: set[str] = set(self._config.apps_to_sync)
+            apps_to_backup = self._config.apps_to_sync
         else:
+            if app_db is None:
+                app_db = appsdb.ApplicationsDatabase(
+                    allow_external_paths=self.config.allow_external_paths,
+                )
             apps_to_backup = app_db.get_app_names()
 
         # Remove the specified apps to ignore
-        for app_name in self._config.apps_to_ignore:
-            apps_to_backup.discard(app_name)
-
-        return apps_to_backup
+        return apps_to_backup - self._config.apps_to_ignore

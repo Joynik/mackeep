@@ -296,6 +296,8 @@ class Matcher:
             Pattern or None: The last matching pattern, None when no pattern
             matches the path.
         """
+        if not self._patterns:
+            return None
         path: str = self._normalize(rel_path)
         if not path:
             return None
@@ -361,11 +363,10 @@ class Matcher:
         Returns:
             Pattern or None: The last matching pattern.
         """
-        deciding: Pattern | None = None
-        for pattern in self._patterns:
+        for pattern in reversed(self._patterns):
             if pattern.matches(path, is_dir):
-                deciding = pattern
-        return deciding
+                return pattern
+        return None
 
     @staticmethod
     def _normalize(rel_path: str) -> str:

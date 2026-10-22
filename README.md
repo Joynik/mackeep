@@ -36,7 +36,22 @@ On macOS or Linux, install the terminal version with
 # Install the terminal version of Mackeep
 brew install Joynik/tap/mackeep-cli
 
-# Launch it and back up your files
+# Create the initial configuration
+mackeep-cli config
+```
+
+Choose storage in the desktop settings, or edit `~/.mackeep.cfg`. For example:
+
+```ini
+[storage]
+engine = file_system
+path = /path/to/your/storage
+directory = Mackeep
+```
+
+Then run the backup:
+
+```bash
 mackeep-cli backup
 ```
 
@@ -48,7 +63,7 @@ Next, on any new workstation, do:
 # Install Mackeep
 brew install Joynik/tap/mackeep-cli
 
-# Launch it and restore your files
+# Configure the same storage as above, then restore your files
 mackeep-cli restore
 ```
 

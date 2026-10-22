@@ -12,6 +12,7 @@ from mackeep.constants import (
     ENGINE_FS,
     ENGINE_GDRIVE,
     ENGINE_ICLOUD,
+    ENGINE_UNCONFIGURED,
     MACKEEP_CONFIG_FILE,
 )
 
@@ -93,17 +94,17 @@ class TestConfig(unittest.TestCase):
 
         # Should should do the same as the default, empty configuration
         assert isinstance(cfg.engine, str)
-        assert cfg.engine == ENGINE_DROPBOX
+        assert cfg.engine == ENGINE_UNCONFIGURED
 
         assert isinstance(cfg.path, str)
         print(cfg.path)
-        assert cfg.path == "/home/some_user/Dropbox"
+        assert cfg.path == ""
 
         assert isinstance(cfg.directory, str)
         assert cfg.directory == "Mackeep"
 
         assert isinstance(cfg.fullpath, str)
-        assert cfg.fullpath == "/home/some_user/Dropbox/Mackeep"
+        assert cfg.fullpath == ""
 
         assert cfg.apps_to_ignore == set()
         assert cfg.apps_to_sync == set()

@@ -239,8 +239,9 @@ application.py for each app, for each config file:
     - If yes: skip it, the excluded folders are not walked
     - If no: copy the file, or the folder without its excluded files
     ↓
-The files that are already in the backup and that are now excluded are
-not deleted, they are only reported
+Stale owned files are reported by dry-run and removed after a successful
+replacement unless another backed-up application owns them. Excluded local
+files are preserved during restore
 ```
 
 ### Link Install Flow (Legacy)
@@ -504,3 +505,36 @@ Potential improvements to the architecture:
 
 See [CONTRIBUTING.md](../.github/CONTRIBUTING.md) and
 [develop.md](develop.md) for guidelines on contributing to Mackeep.
+
+## Replacement transactions and ownership
+
+`transaction.py` stages replacement files and directories on each destination
+filesystem. It prepares all entries of an application before renaming any
+existing destination. Old values are retained during commit; a failed commit
+rolls completed renames back in reverse order. If rollback fails, workspaces
+are kept and reported. This is a per-application transaction, not an atomic
+transaction across applications or a crash-recovery journal.
+
+`backupstate.py` validates and stores per-application leaf ownership in
+`.mackeep-state/owners.json`. Backups stage the ownership update together with
+their data. Removed definitions are cleaned using the previous ownership,
+while leaves owned by other applications survive shared-directory replacement.
+An old unindexed backup cannot reveal paths removed from historical definitions;
+its ownership baseline starts with the first tracked backup of each app.
+
+`paths.py` maps enabled external locations into `.mackeep-external/` and
+validates containment and source/destination overlap. The shared
+`[security] allow_external_paths` setting defaults to false and is exposed in
+schema 4 and in the desktop settings. JSON schema 4 also marks stale cleanup
+with `will_remove: true`. Legacy clients can still read unchanged fields;
+clients showing deletion must use the new flag.
+
+Dry-run constructs `Config` in read-only mode. Ordinary initialization creates
+only the main config and custom-app directory; the storage directory waits
+for an actual configured backup. JSON argument and runtime errors are caught
+at the CLI boundary. Expected failures return structured errors and nonzero
+status; unexpected exceptions additionally retain their traceback in stderr.
+
+The JSON plan collector stores at most `max_actions` records and counts full
+summaries during traversal. Duplicate copy/conflict pairs contribute bytes
+once. Desktop accumulates per-application done counters for the whole run.

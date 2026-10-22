@@ -188,7 +188,7 @@ def _action(src: str, dst: str) -> dict[str, str]:
         dict
     """
     return {
-        "action": "skip" if os.path.exists(dst) else "copy",
+        "action": "skip" if os.path.lexists(dst) else "copy",
         "src": src,
         "dst": dst,
     }
@@ -212,7 +212,22 @@ def run(actions: list[dict[str, str]]) -> int:
     for action in actions:
         if action["action"] == "copy":
             os.makedirs(os.path.dirname(action["dst"]), exist_ok=True)
-            shutil.copy2(action["src"], action["dst"])
+            created = False
+            try:
+                with (
+                    open(action["src"], "rb") as source,
+                    open(action["dst"], "xb") as destination,
+                ):
+                    created = True
+                    shutil.copyfileobj(source, destination)
+            except FileExistsError:
+                action["action"] = "skip"
+                continue
+            except OSError:
+                if created and os.path.lexists(action["dst"]):
+                    os.unlink(action["dst"])
+                raise
+            shutil.copystat(action["src"], action["dst"])
             copied += 1
             updated.add(action["dst"])
         elif action["action"] == "set_directory" and action["dst"] in updated:
