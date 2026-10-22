@@ -57,8 +57,13 @@ final class BackupModel {
     /// The filter of the plan.
     var filter: PlanFilter = .all
 
-    /// The lines of the log of the running command.
-    private(set) var log: [String] = []
+    /// Execution rows are bounded; final totals include every event.
+    nonisolated static let actionLimit = 5000
+    private(set) var executionActions: [MackeepAction] = []
+    private(set) var executionSummary: MackeepSummary?
+    private(set) var lastRun: RunRecord?
+    private(set) var displayedCommand: String?
+    private(set) var isPreview = true
 
     /// Whether a command is running.
     private(set) var isRunning: Bool = false
@@ -95,15 +100,33 @@ final class BackupModel {
 
     /// The actions of the plan, after the filter.
     var visibleActions: [MackeepAction] {
-        (plan?.actions ?? []).filter { filter.matches($0) }
+        (plan?.actions ?? executionActions).filter { filter.matches($0) }
     }
 
     /// The summary of the plan.
-    var summary: MackeepSummary? { plan?.summary }
+    var summary: MackeepSummary? { plan?.summary ?? executionSummary }
 
     /// Read the history.
     func loadHistory() {
         history = historyStore.load()
+    }
+
+    /// Clear persisted history and update the table only after success.
+    func clearHistory() {
+        do {
+            try historyStore.clear()
+            loadHistory()
+        } catch { present(error) }
+    }
+
+    private func resetResults(command: String, preview: Bool) {
+        displayedCommand = command
+        isPreview = preview
+        plan = nil
+        executionActions = []
+        executionSummary = nil
+        lastRun = nil
+        filter = .all
     }
 
     /// Compute the plan of a backup, without doing it.
@@ -138,10 +161,8 @@ final class BackupModel {
         presentedError = nil
         canCancel = true
         isStopping = false
-        plan = nil
+        resetResults(command: action, preview: true)
         plannedCommand = nil
-        log = []
-        filter = .all
         var arguments = ["--json", action]
         if let application { arguments.append(application) }
         arguments.append("--dry-run")
@@ -192,7 +213,7 @@ final class BackupModel {
         presentedError = nil
         isStopping = false
         canCancel = false
-        log = []
+        resetResults(command: name, preview: false)
         Task {
             defer { isRunning = false; canCancel = false; cancellation = nil }
             do {
@@ -216,29 +237,22 @@ final class BackupModel {
                 let updates = Task {
                     for await event in events { handle(event) }
                 }
-                let result = await Task.detached { () -> (Int, Int, String?) in
-                    var files = 0
-                    var bytes = 0
-                    defer { continuation.finish() }
-                    do {
-                        var command = command
-                        command.cancellation = token
-                        try command.streamEvents(arguments, allowEmpty: allowEmpty) { event in
-                            if event.event == "done" {
-                                files += event.files ?? 0; bytes += event.bytes ?? 0
-                            }
-                            continuation.yield(event)
-                        }
-                        return (files, bytes, nil)
-                    } catch is CancellationError { return (files, bytes, "cancelled") } catch {
-                        return (files, bytes, error.localizedDescription)
-                    }
+                let result = await Task.detached {
+                    var command = command
+                    command.cancellation = token
+                    return Self.execute(
+                        command: command, arguments: arguments, allowEmpty: allowEmpty,
+                        continuation: continuation)
                 }.value
                 await updates.value
-                let message = token.isCancelled ? L10n.string("backup.cancelled") : result.2
+                executionActions = result.actions
+                executionSummary = result.summary
+                let message = token.isCancelled ? L10n.string("backup.cancelled") : result.message
                 let record = RunRecord(
                     command: name, application: application,
-                    succeeded: message == nil, files: result.0, bytes: result.1, message: message)
+                    succeeded: message == nil, files: result.summary.files ?? 0,
+                    bytes: result.summary.totalBytes, message: message)
+                lastRun = record
                 historyStore.append(record)
                 loadHistory()
                 if let message, !token.isCancelled {
@@ -247,7 +261,7 @@ final class BackupModel {
                 }
                 Notifier.notify(
                     title: L10n.string(
-                        result.2 == nil ? "backup.done.title" : "backup.failed.title"),
+                        message == nil ? "backup.done.title" : "backup.failed.title"),
                     message: message ?? L10n.string("backup.done.message"))
                 plannedCommand = nil
                 plan = nil
@@ -255,30 +269,47 @@ final class BackupModel {
         }
     }
 
-    /// Take an event of the running command.
+    /// Collect complete totals outside the bounded UI stream.
+    nonisolated private static func execute(
+        command: MackeepCommand, arguments: [String], allowEmpty: Bool,
+        continuation: AsyncStream<MackeepEvent>.Continuation
+    ) -> (actions: [MackeepAction], summary: MackeepSummary, message: String?) {
+        defer { continuation.finish() }
+        var rows: [MackeepAction] = []
+        var counts: [String: Int] = [:]
+        var apps: Set<String> = []
+        var files = 0
+        var bytes = 0
+        var message: String?
+        do {
+            try command.streamEvents(arguments, allowEmpty: allowEmpty) { event in
+                if let app = event.app { apps.insert(app) }
+                if let row = event.actionRow {
+                    counts[row.action, default: 0] += 1
+                    if rows.count < actionLimit { rows.append(row) }
+                }
+                if event.event == "done" {
+                    files += event.files ?? 0
+                    bytes += event.bytes ?? 0
+                }
+                continuation.yield(event)
+            }
+        } catch is CancellationError { message = "cancelled" } catch {
+            message = error.localizedDescription
+        }
+        let total = counts.values.reduce(0, +)
+        return (
+            rows,
+            MackeepSummary(
+                apps: apps.sorted(), actions: counts, totalActions: total, totalBytes: bytes,
+                files: files, truncated: total > actionLimit, limit: actionLimit),
+            message)
+    }
+
+    /// Live rows may be coalesced; execution replaces them with the collected result.
     private func handle(_ event: MackeepEvent) {
-        if log.count >= 2000 { log.removeFirst(256) }
-        switch event.event {
-        case "start":
-            log.append(L10n.string("backup.log.start", event.app ?? ""))
-        case "file":
-            let name: String = (event.src ?? "").split(separator: "/").last
-                .map(String.init) ?? ""
-            log.append(
-                L10n.string("backup.log.file", event.action ?? "", name)
-            )
-        case "done":
-            log.append(
-                L10n.string(
-                    "backup.log.done",
-                    event.files ?? 0,
-                    event.bytes ?? 0
-                )
-            )
-        case "error":
-            log.append(L10n.string("backup.log.error", event.message ?? ""))
-        default:
-            break
+        if let row = event.actionRow, executionActions.count < Self.actionLimit {
+            executionActions.append(row)
         }
     }
 }

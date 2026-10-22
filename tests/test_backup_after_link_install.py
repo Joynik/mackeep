@@ -1,7 +1,8 @@
 """Test the edge case: running backup after link install."""
+
+import contextlib
 import os
 import shutil
-import sys
 import tempfile
 import unittest
 from io import StringIO
@@ -82,9 +83,8 @@ class TestBackupAfterLinkInstall(unittest.TestCase):
         )
 
         captured_output = StringIO()
-        sys.stdout = captured_output
-        app_profile.link_install()
-        sys.stdout = sys.__stdout__
+        with contextlib.redirect_stdout(captured_output):
+            app_profile.link_install()
 
         # Verify link install worked correctly
         mackeep_file = os.path.join(self.mock_mackeep.mackeep_folder, ".testfile")
@@ -108,10 +108,9 @@ class TestBackupAfterLinkInstall(unittest.TestCase):
 
         # Step 3: Run backup (this is where the edge case would occur)
         captured_output = StringIO()
-        sys.stdout = captured_output
-        app_profile.copy_files_to_mackeep_folder()
-        output = captured_output.getvalue()
-        sys.stdout = sys.__stdout__
+        with contextlib.redirect_stdout(captured_output):
+            app_profile.copy_files_to_mackeep_folder()
+            output = captured_output.getvalue()
 
         # Verify backup skipped the already linked files
         # Should not print "Backing up" for these files
@@ -162,10 +161,9 @@ class TestBackupAfterLinkInstall(unittest.TestCase):
         )
 
         captured_output = StringIO()
-        sys.stdout = captured_output
-        app_profile_verbose.copy_files_to_mackeep_folder()
-        output = captured_output.getvalue()
-        sys.stdout = sys.__stdout__
+        with contextlib.redirect_stdout(captured_output):
+            app_profile_verbose.copy_files_to_mackeep_folder()
+            output = captured_output.getvalue()
 
         # Verify skip message is shown
         assert "Skipping" in output

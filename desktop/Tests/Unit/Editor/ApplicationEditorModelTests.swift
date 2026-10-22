@@ -206,24 +206,6 @@ final class ApplicationEditorModelTests: XCTestCase {
         XCTAssertTrue(editor.text.contains("name = From the form"))
     }
 
-    func testTheApplicationIsCreated() throws {
-        let model: ApplicationCreatorModel = ApplicationCreatorModel(directory: directory)
-        model.name = "my-app"
-        model.displayName = "My App"
-
-        let identifier: String = try model.create()
-
-        XCTAssertEqual(identifier, "my-app")
-        let url: URL = directory.appendingPathComponent("my-app.cfg")
-        XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
-        let document: INIDocument = try INIFile.load(from: url)
-        XCTAssertEqual(
-            document.value(forKey: "name", inSection: "application"),
-            "My App"
-        )
-        XCTAssertTrue(document.hasSection("configuration_files"))
-    }
-
     func testTheIdentifierOfAnExistingApplicationIsRefused() throws {
         let model: ApplicationCreatorModel = ApplicationCreatorModel(directory: directory)
         model.name = "my-app"

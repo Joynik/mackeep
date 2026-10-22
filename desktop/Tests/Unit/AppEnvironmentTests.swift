@@ -7,11 +7,16 @@ import XCTest
 final class AppEnvironmentTests: XCTestCase {
     private var preferences: UserDefaults!
     private var suite: String!
+    private var previousLanguage: AppLanguage!
     override func setUpWithError() throws {
+        previousLanguage = L10n.language
         suite = "com.joynik.mackeep.test.\(UUID().uuidString)"
         preferences = UserDefaults(suiteName: suite)
     }
-    override func tearDownWithError() throws { preferences.removePersistentDomain(forName: suite) }
+    override func tearDownWithError() throws {
+        preferences.removePersistentDomain(forName: suite)
+        L10n.language = previousLanguage
+    }
 
     func testTheAppearanceIsKeptBetweenTheRuns() {
         let environment: AppEnvironment = AppEnvironment(defaults: preferences, discover: false)

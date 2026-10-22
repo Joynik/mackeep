@@ -3,6 +3,7 @@ import sqlite3
 import stat
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -29,9 +30,18 @@ class TestMackeep(unittest.TestCase):
             assert not utils.confirm("Answer No to this question")
 
     def test_confirm_typo(self):
-        # Override the input used in utils
-        with patch.object(utils, "input", return_value="No", create=True):
-            assert not utils.confirm("Answer garbage to this question")
+        for answer, expected in (("No", False), ("Yes", True)):
+            with (
+                self.subTest(answer=answer),
+                patch.object(
+                    utils,
+                    "input",
+                    side_effect=["unexpected", answer],
+                    create=True,
+                ) as prompt,
+            ):
+                assert utils.confirm("Retry invalid input") is expected
+                assert prompt.call_count == len(["unexpected", answer])
 
     def test_delete_file(self):
         # Create a tmp file
@@ -74,30 +84,15 @@ class TestMackeep(unittest.TestCase):
         assert not os.path.exists(subfilepath)
 
     def test_copy_file(self):
-        # Create a tmp file
-        with tempfile.NamedTemporaryFile(delete=False) as tfile:
-            srcfile = tfile.name
-
-        # Create a tmp folder
-        dstpath = tempfile.mkdtemp()
-        # Set the destination filename
-        dstfile = os.path.join(dstpath, "subfolder", os.path.basename(srcfile))
-
-        # Make sure the source file and destination folder exist and the
-        # destination file doesn't yet exist
-        assert os.path.isfile(srcfile)
-        assert os.path.isdir(dstpath)
-        assert not os.path.exists(dstfile)
-
-        # Check if mackeep can copy it
-        utils.copy(srcfile, dstfile)
-        assert os.path.isfile(srcfile)
-        assert os.path.isdir(dstpath)
-        assert os.path.exists(dstfile)
-
-        # Let's clean up
-        utils.delete(srcfile)
-        utils.delete(dstpath)
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source"
+            destination = Path(directory) / "nested/copy"
+            content = b"settings=enabled\n\x00\xff"
+            source.write_bytes(content)
+            utils.copy(str(source), str(destination))
+            assert destination.is_file()
+            assert destination.read_bytes() == content
+            assert source.read_bytes() == content
 
     def test_copy_fail(self):
         # Create a tmp FIFO file
@@ -130,115 +125,54 @@ class TestMackeep(unittest.TestCase):
         utils.delete(dstpath)
 
     def test_copy_file_to_dir(self):
-        """Copies a file to a destination folder that already exists."""
-        # Create a tmp folder
-        srcpath = tempfile.mkdtemp()
-
-        # Create a tmp file
-        with tempfile.NamedTemporaryFile(delete=False, dir=srcpath) as tfile:
-            srcfile = tfile.name
-
-        # Create a tmp folder
-        dstpath = tempfile.mkdtemp()
-
-        # Set the destination filename
-        srcpath_basename = os.path.basename(srcpath)
-        dstfile = os.path.join(
-            dstpath, "subfolder", srcpath_basename, os.path.basename(srcfile),
-        )
-        # Make sure the source file and destination folder exist and the
-        # destination file doesn't yet exist
-        assert os.path.isdir(srcpath)
-        assert os.path.isfile(srcfile)
-        assert os.path.isdir(dstpath)
-        assert not os.path.exists(dstfile)
-
-        # Check if mackeep can copy it
-        utils.copy(srcfile, dstfile)
-        assert os.path.isdir(srcpath)
-        assert os.path.isfile(srcfile)
-        assert os.path.isdir(dstpath)
-        assert os.path.exists(dstfile)
-
-        # Let's clean up
-        utils.delete(srcpath)
-        utils.delete(dstpath)
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source"
+            destination = Path(directory) / "existing"
+            destination.mkdir()
+            source.write_bytes(b"nonempty config\x00\xff")
+            # utils.copy takes the complete destination path, including the filename.
+            utils.copy(str(source), str(destination / source.name))
+            assert list(destination.iterdir()) == [destination / source.name]
+            assert (destination / source.name).read_bytes() == source.read_bytes()
+            assert source.read_bytes() == b"nonempty config\x00\xff"
 
     def test_copy_dir(self):
-        """Copies a directory recursively to the destination path."""
-        # Create a tmp folder
-        srcpath = tempfile.mkdtemp()
-
-        # Create a tmp file
-        with tempfile.NamedTemporaryFile(delete=False, dir=srcpath) as tfile:
-            srcfile = tfile.name
-
-        # Create a tmp folder
-        dstpath = tempfile.mkdtemp()
-
-        # Set the destination filename
-        srcpath_basename = os.path.basename(srcpath)
-        dstfile = os.path.join(dstpath, srcpath_basename, os.path.basename(srcfile))
-        # Make sure the source file and destination folder exist and the
-        # destination file doesn't yet exist
-        assert os.path.isdir(srcpath)
-        assert os.path.isfile(srcfile)
-        assert os.path.isdir(dstpath)
-        assert not os.path.exists(dstfile)
-
-        # Check if mackeep can copy it
-        utils.copy(srcpath, dstfile)
-        assert os.path.isdir(srcpath)
-        assert os.path.isfile(srcfile)
-        assert os.path.isdir(dstpath)
-        assert os.path.exists(dstfile)
-
-        # Let's clean up
-        utils.delete(srcpath)
-        utils.delete(dstpath)
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source"
+            destination = Path(directory) / "new/tree"
+            (source / "sub").mkdir(parents=True)
+            expected = {"config": b"main", "sub/binary": b"\x00\xffnested"}
+            for relative, content in expected.items():
+                (source / relative).write_bytes(content)
+            utils.copy(str(source), str(destination))
+            assert destination.is_dir()
+            for root in (source, destination):
+                assert {
+                    str(p.relative_to(root)): p.read_bytes()
+                    for p in root.rglob("*")
+                    if p.is_file()
+                } == expected
 
     def test_copy_dir_that_exists(self):
-        """Copies a directory recursively to an existing destination."""
-        # Create a source and a destination tmp folders
-        src_folder = tempfile.mkdtemp()
-        dst_folder = tempfile.mkdtemp()
-
-        # Create a folder inside the source folder
-        src_subfolder = tempfile.mkdtemp(dir=src_folder)
-
-        # Create the same subfolder inside the destination folder
-        src_subfolder_name = os.path.basename(src_subfolder)
-        dst_subfolder = os.path.join(dst_folder, src_subfolder_name)
-        os.mkdir(dst_subfolder)
-
-        # Create a tmp file in the src subfolder
-        with tempfile.NamedTemporaryFile(delete=False, dir=src_subfolder) as src_file:
-            src_file_name = src_file.name
-
-        # Set the destination filename
-        dst_file = os.path.join(dst_subfolder, os.path.basename(src_file_name))
-
-        # Make sure the source file and destination folder exist and the
-        # destination file doesn't yet exist
-        assert os.path.isdir(src_folder)
-        assert os.path.isdir(src_subfolder)
-        assert os.path.isfile(src_file_name)
-        assert os.path.isdir(dst_folder)
-        assert os.path.isdir(dst_subfolder)
-        assert not os.path.exists(dst_file)
-
-        # Check if mackeep can copy it
-        utils.copy(src_folder, dst_folder)
-        assert os.path.isdir(src_folder)
-        assert os.path.isdir(src_subfolder)
-        assert os.path.isfile(src_file_name)
-        assert os.path.isdir(dst_folder)
-        assert os.path.isdir(dst_subfolder)
-        assert os.path.exists(dst_file)
-
-        # Let's clean up
-        utils.delete(src_folder)
-        utils.delete(dst_folder)
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source"
+            destination = Path(directory) / "destination"
+            for root in (source, destination):
+                (root / "sub").mkdir(parents=True)
+            (source / "sub/config").write_bytes(b"new contents\x00")
+            (destination / "sub/config").write_bytes(b"old contents")
+            (destination / "unrelated").write_bytes(b"keep")
+            utils.copy(str(source), str(destination))
+            assert destination.is_dir()
+            assert (source / "sub/config").read_bytes() == b"new contents\x00"
+            assert {
+                str(p.relative_to(destination)): p.read_bytes()
+                for p in destination.rglob("*")
+                if p.is_file()
+            } == {
+                "sub/config": b"new contents\x00",
+                "unrelated": b"keep",
+            }
 
     def test_link_file(self):
         # Create a tmp file
@@ -332,28 +266,36 @@ class TestMackeep(unittest.TestCase):
         Tests for the error that should occur if the backup folder cannot be
         found for Dropbox and Google
         """
-        # Hack to make our home folder some temporary folder
-        temp_home = tempfile.mkdtemp()
-        utils.os.environ["HOME"] = temp_home
-
-        # Check for the missing Dropbox folder
-        assert not os.path.exists(os.path.join(temp_home, ".dropbox/host.db"))
-        with pytest.raises(SystemExit):
-            utils.get_dropbox_folder_location()
-
-        # Check for the missing Google Drive folder
-        assert not os.path.exists(
-            os.path.join(
-                temp_home, "Library/Application Support/Google/Drive/sync_config.db",
+        with (
+            tempfile.TemporaryDirectory() as temp_home,
+            patch.dict(
+                os.environ,
+                {"HOME": temp_home},
             ),
-        )
-        with pytest.raises(SystemExit):
-            utils.get_google_drive_folder_location()
+        ):
+            # Check for the missing Dropbox folder
+            assert not os.path.exists(os.path.join(temp_home, ".dropbox/host.db"))
+            with pytest.raises(SystemExit):
+                utils.get_dropbox_folder_location()
+
+            # Check for the missing Google Drive folder
+            assert not os.path.exists(
+                os.path.join(
+                    temp_home,
+                    "Library/Application Support/Google/Drive/sync_config.db",
+                ),
+            )
+            with pytest.raises(SystemExit):
+                utils.get_google_drive_folder_location()
 
     def test_dropbox_folder_location_with_malformed_host_db(self):
         """Malformed Dropbox host.db should fail with a user-facing error."""
-        with tempfile.TemporaryDirectory() as temp_home, patch.dict(
-            os.environ, {"HOME": temp_home},
+        with (
+            tempfile.TemporaryDirectory() as temp_home,
+            patch.dict(
+                os.environ,
+                {"HOME": temp_home},
+            ),
         ):
             host_db_path = os.path.join(temp_home, ".dropbox", "host.db")
             os.makedirs(os.path.dirname(host_db_path), exist_ok=True)
@@ -365,8 +307,12 @@ class TestMackeep(unittest.TestCase):
 
     def test_dropbox_folder_location_with_invalid_base64(self):
         """Invalid base64 in Dropbox host.db should fail with a user-facing error."""
-        with tempfile.TemporaryDirectory() as temp_home, patch.dict(
-            os.environ, {"HOME": temp_home},
+        with (
+            tempfile.TemporaryDirectory() as temp_home,
+            patch.dict(
+                os.environ,
+                {"HOME": temp_home},
+            ),
         ):
             host_db_path = os.path.join(temp_home, ".dropbox", "host.db")
             os.makedirs(os.path.dirname(host_db_path), exist_ok=True)
@@ -378,11 +324,16 @@ class TestMackeep(unittest.TestCase):
 
     def test_google_drive_folder_location_with_missing_path_entry(self):
         """Google Drive DB without local_sync_root_path should fail cleanly."""
-        with tempfile.TemporaryDirectory() as temp_home, patch.dict(
-            os.environ, {"HOME": temp_home},
+        with (
+            tempfile.TemporaryDirectory() as temp_home,
+            patch.dict(
+                os.environ,
+                {"HOME": temp_home},
+            ),
         ):
             gdrive_db = os.path.join(
-                temp_home, "Library/Application Support/Google/Drive/sync_config.db",
+                temp_home,
+                "Library/Application Support/Google/Drive/sync_config.db",
             )
             os.makedirs(os.path.dirname(gdrive_db), exist_ok=True)
 
@@ -401,8 +352,12 @@ class TestMackeep(unittest.TestCase):
 
     def test_google_drive_folder_location_uses_user_default_db(self):
         """Read Google Drive location from user_default sync DB when present."""
-        with tempfile.TemporaryDirectory() as temp_home, patch.dict(
-            os.environ, {"HOME": temp_home},
+        with (
+            tempfile.TemporaryDirectory() as temp_home,
+            patch.dict(
+                os.environ,
+                {"HOME": temp_home},
+            ),
         ):
             gdrive_db = os.path.join(
                 temp_home,
@@ -438,13 +393,17 @@ class TestMackeep(unittest.TestCase):
 
         # Force the Mac OSX Test using mock
         with patch.object(
-            utils.platform, "system", return_value=utils.constants.PLATFORM_DARWIN,
+            utils.platform,
+            "system",
+            return_value=utils.constants.PLATFORM_DARWIN,
         ):
             assert utils.can_file_be_synced_on_current_platform(path)
 
         # Force the Linux Test using mock
         with patch.object(
-            utils.platform, "system", return_value=utils.constants.PLATFORM_LINUX,
+            utils.platform,
+            "system",
+            return_value=utils.constants.PLATFORM_LINUX,
         ):
             assert utils.can_file_be_synced_on_current_platform(path)
 

@@ -1945,6 +1945,222 @@
         }
       }
     },
+    "backup.action.conflict": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konflikt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conflict"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conflicto"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conflit"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conflitto"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "競合"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "충돌"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conflito"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конфликт"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конфлікт"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冲突"
+          }
+        }
+      }
+    },
+    "backup.action.copied": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopiert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copié"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiato"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コピー済み"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복사됨"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiado"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопировано"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопійовано"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已复制"
+          }
+        }
+      }
+    },
+    "backup.action.copy": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コピー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복사"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копировать"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копіювати"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制"
+          }
+        }
+      }
+    },
     "backup.action.removeStale": {
       "comment": "The string of the interface",
       "extractionState": "manual",
@@ -2017,290 +2233,218 @@
         }
       }
     },
-    "backup.advanced": {
-      "comment": "The string of the backup section",
+    "backup.action.removedStale": {
+      "comment": "The string of the interface",
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Erweitert"
+            "value": "Veraltete Sicherung entfernt"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Advanced"
+            "value": "Outdated backup removed"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avanzado"
+            "value": "Copia obsoleta eliminada"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avancé"
+            "value": "Sauvegarde obsolète supprimée"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avanzate"
+            "value": "Copia obsoleta rimossa"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "詳細設定"
+            "value": "古いバックアップを削除済み"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "고급"
+            "value": "오래된 백업 삭제됨"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avançado"
+            "value": "Backup obsoleto removido"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Дополнительно"
+            "value": "Устаревшая копия удалена"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Додатково"
+            "value": "Застарілу копію видалено"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "高级"
+            "value": "已删除过期备份"
           }
         }
       }
     },
-    "backup.advanced.explanation": {
-      "comment": "The string of the backup section",
+    "backup.action.skipExcluded": {
+      "comment": "The string of the interface",
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Verknüpfungsmodi sind verborgen: ab macOS 14 zerstören die Verknüpfungen auf die Einstellungsdateien die Einstellungen der Anwendungen."
+            "value": "Ausgeschlossen"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The link modes are hidden: on macOS 14 and later, the links to the preference files break the settings of the applications."
+            "value": "Excluded"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Los modos de enlace están ocultos: en macOS 14 y posteriores, los enlaces a los archivos de preferencias rompen la configuración de las aplicaciones."
+            "value": "Excluido"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les modes de lien sont masqués : sur macOS 14 et plus, les liens vers les fichiers de préférences cassent les réglages des applications."
+            "value": "Exclu"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le modalità a collegamento sono nascoste: su macOS 14 e successivi i collegamenti ai file delle preferenze rompono le impostazioni delle applicazioni."
+            "value": "Escluso"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "リンクモードは隠されています。macOS 14 以降では、設定ファイルへのリンクがアプリの設定を壊してしまいます。"
+            "value": "除外"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "링크 모드는 숨겨져 있습니다. macOS 14 이후에서는 설정 파일로의 링크가 앱의 설정을 망가뜨립니다."
+            "value": "제외됨"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Os modos de link estão ocultos: no macOS 14 e posteriores, os links para os arquivos de preferências quebram as configurações dos aplicativos."
+            "value": "Excluído"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Режимы link спрятаны: на macOS 14 и новее симлинки на файлы настроек ломают настройки приложений."
+            "value": "Исключено"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Режими link приховані: на macOS 14 і новіших симлінки на файли налаштувань ламають налаштування застосунків."
+            "value": "Виключено"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "链接模式已隐藏：在 macOS 14 及更高版本中，指向偏好设置文件的链接会破坏应用的设置。"
+            "value": "已排除"
           }
         }
       }
     },
-    "backup.advanced.title": {
-      "comment": "The string of the backup section",
+    "backup.action.skipMissing": {
+      "comment": "The string of the interface",
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Erweitert"
+            "value": "Fehlt"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Advanced"
+            "value": "Missing"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avanzado"
+            "value": "No encontrado"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avancé"
+            "value": "Manquant"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avanzate"
+            "value": "Mancante"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "詳細設定"
+            "value": "見つかりません"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "고급"
+            "value": "없음"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avançado"
+            "value": "Ausente"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Дополнительно"
+            "value": "Отсутствует"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Додатково"
+            "value": "Відсутній"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "高级"
-          }
-        }
-      }
-    },
-    "backup.advanced.warning": {
-      "comment": "The string of the backup section",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nutze den Kopiermodus ab macOS 14."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Use the copy mode on macOS 14 and later."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usa el modo de copia en macOS 14 y posteriores."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Utilisez le mode copie sur macOS 14 et plus."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usa la modalità copia su macOS 14 e successivi."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "macOS 14 以降ではコピーモードを使ってください。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "macOS 14 이후에서는 복사 모드를 사용하세요."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Use o modo cópia no macOS 14 e posteriores."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "На macOS 14 и новее используйте режим копирования."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "На macOS 14 і новіших використовуйте режим копіювання."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在 macOS 14 及更高版本上请使用复制模式。"
+            "value": "不存在"
           }
         }
       }
@@ -2445,6 +2589,150 @@
           "stringUnit": {
             "state": "translated",
             "value": "已取消"
+          }
+        }
+      }
+    },
+    "backup.command.backup": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sicherung"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia de seguridad"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegarde"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バックアップ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "백업"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бэкап"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бекап"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备份"
+          }
+        }
+      }
+    },
+    "backup.command.restore": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellung"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restauración"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restauration"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ripristino"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "復元"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복원"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restauração"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Восстановление"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відновлення"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复"
           }
         }
       }
@@ -3385,6 +3673,294 @@
         }
       }
     },
+    "backup.history.allApplications": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle Anwendungen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All applications"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todas las aplicaciones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les applications"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tutte le applicazioni"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべてのアプリ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모든 앱"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos os aplicativos"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Все приложения"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Усі застосунки"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有应用"
+          }
+        }
+      }
+    },
+    "backup.history.clear": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verlauf löschen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear history"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar historial"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer l’historique"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancella cronologia"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "履歴を消去"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기록 지우기"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limpar histórico"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Очистить историю"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Очистити історію"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除历史记录"
+          }
+        }
+      }
+    },
+    "backup.history.date": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datum und Uhrzeit"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date and time"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fecha y hora"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date et heure"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data e ora"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日時"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "날짜 및 시간"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data e hora"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дата и время"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дата й час"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日期和时间"
+          }
+        }
+      }
+    },
+    "backup.history.details": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Details"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Details"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalles"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détails"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dettagli"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "詳細"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "세부 정보"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalhes"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подробности"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подробиці"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "详细信息"
+          }
+        }
+      }
+    },
     "backup.history.empty": {
       "comment": "The string of the backup section",
       "extractionState": "manual",
@@ -3453,6 +4029,366 @@
           "stringUnit": {
             "state": "translated",
             "value": "还没有运行记录。"
+          }
+        }
+      }
+    },
+    "backup.history.failure": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fehlgeschlagen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Errore"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "失敗"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실패"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Falha"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ошибка"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Помилка"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "失败"
+          }
+        }
+      }
+    },
+    "backup.history.files": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dateien"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archivos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fichiers"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイル"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파일"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arquivos"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件"
+          }
+        }
+      }
+    },
+    "backup.history.operation": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vorgang"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Operation"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Operación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opération"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Operazione"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "操作"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "작업"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Operação"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Операция"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Операція"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "操作"
+          }
+        }
+      }
+    },
+    "backup.history.result": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ergebnis"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Result"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resultado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Résultat"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Risultato"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "結果"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "결과"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resultado"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Результат"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Результат"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "结果"
+          }
+        }
+      }
+    },
+    "backup.history.success": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abgeschlossen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminé"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completato"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "완료"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concluído"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Успешно"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Успішно"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已完成"
           }
         }
       }
@@ -3813,6 +4749,150 @@
           "stringUnit": {
             "state": "translated",
             "value": "开始 %@"
+          }
+        }
+      }
+    },
+    "backup.mode.hint": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sicherung und Wiederherstellung kopieren Dateien. Der Link-Modus ist nur in der CLI verfügbar: Ab macOS 14 können verknüpfte Einstellungen das Lesen oder Speichern in einigen Apps verhindern."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup and restore copy files. Link mode is CLI-only: on macOS 14+, symlinked preferences can prevent some apps from reading or saving settings."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La copia de seguridad y la restauración copian archivos. El modo de enlaces solo está disponible en la CLI: en macOS 14 y posteriores puede impedir que algunas aplicaciones lean o guarden ajustes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sauvegarde et la restauration copient les fichiers. Le mode liens est réservé à la CLI : sous macOS 14 et versions ultérieures, il peut empêcher certaines applications de lire ou d’enregistrer leurs réglages."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup e ripristino copiano i file. La modalità collegamenti è disponibile solo nella CLI: da macOS 14 può impedire ad alcune app di leggere o salvare le impostazioni."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バックアップと復元ではファイルをコピーします。リンクモードは CLI 専用です。macOS 14 以降では、一部のアプリで設定の読み込みや保存に問題が起きることがあります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "백업과 복원은 파일을 복사합니다. 링크 모드는 CLI에서만 사용할 수 있으며, macOS 14 이상에서는 일부 앱의 설정 읽기나 저장을 방해할 수 있습니다."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup e restauração copiam arquivos. O modo de links está disponível apenas na CLI: no macOS 14 ou posterior, pode impedir que alguns apps leiam ou salvem configurações."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бэкап и восстановление копируют файлы. Режим ссылок доступен только в CLI: на macOS 14 и новее он может нарушать чтение и сохранение настроек некоторых приложений."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бекап і відновлення копіюють файли. Режим посилань доступний лише в CLI: у macOS 14 і новіших він може порушувати читання та збереження налаштувань деяких застосунків."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备份和恢复会复制文件。链接模式仅在 CLI 中提供：在 macOS 14 及更新版本中，它可能导致部分应用无法读取或保存设置。"
+          }
+        }
+      }
+    },
+    "backup.mode.title": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "So funktioniert die Sicherung"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How backup works"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cómo funciona la copia de seguridad"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fonctionnement de la sauvegarde"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Come funziona il backup"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バックアップの仕組み"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "백업 작동 방식"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Como funciona o backup"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Как работает бэкап"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Як працює бекап"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备份工作方式"
           }
         }
       }
@@ -4245,6 +5325,150 @@
           "stringUnit": {
             "state": "translated",
             "value": "已存在的文件会被替换。"
+          }
+        }
+      }
+    },
+    "backup.result.preview": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probelauf — %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dry run — %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simulación — %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simulation — %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simulazione — %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "試行 — %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "시험 실행 — %@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simulação — %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пробный запуск — %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пробний запуск — %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "试运行 — %@"
+          }
+        }
+      }
+    },
+    "backup.result.truncated": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nur ein Teil der Tabelle wird angezeigt. Die Summen umfassen den gesamten Lauf."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only part of the table is shown. Totals include the entire run."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo se muestra parte de la tabla. Los totales incluyen toda la ejecución."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seule une partie du tableau est affichée. Les totaux couvrent toute l’exécution."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "È mostrata solo una parte della tabella. I totali includono l’intera esecuzione."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表の一部のみを表示しています。集計には実行全体が含まれます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "표의 일부만 표시됩니다. 합계에는 전체 실행이 포함됩니다."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apenas parte da tabela é exibida. Os totais incluem toda a execução."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показана только часть строк. Итоговые счётчики учитывают весь запуск."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показано лише частину рядків. Підсумки враховують увесь запуск."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅显示部分表格行。总计包含整个运行过程。"
           }
         }
       }
@@ -6121,6 +7345,78 @@
         }
       }
     },
+    "editor.paths.label": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pfad"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Path"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chemin"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Percorso"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "パス"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "경로"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caminho"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Путь"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шлях"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "路径"
+          }
+        }
+      }
+    },
     "editor.paths.placeholder": {
       "comment": "The string of the interface",
       "extractionState": "manual",
@@ -7712,67 +9008,67 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Dateien der Anwendung im Benutzerverzeichnis."
+            "value": "Dateien und Ordner der Anwendung im Benutzerordner."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The files of the application in your home folder."
+            "value": "The application’s files and folders in your home folder."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Los archivos de la aplicación en tu carpeta personal."
+            "value": "Archivos y carpetas de la aplicación en tu carpeta personal."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les fichiers de l’application dans votre dossier personnel."
+            "value": "Fichiers et dossiers de l’application dans votre dossier personnel."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "I file dell'applicazione nella cartella home."
+            "value": "File e cartelle dell’applicazione nella cartella home."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ホームディレクトリにあるアプリケーションのファイル。"
+            "value": "ホームフォルダ内のアプリのファイルとフォルダ。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "홈 디렉터리에 있는 애플리케이션의 파일."
+            "value": "홈 폴더에 있는 앱의 파일 및 폴더."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Os arquivos do aplicativo na sua pasta home."
+            "value": "Arquivos e pastas do aplicativo na pasta pessoal."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Файлы приложения в домашней папке."
+            "value": "Файлы и папки приложения в домашней папке."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Файли застосунку у домашній теці."
+            "value": "Файли й теки застосунку в домашній теці."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "主目录中的应用程序文件。"
+            "value": "主目录中的应用文件和文件夹。"
           }
         }
       }
@@ -7856,67 +9152,67 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Dateien oder Ordner, die nicht kopiert werden."
+            "value": "Dateien und Ordner, die nicht kopiert werden."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The files or the folders that are not copied."
+            "value": "Files and folders that are not copied."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Los archivos o las carpetas que no se copian."
+            "value": "Archivos y carpetas que no se copian."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les fichiers ou les dossiers qui ne sont pas copiés."
+            "value": "Fichiers et dossiers qui ne sont pas copiés."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "I file o le cartelle che non vengono copiati."
+            "value": "File e cartelle che non vengono copiati."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "コピーされないファイルやフォルダ。"
+            "value": "コピーしないファイルとフォルダ。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "복사하지 않는 파일과 폴더."
+            "value": "복사하지 않는 파일 및 폴더."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Os arquivos ou as pastas que não são copiados."
+            "value": "Arquivos e pastas que não são copiados."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Файлы или папки, которые не копируются."
+            "value": "Файлы и папки, которые не копируются."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Файли або теки, які не копіюються."
+            "value": "Файли й теки, які не копіюються."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "不复制的文件或文件夹。"
+            "value": "不复制的文件和文件夹。"
           }
         }
       }
@@ -8000,67 +9296,67 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Dateien der Anwendung im Ordner .config."
+            "value": "Dateien und Ordner der Anwendung in .config."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The files of the application in the .config folder."
+            "value": "The application’s files and folders in .config."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Los archivos de la aplicación en la carpeta .config."
+            "value": "Archivos y carpetas de la aplicación en .config."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les fichiers de l’application dans le dossier .config."
+            "value": "Fichiers et dossiers de l’application dans .config."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "I file dell'applicazione nella cartella .config."
+            "value": "File e cartelle dell’applicazione in .config."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": ".config フォルダにあるアプリケーションのファイル。"
+            "value": ".config 内のアプリのファイルとフォルダ。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": ".config 폴더에 있는 애플리케이션의 파일."
+            "value": ".config에 있는 앱의 파일 및 폴더."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Os arquivos do aplicativo na pasta .config."
+            "value": "Arquivos e pastas do aplicativo em .config."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Файлы приложения в папке .config."
+            "value": "Файлы и папки приложения в .config."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Файли застосунку в теці .config."
+            "value": "Файли й теки застосунку в .config."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": ".config 目录中的应用程序文件。"
+            "value": ".config 中的应用文件和文件夹。"
           }
         }
       }
@@ -8144,67 +9440,67 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Dateien oder Ordner in .config, die nicht kopiert werden."
+            "value": "Dateien und Ordner in .config, die nicht kopiert werden."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The files or the folders in .config that are not copied."
+            "value": "Files and folders in .config that are not copied."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Los archivos o las carpetas en .config que no se copian."
+            "value": "Archivos y carpetas en .config que no se copian."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les fichiers ou les dossiers dans .config qui ne sont pas copiés."
+            "value": "Fichiers et dossiers dans .config qui ne sont pas copiés."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "I file o le cartelle in .config che non vengono copiati."
+            "value": "File e cartelle in .config che non vengono copiati."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": ".config にある、コピーされないファイルやフォルダ。"
+            "value": ".config 内でコピーしないファイルとフォルダ。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": ".config에 있는 복사하지 않는 파일과 폴더."
+            "value": ".config에서 복사하지 않는 파일 및 폴더."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Os arquivos ou as pastas em .config que não são copiados."
+            "value": "Arquivos e pastas em .config que não são copiados."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Файлы или папки в .config, которые не копируются."
+            "value": "Файлы и папки в .config, которые не копируются."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Файли або теки в .config, які не копіюються."
+            "value": "Файли й теки в .config, які не копіюються."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": ".config 中不复制的文件或文件夹。"
+            "value": ".config 中不复制的文件和文件夹。"
           }
         }
       }
@@ -10941,6 +12237,78 @@
           "stringUnit": {
             "state": "translated",
             "value": "一条规则，例如 **/.DS_Store"
+          }
+        }
+      }
+    },
+    "settings.exclusions.rule": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regel"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rule"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regla"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règle"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regola"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ルール"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "규칙"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regra"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Правило"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Правило"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "规则"
           }
         }
       }

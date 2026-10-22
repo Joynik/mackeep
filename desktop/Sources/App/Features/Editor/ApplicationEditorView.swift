@@ -130,9 +130,10 @@ struct ApplicationEditorView: View {
         Form {
             Section {
                 HStack(alignment: .center, spacing: 16) {
-                    Text(L10n.string("editor.create.name.placeholder"))
-                    TextField(
-                        "",
+                    FieldInfoLabel(
+                        title: L10n.string("editor.create.name.placeholder"),
+                        hint: L10n.string("editor.name.placeholder"))
+                    LeadingTextField(
                         text: Binding(
                             get: { model.displayName },
                             set: { newValue in
@@ -141,19 +142,9 @@ struct ApplicationEditorView: View {
                             }
                         )
                     )
-                    .textFieldStyle(AppFieldStyle())
-                    .multilineTextAlignment(.leading)
+                    .appFieldStyle()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityLabel(L10n.string("editor.create.name.placeholder"))
-                    .overlay(alignment: .leading) {
-                        // The name of the application, when it is not written.
-                        if model.displayName.isEmpty {
-                            Text(L10n.string("editor.name.placeholder"))
-                                .foregroundStyle(.secondary)
-                                .padding(.leading, 6)
-                                .allowsHitTesting(false)
-                        }
-                    }
                 }
             } header: {
                 BlockHeader(
@@ -423,12 +414,16 @@ struct PathEditorView: View {
 
             Divider()
 
-            HStack(spacing: 8) {
+            HStack(spacing: 16) {
+                FieldInfoLabel(
+                    title: L10n.string("editor.paths.label"),
+                    hint: L10n.string("editor.paths.placeholder"))
                 TextField(
-                    L10n.string("editor.paths.placeholder"),
+                    "",
                     text: $newPath
                 )
                 .textFieldStyle(AppFieldStyle())
+                .accessibilityLabel(L10n.string("editor.paths.label"))
                 .font(.callout.monospaced())
                 .lineLimit(1)
                 .onSubmit {

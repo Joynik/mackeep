@@ -135,7 +135,13 @@ final class HistoryStore {
     }
 
     /// Remove the history.
-    func clear() {
-        try? fileManager.removeItem(at: url)
+    func clear() throws {
+        if fileManager.fileExists(atPath: url.path) {
+            let attributes = try fileManager.attributesOfItem(atPath: url.path)
+            guard attributes[.type] as? FileAttributeType != .typeDirectory else {
+                throw CocoaError(.fileWriteInvalidFileName)
+            }
+            try fileManager.removeItem(at: url)
+        }
     }
 }

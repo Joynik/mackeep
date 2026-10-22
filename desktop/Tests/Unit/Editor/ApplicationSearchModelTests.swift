@@ -161,17 +161,24 @@ final class ApplicationSearchModelTests: XCTestCase {
         XCTAssertFalse(paths.contains { $0.hasSuffix("Library/Caches/AnyDesk") })
     }
 
-    func testTheFilesThatSpotlightKnowsAreFound() {
-        let found: [FoundFile] = ApplicationSearchModel.spotlightSearch(
-            names: ["Mackeep"],
-            matching: "",
-            known: []
-        )
-
-        // The files that are outside of the home cannot be added to the
-        // application, they are not shown
-        XCTAssertTrue(
-            found.allSatisfy { $0.url.path.hasPrefix(EditorPath.homeDirectory.path) }
-        )
+    func testSpotlightResultsAreFilteredAndDeduplicated() throws {
+        let home = ApplicationSearchModel.home.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: home) }
+        let expected = try write("Mackeep config", in: home)
+        let known = try write("Mackeep known", in: home)
+        let other = try write("unrelated", in: home)
+        let outside = try write("Mackeep outside")
+        var queries: [String] = []
+        let found = ApplicationSearchModel.spotlightSearch(
+            names: ["Mackeep", "Mackeep"], matching: "Mackeep",
+            known: ["home:" + home.lastPathComponent + "/Mackeep known"],
+            query: { query, _ in
+                queries.append(query)
+                return [expected.path, outside.path, expected.path, known.path, other.path]
+            })
+        XCTAssertEqual(queries, Array(repeating: "kMDItemFSName == '*Mackeep*'c", count: 2))
+        XCTAssertEqual(found.map(\.url), [expected])
+        XCTAssertEqual(found.first?.size, 7)
     }
 }

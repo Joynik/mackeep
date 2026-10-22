@@ -1,5 +1,10 @@
 """The fixtures shared by the tests."""
 
+import os
+import shutil
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 
 from mackeep import utils
@@ -34,3 +39,24 @@ def home(tmp_path, monkeypatch):
     utils.FORCE_YES = False
     utils.FORCE_NO = False
     utils.CAN_RUN_AS_ROOT = False
+
+
+@pytest.fixture
+def fixture_home(home):
+    """Copy read-only input fixtures into an isolated, writable HOME."""
+    fixtures = Path(__file__).parent / "fixtures"
+    original = {
+        p.relative_to(fixtures): p.read_bytes()
+        for p in fixtures.rglob("*")
+        if p.is_file()
+    }
+    shutil.copytree(fixtures, home, dirs_exist_ok=True)
+    with patch.dict(os.environ):
+        os.environ.pop("XDG_CONFIG_HOME", None)
+        os.environ.pop("MACKEEP_CONFIG", None)
+        yield home
+    assert {
+        p.relative_to(fixtures): p.read_bytes()
+        for p in fixtures.rglob("*")
+        if p.is_file()
+    } == original

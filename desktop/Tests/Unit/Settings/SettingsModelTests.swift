@@ -6,6 +6,7 @@ import XCTest
 @MainActor
 final class SettingsModelTests: XCTestCase {
     private var directory: URL!
+    private var cancellations: [CommandCancellation] = []
 
     override func setUpWithError() throws {
         directory = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -17,6 +18,8 @@ final class SettingsModelTests: XCTestCase {
     }
 
     override func tearDownWithError() throws {
+        for token in cancellations { token.cancel() }
+        cancellations.removeAll()
         try? FileManager.default.removeItem(at: directory)
     }
 
@@ -32,7 +35,11 @@ final class SettingsModelTests: XCTestCase {
             [.posixPermissions: 0o755],
             ofItemAtPath: url.path
         )
-        return MackeepCommand(path: url.path, home: directory.path)
+        var command = MackeepCommand(path: url.path, home: directory.path)
+        let token = CommandCancellation()
+        cancellations.append(token)
+        command.cancellation = token
+        return command
     }
 
     /// Write the answer of the tool and return the command.
@@ -76,9 +83,9 @@ final class SettingsModelTests: XCTestCase {
     }
 
     /// Wait for the model to finish the command it runs.
-    private func waitForTheSettings(_ model: SettingsModel) async {
-        while model.isLoading {
-            try? await Task.sleep(for: .milliseconds(10))
+    private func waitForTheSettings(_ model: SettingsModel) async throws {
+        try await waitUntil("Settings loaded; error: \(String(describing: model.presentedError))") {
+            !model.isLoading
         }
     }
 
@@ -87,7 +94,7 @@ final class SettingsModelTests: XCTestCase {
         let model: SettingsModel = SettingsModel(command: command, capabilities: nil)
 
         model.load()
-        await waitForTheSettings(model)
+        try await waitForTheSettings(model)
 
         XCTAssertEqual(model.engine, .fileSystem)
         XCTAssertEqual(model.directory, "Mackeep")
@@ -120,7 +127,7 @@ final class SettingsModelTests: XCTestCase {
         let model: SettingsModel = SettingsModel(command: command, capabilities: nil)
 
         model.load()
-        await waitForTheSettings(model)
+        try await waitForTheSettings(model)
 
         XCTAssertEqual(model.customAppsDir, "/Users/user/.mackeep")
     }
@@ -156,7 +163,7 @@ final class SettingsModelTests: XCTestCase {
         """)
         let model: SettingsModel = SettingsModel(command: command, capabilities: nil)
         model.load()
-        await waitForTheSettings(model)
+        try await waitForTheSettings(model)
 
         // The user changes the path of the storage and the name of the folder
         model.storagePath = "/Users/user/other"
@@ -176,7 +183,7 @@ final class SettingsModelTests: XCTestCase {
         let model: SettingsModel = SettingsModel(command: command, capabilities: nil)
 
         model.load()
-        await waitForTheSettings(model)
+        try await waitForTheSettings(model)
 
         XCTAssertEqual(
             model.backupDirectory,
@@ -270,7 +277,7 @@ final class SettingsModelTests: XCTestCase {
     func testTheExternalPathPolicyIsRead() async throws {
         let model = SettingsModel(command: try makeConfig(allowExternalPaths: true), capabilities: nil)
         model.load()
-        await waitForTheSettings(model)
+        try await waitForTheSettings(model)
         XCTAssertTrue(model.allowExternalPaths)
         XCTAssertTrue(model.supportsExternalPaths)
     }
@@ -278,7 +285,7 @@ final class SettingsModelTests: XCTestCase {
     func testUnconfiguredStorageDoesNotShowAnInventedBackupPath() async throws {
         let model = SettingsModel(command: try makeConfig(engine: "unconfigured", path: ""), capabilities: nil)
         model.load()
-        await waitForTheSettings(model)
+        try await waitForTheSettings(model)
         XCTAssertEqual(model.engine, .unconfigured)
         XCTAssertEqual(model.backupDirectory, "—")
     }

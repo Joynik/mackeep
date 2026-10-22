@@ -78,4 +78,19 @@ final class GlobMatcherTests: XCTestCase {
         XCTAssertTrue(GlobMatcher(patterns: ["cache/", "!cache/keep"]).matches("cache/keep"))
     }
 
+    func testSharedDesktopAndCLIExclusionContract() throws {
+        struct Case: Decodable {
+            let patterns: [String]
+            let path: String
+            let is_directory: Bool
+            let excluded: Bool
+        }
+        let url = INICompatibilityTests.repository.appendingPathComponent("tests/fixtures/exclusion-cases.json")
+        let cases = try JSONDecoder().decode([Case].self, from: Data(contentsOf: url))
+        XCTAssertFalse(cases.isEmpty)
+        for test in cases {
+            XCTAssertEqual(GlobMatcher(patterns: test.patterns).matches(test.path, isDirectory: test.is_directory),
+                           test.excluded, "Rules \(test.patterns), path \(test.path)")
+        }
+    }
 }

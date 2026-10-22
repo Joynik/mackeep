@@ -40,12 +40,16 @@ struct ExclusionsEditorView: View {
 
             Divider()
 
-            HStack(spacing: 8) {
+            HStack(spacing: 16) {
+                FieldInfoLabel(
+                    title: L10n.string("settings.exclusions.rule"),
+                    hint: L10n.string("editor.exclusions.mask.placeholder"))
                 TextField(
-                    L10n.string("editor.exclusions.mask.placeholder"),
+                    "",
                     text: $mask
                 )
                 .textFieldStyle(AppFieldStyle())
+                .accessibilityLabel(L10n.string("settings.exclusions.rule"))
                 .font(.callout.monospaced())
                 .lineLimit(1)
 

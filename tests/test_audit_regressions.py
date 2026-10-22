@@ -3,12 +3,20 @@
 import io
 import json
 import os
+import signal
+import subprocess
+import sys
+import time
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
 from mackeep import migrate, utils
+from mackeep.backupstate import BackupState
+from mackeep.config import ConfigError
+from mackeep.paths import entry_paths
+from mackeep.transaction import Transaction
 from mackeep_cli.main import _JsonReporter, main
 
 
@@ -166,7 +174,7 @@ def test_json_errors_are_structured(home, capsys, args):
     assert answer["error"]["message"]
 
 
-def test_round_trip_preserves_owner_execution_and_time(home):
+def test_round_trip_restores_bytes_execution_and_time(home):
     setup(home)
     file = home / "app"
     file.write_text("#!/bin/sh\n")
@@ -174,7 +182,11 @@ def test_round_trip_preserves_owner_execution_and_time(home):
     original_time = 1_600_000_000
     os.utime(file, (original_time, original_time))
     assert run("--force", "backup") == 0
+    file.write_bytes(b"changed local content")
+    file.chmod(0o600)
+    os.utime(file, (original_time + 100, original_time + 100))
     assert run("--force", "restore") == 0
+    assert file.read_bytes() == b"#!/bin/sh\n"
     private_executable = 0o700
     assert file.stat().st_mode & 0o777 == private_executable
     assert int(file.stat().st_mtime) == original_time
@@ -510,3 +522,223 @@ def test_empty_file_system_path_waits_for_user_configuration(home, capsys):
     assert json.loads(capsys.readouterr().out)["storage_configured"] is False
     assert run("--force", "backup") != 0
     assert not (home / "Mackeep").exists()
+
+
+def test_failed_rollback_retains_recovery_data_after_close(home, monkeypatch):
+    """A second failure must leave both old versions recoverable and named."""
+
+    first, second = home / "first", home / "second"
+    first.write_bytes(b"first old")
+    second.write_bytes(b"second old")
+    transaction = Transaction()
+    def stage_first(path: str) -> None:
+        Path(path).write_bytes(b"first new")
+
+    def stage_second(path: str) -> None:
+        Path(path).write_bytes(b"second new")
+
+    transaction.prepare(str(first), stage_first)
+    transaction.prepare(str(second), stage_second)
+    replace = os.replace
+
+    def fail_commit_and_rollback(source, destination):
+        if Path(source).name == "new" and Path(destination) == second:
+            raise OSError("commit failed")
+        if Path(source).name == "previous" and Path(destination) == second:
+            raise OSError("rollback failed")
+        replace(source, destination)
+
+    monkeypatch.setattr("mackeep.transaction.os.replace", fail_commit_and_rollback)
+    with pytest.raises(
+        OSError, match="Rollback failed; previous data retained",
+    ) as error:
+        transaction.commit()
+    transaction.close()
+    workspaces = [Path(item.workspace) for item in transaction.replacements]
+    for workspace in workspaces:
+        assert str(workspace) in str(error.value)
+        assert workspace.is_dir()
+    assert (workspaces[0] / "previous").read_bytes() == b"first old"
+    assert (workspaces[1] / "previous").read_bytes() == b"second old"
+    assert first.read_bytes() == b"first new"
+    assert (workspaces[1] / "new").read_bytes() == b"second new"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        [],
+        {"version": 99, "owners": {}},
+        {"version": 1, "owners": []},
+        {"version": 1, "owners": {"audit": "app"}},
+        *(
+            {"version": 1, "owners": {"audit": [path]}}
+            for path in (
+                None,
+                "",
+                "/outside",
+                ".",
+                "app/../outside",
+                "app//file",
+                ".mackeep-state/owners.json",
+            )
+        ),
+    ],
+)
+def test_invalid_ownership_index_blocks_writes(home, payload):
+    """Reject each malformed record without replacing existing backup data."""
+    backup = setup(home)
+    (home / "app").write_bytes(b"original")
+    assert run("--force", "backup") == 0
+    index = backup / ".mackeep-state/owners.json"
+    invalid = json.dumps(payload).encode()
+    index.write_bytes(invalid)
+    (home / "app").write_bytes(b"new local")
+    assert run("--force", "backup") != 0
+    assert index.read_bytes() == invalid
+    assert (backup / "app").read_bytes() == b"original"
+    assert (home / "app").read_bytes() == b"new local"
+
+
+@pytest.mark.parametrize("link_directory", [False, True])
+def test_symlinked_ownership_index_blocks_writes(home, link_directory):
+    """Neither an index nor its directory may redirect backup state writes."""
+    backup = setup(home)
+    (home / "app").write_bytes(b"original")
+    assert run("--force", "backup") == 0
+    state = backup / ".mackeep-state"
+    original = (state / "owners.json").read_bytes()
+    target = home / "outside-state"
+    if link_directory:
+        state.rename(target)
+        state.symlink_to(target, target_is_directory=True)
+    else:
+        target.write_bytes(original)
+        (state / "owners.json").unlink()
+        (state / "owners.json").symlink_to(target)
+    (home / "app").write_bytes(b"replacement")
+    assert run("--force", "backup") != 0
+    assert (state / "owners.json").read_bytes() == original
+    assert (backup / "app").read_bytes() == b"original"
+    assert (home / "app").read_bytes() == b"replacement"
+
+
+@pytest.mark.parametrize("entry", [".mackeep-state/file", ".mackeep-external/file"])
+def test_reserved_backup_names_are_rejected(home, entry):
+    backup = setup(home, entry)
+    source = home / entry
+    source.parent.mkdir()
+    source.write_bytes(b"keep local")
+    assert run("--force", "backup") != 0
+    assert source.read_bytes() == b"keep local"
+    assert not backup.exists()
+
+
+def test_hardlinked_source_and_destination_are_rejected(home):
+    backup = setup(home)
+    backup.mkdir()
+    source = home / "app"
+    source.write_bytes(b"only data")
+    (backup / "app").hardlink_to(source)
+    assert run("--force", "backup") != 0
+    assert source.read_bytes() == b"only data"
+    assert (backup / "app").read_bytes() == b"only data"
+    assert not (backup / ".mackeep-state").exists()
+
+
+def test_ownership_relative_rejects_paths_outside_storage(home):
+
+    state = BackupState(str(home / "storage"))
+    outside = home / "outside"
+    outside.write_bytes(b"keep")
+    with pytest.raises(ConfigError, match="leaves storage"):
+        state.relative(str(outside))
+    assert state.relative(str(home / "storage/app")) == "app"
+    assert outside.read_bytes() == b"keep"
+
+
+def test_signal_cancellation_finishes_current_real_transaction(home):
+    """Synchronize inside a real copy, signal the CLI, and check persisted results."""
+
+    backup = setup(home)
+    definition(home, "second", name="second")
+    config = home / ".mackeep.cfg"
+    config.write_text(config.read_text().replace("\naudit\n", "\naudit\nsecond\n"))
+    (home / "app").write_bytes(b"complete first application")
+    (home / "second").write_bytes(b"must not be copied")
+    marker, release = home / "copy-started", home / "copy-release"
+    script = """
+import sys, time
+from pathlib import Path
+from mackeep import utils
+from mackeep_cli.main import main
+original = utils.copy
+home = Path.home()
+def synchronized_copy(source, destination, **kwargs):
+    if Path(source).name == "app":
+        (home / "copy-started").touch()
+        deadline = time.monotonic() + 10
+        while not (home / "copy-release").exists():
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Test never released copy")
+            time.sleep(0.01)
+    return original(source, destination, **kwargs)
+utils.copy = synchronized_copy
+sys.argv = ["mackeep-cli", "--root", "--force", "--json", "backup"]
+main()
+"""
+    environment = {
+        **os.environ,
+        "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src"),
+    }
+    with subprocess.Popen(
+        [sys.executable, "-c", script],
+        env=environment,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    ) as process:
+        try:
+            deadline = time.monotonic() + 10
+            while (
+                not marker.exists()
+                and process.poll() is None
+                and time.monotonic() < deadline
+            ):
+                time.sleep(0.01)
+            assert marker.exists(), "The first application never reached copy"
+            process.send_signal(signal.SIGUSR1)
+            release.touch()
+            stdout, stderr = process.communicate(timeout=10)
+            cancelled_status = 130
+            assert process.returncode == cancelled_status, (stdout, stderr)
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.communicate(timeout=5)
+    assert (backup / "app").read_bytes() == b"complete first application"
+    assert not (backup / "second").exists()
+    owners = json.loads((backup / ".mackeep-state/owners.json").read_text())["owners"]
+    assert owners == {"audit": ["app"], "second": []}
+    events = [json.loads(line) for line in stdout.splitlines()]
+    assert [event["app"] for event in events if event.get("event") == "done"] == [
+        "audit",
+    ]
+    assert not any(event.get("app") == "second" for event in events)
+    assert not list(backup.glob(".mackeep-*/previous"))
+
+
+@pytest.mark.parametrize("absolute", [False, True])
+def test_path_mapping_refuses_external_entries_without_permission(home, absolute):
+    """Exercise the mapping guard independently of database validation."""
+    outside = home.parent / f"{home.name}-external"
+    outside.write_bytes(b"untouched external data")
+    entry = str(outside) if absolute else os.path.relpath(outside, home)
+    backup = home / "storage/Mackeep"
+    with pytest.raises(ConfigError, match="External paths are disabled"):
+        entry_paths(entry, str(backup))
+    local, stored = entry_paths(entry, str(backup), allow_external=True)
+    assert local == str(outside)
+    assert Path(stored).is_relative_to(backup / ".mackeep-external")
+    assert outside.read_bytes() == b"untouched external data"
+    assert not backup.exists()

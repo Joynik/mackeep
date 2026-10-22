@@ -320,6 +320,16 @@ struct MackeepEvent: Codable, Equatable, Sendable {
 
     /// The message of an error event.
     let message: String?
+    var willRemove: Bool? = nil
+
+    /// Share the table row format with dry-run actions.
+    var actionRow: MackeepAction? {
+        guard event == "file" || event == "skip",
+              let app, let action, let src else { return nil }
+        return MackeepAction(
+            app: app, action: action, src: src, dst: dst ?? "", sizeBytes: sizeBytes,
+            reason: reason, wouldOverwrite: nil, willRemove: willRemove)
+    }
 
     enum CodingKeys: String, CodingKey {
         case schemaVersion = "schema_version"
@@ -334,6 +344,7 @@ struct MackeepEvent: Codable, Equatable, Sendable {
         case bytes
         case skipped
         case message
+        case willRemove = "will_remove"
     }
 }
 

@@ -5,7 +5,12 @@ mkdir -p "$HOME/.mackeep"
 if [ ! -f "$HOME/.mackeep.cfg" ]; then
     printf '[storage]\nengine = unconfigured\n[applications_to_sync]\n' > "$HOME/.mackeep.cfg"
 fi
-case "${2:-}" in
+if [ "$#" -eq 1 ] && [ "$1" = "--version" ]; then
+    printf 'Mackeep test\n'
+    exit 0
+fi
+[ "$#" -eq 2 ] && [ "$1" = "--json" ] || exit 64
+case "$2" in
     config)
         printf '{"schema_version":4,"version":"test","config_file":"%s/.mackeep.cfg","custom_apps_dir":"%s/.mackeep","custom_apps_dirs":[],"apps_to_sync":[],"apps_to_ignore":[],"global_exclude":[],"storage":{"engine":"unconfigured","path":"","directory":"Mackeep","resolved_backup_dir":"","exists":false}}\n' "$HOME" "$HOME"
         ;;
@@ -16,5 +21,5 @@ case "${2:-}" in
             printf '[]\n'
         fi
         ;;
-    *) printf 'Mackeep test\n';;
+    *) printf 'Unexpected test CLI command: %s\n' "$*" >&2; exit 64;;
 esac

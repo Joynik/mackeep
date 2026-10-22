@@ -45,8 +45,16 @@ struct AppFieldStyle: TextFieldStyle {
             .multilineTextAlignment(.leading)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .modifier(AppFieldFrame())
+    }
+}
+
+/// Shared border and spacing for SwiftUI and AppKit fields.
+private struct AppFieldFrame: ViewModifier {
+    func body(content: Content) -> some View {
+        content
             .padding(.horizontal, 6)
-            .frame(height: Self.height)
+            .frame(height: AppControl.height)
             .background {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .fill(Color(nsColor: .controlBackgroundColor))
@@ -73,6 +81,75 @@ extension View {
             Button(L10n.string("error.dismiss"), role: .cancel) { error.wrappedValue = nil }
         } message: {
             Text(error.wrappedValue?.message ?? "")
+        }
+    }
+}
+
+/// A single-line field with explicit native alignment, independent of Form defaults.
+struct LeadingTextField: NSViewRepresentable {
+    @Binding var text: String
+
+    func makeNSView(context: Context) -> NSTextField {
+        let field = NSTextField(string: text)
+        field.isBezeled = false
+        field.drawsBackground = false
+        field.alignment = .left
+        field.font = .systemFont(ofSize: NSFont.systemFontSize)
+        field.cell?.usesSingleLineMode = true
+        field.cell?.isScrollable = true
+        field.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        field.delegate = context.coordinator
+        return field
+    }
+
+    func updateNSView(_ field: NSTextField, context: Context) {
+        context.coordinator.text = $text
+        if field.stringValue != text { field.stringValue = text }
+        field.alignment = .left
+        (field.currentEditor() as? NSTextView)?.alignment = .left
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
+
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        var text: Binding<String>
+        init(text: Binding<String>) { self.text = text }
+
+        func controlTextDidChange(_ notification: Notification) {
+            guard let field = notification.object as? NSTextField else { return }
+            text.wrappedValue = field.stringValue
+        }
+    }
+}
+
+extension LeadingTextField {
+    func appFieldStyle() -> some View { modifier(AppFieldFrame()) }
+}
+
+/// A field label whose hint is available on hover and on click.
+struct FieldInfoLabel: View {
+    let title: String
+    let hint: String
+    var iconOnly = false
+    @State private var showsHint = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if !iconOnly { Text(title) }
+            Button { showsHint.toggle() } label: {
+                Image(systemName: "info.circle")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .accessibilityLabel(title)
+            .help(hint)
+            .popover(isPresented: $showsHint) {
+                Text(hint)
+                    .font(.callout)
+                    .padding(12)
+                    .frame(idealWidth: 260)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }

@@ -191,12 +191,16 @@ struct SettingsView: View {
                 .foregroundStyle(.orange)
             }
 
-            HStack {
+            HStack(spacing: 16) {
+                FieldInfoLabel(
+                    title: L10n.string("settings.exclusions.rule"),
+                    hint: L10n.string("settings.exclusions.placeholder"))
                 TextField(
-                    L10n.string("settings.exclusions.placeholder"),
+                    "",
                     text: $newExclude
                 )
                 .textFieldStyle(AppFieldStyle())
+                .accessibilityLabel(L10n.string("settings.exclusions.rule"))
                 .font(.callout.monospaced())
 
                 Button {

@@ -11,15 +11,14 @@ struct BackupView: View {
     /// Whether the history is shown.
     @State private var showsHistory = false
 
-    /// Whether the advanced settings are shown.
-    @State private var showsAdvanced = false
-
     var body: some View {
         VStack(spacing: 0) {
             actions
             Divider()
             content
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .navigationTitle(L10n.string("section.backup.title"))
         .appError($model.presentedError)
         // The controls of the window have the same height, so they line up.
@@ -29,9 +28,6 @@ struct BackupView: View {
         }
         .sheet(isPresented: $showsHistory) {
             HistoryView(model: model)
-        }
-        .sheet(isPresented: $showsAdvanced) {
-            AdvancedView()
         }
         .onAppear {
             model.loadHistory()
@@ -82,23 +78,19 @@ struct BackupView: View {
                 Label(L10n.string("backup.history"), systemImage: "clock.arrow.circlepath")
             }
 
-            Button {
-                showsAdvanced = true
-            } label: {
-                Label(L10n.string("backup.advanced"), systemImage: "ellipsis.circle")
-            }
+            FieldInfoLabel(
+                title: L10n.string("backup.mode.title"),
+                hint: L10n.string("backup.mode.hint"), iconOnly: true)
         }
         .padding(12)
     }
 
 
-    /// The plan of the run, or the log of the running command.
+    /// The latest preview or execution report.
     @ViewBuilder
     private var content: some View {
-        if model.isRunning || !model.log.isEmpty {
-            log
-        } else if model.plan != nil {
-            plan
+        if model.displayedCommand != nil {
+            report
         } else {
             empty
         }
@@ -117,9 +109,35 @@ struct BackupView: View {
         }
     }
 
-    /// The table of the actions of the plan.
-    private var plan: some View {
-        VStack(spacing: 0) {
+    /// Plans and execution results use the same table, with an explicit operation heading.
+    private var report: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                let operation = model.displayedCommand == "restore"
+                    ? L10n.string("backup.command.restore") : L10n.string("backup.command.backup")
+                Text(model.isPreview ? L10n.string("backup.result.preview", operation) : operation)
+                    .font(.headline)
+                if model.isRunning { ProgressView().controlSize(.small) }
+                if let record = model.lastRun {
+                    Label(
+                        L10n.string(record.succeeded
+                                    ? "backup.history.success" : "backup.history.failure"),
+                        systemImage: record.succeeded
+                            ? "checkmark.circle" : "exclamationmark.triangle")
+                        .foregroundStyle(record.succeeded ? Color.green : Color.red)
+                }
+                Spacer()
+            }
+            .padding(12)
+
+            if let message = model.lastRun?.message {
+                Text(message)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                    .padding(.horizontal, 12)
+            }
+
             HStack {
                 Picker("", selection: $model.filter) {
                     ForEach(BackupModel.PlanFilter.allCases) { filter in
@@ -151,36 +169,24 @@ struct BackupView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
 
-            PlanTableView(actions: model.visibleActions)
+            if model.summary?.truncated == true {
+                Text(L10n.string("backup.result.truncated"))
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+            }
+            PlanTableView(actions: model.visibleActions, isPreview: model.isPreview)
         }
     }
 
-    /// The log of the running command.
-    private var log: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(Array(model.log.enumerated()), id: \.offset) { index, line in
-                        Text(line)
-                            .font(.caption.monospaced())
-                            .textSelection(.enabled)
-                            .id(index)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
-            }
-            .onChange(of: model.log.count) {
-                proxy.scrollTo(model.log.count - 1, anchor: .bottom)
-            }
-        }
-    }
 }
 
 /// The table of the actions of a plan.
 struct PlanTableView: View {
     /// The actions.
     let actions: [MackeepAction]
+    var isPreview = true
 
     var body: some View {
         Table(actions) {
@@ -191,8 +197,9 @@ struct PlanTableView: View {
             TableColumn(L10n.string("backup.table.action")) { action in
                 Label {
                     Text(action.willRemove == true
-                         ? L10n.string("backup.action.removeStale")
-                         : action.action)
+                         ? L10n.string(isPreview
+                                       ? "backup.action.removeStale" : "backup.action.removedStale")
+                         : actionTitle(action.action))
                 } icon: {
                     Image(systemName: icon(for: action.action))
                         .foregroundStyle(color(for: action.action))
@@ -216,6 +223,18 @@ struct PlanTableView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    /// Translate protocol action codes without changing the CLI contract.
+    private func actionTitle(_ action: String) -> String {
+        switch action {
+        case "copy": L10n.string(isPreview ? "backup.action.copy" : "backup.action.copied")
+        case "skip_excluded": L10n.string("backup.action.skipExcluded")
+        case "skip_missing": L10n.string("backup.action.skipMissing")
+        case "conflict": L10n.string("backup.action.conflict")
+        case "stale_in_backup": L10n.string("backup.filter.stale")
+        default: action
         }
     }
 
@@ -280,6 +299,8 @@ struct RestoreConfirmationView: View {
             if model.summary?.truncated == true {
                 Text(L10n.string("backup.plan.truncated")).foregroundStyle(.orange)
             }
+            Text(L10n.string("backup.result.preview", L10n.string("backup.command.restore")))
+                .font(.headline)
             PlanTableView(actions: model.visibleActions)
                 .frame(minHeight: 260)
 
@@ -316,35 +337,76 @@ struct HistoryView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(L10n.string("backup.history.title"))
-                .font(.title3.weight(.semibold))
+            HStack {
+                Text(L10n.string("backup.history.title"))
+                    .font(.title3.weight(.semibold))
+                Spacer()
+                Button(role: .destructive) {
+                    model.clearHistory()
+                } label: {
+                    Label(L10n.string("backup.history.clear"), systemImage: "trash")
+                }
+                .disabled(model.history.isEmpty)
+            }
 
             if model.history.isEmpty {
                 Text(L10n.string("backup.history.empty"))
                     .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             } else {
-                List(model.history) { record in
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack {
-                            Text(record.command)
-                                .font(.callout.weight(.semibold))
-                            if let application: String = record.application {
-                                Text(application)
-                                    .font(.caption.monospaced())
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Text(record.date.formatted(date: .abbreviated, time: .standard))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        if let message: String = record.message {
-                            Text(message)
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                        }
+                Table(model.history) {
+                    TableColumn(L10n.string("backup.history.date")) { record in
+                        Text(record.date, format: .dateTime.day().month().year().hour().minute())
+                            .monospacedDigit()
                     }
+                    .width(min: 140, ideal: 160)
+                    TableColumn(L10n.string("backup.history.operation")) { record in
+                        Text(record.command == "backup"
+                             ? L10n.string("backup.command.backup")
+                             : record.command == "restore"
+                                ? L10n.string("backup.command.restore") : record.command)
+                    }
+                    .width(min: 100, ideal: 120)
+                    TableColumn(L10n.string("backup.table.application")) { record in
+                        Text(record.application ?? L10n.string("backup.history.allApplications"))
+                            .lineLimit(1)
+                            .help(record.application ?? L10n.string("backup.history.allApplications"))
+                    }
+                    .width(min: 100, ideal: 140)
+                    TableColumn(L10n.string("backup.history.result")) { record in
+                        Label(
+                            L10n.string(record.succeeded
+                                        ? "backup.history.success" : "backup.history.failure"),
+                            systemImage: record.succeeded
+                                ? "checkmark.circle" : "exclamationmark.triangle"
+                        )
+                        .foregroundStyle(record.succeeded ? Color.green : Color.red)
+                        .help(record.message ?? "")
+                    }
+                    .width(min: 100, ideal: 120)
+                    TableColumn(L10n.string("backup.history.files")) { record in
+                        Text(record.files, format: .number)
+                            .monospacedDigit()
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    .width(70)
+                    TableColumn(L10n.string("backup.table.size")) { record in
+                        Text(ByteCountFormatter.string(
+                            fromByteCount: Int64(record.bytes), countStyle: .file))
+                            .monospacedDigit()
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    .width(min: 80, ideal: 100)
+                    TableColumn(L10n.string("backup.history.details")) { record in
+                        Text(record.message ?? "—")
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .help(record.message ?? "")
+                    }
+                    .width(min: 120, ideal: 180)
                 }
+                .tableStyle(.inset(alternatesRowBackgrounds: true))
+                .border(Color(nsColor: .separatorColor))
             }
 
             HStack {
@@ -354,38 +416,8 @@ struct HistoryView: View {
                 }
             }
         }
+        .appError($model.presentedError)
         .padding(20)
-        .frame(width: 560, height: 480)
-    }
-}
-
-/// The sheet with the modes that are not used often.
-struct AdvancedView: View {
-    /// The environment of the sheet.
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(L10n.string("backup.advanced.title"))
-                .font(.title3.weight(.semibold))
-
-            Label(
-                L10n.string("backup.advanced.warning"),
-                systemImage: "exclamationmark.triangle"
-            )
-            .foregroundStyle(.orange)
-
-            Text(L10n.string("backup.advanced.explanation"))
-                .font(.callout)
-
-            HStack {
-                Spacer()
-                Button(L10n.string("backup.restore.cancel"), role: .cancel) {
-                    dismiss()
-                }
-            }
-        }
-        .padding(20)
-        .frame(width: 520)
+        .frame(width: 1000, height: 480)
     }
 }

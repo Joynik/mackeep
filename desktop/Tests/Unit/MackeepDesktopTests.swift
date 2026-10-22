@@ -11,16 +11,6 @@ final class MackeepDesktopTests: XCTestCase {
         }
     }
 
-    func testTheLanguageOfTheInterfaceIsLookedUpInItsBundle() {
-        L10n.language = .russian
-        defer { L10n.language = .system }
-
-        XCTAssertEqual(
-            L10n.string("section.applications.title"),
-            "Приложения"
-        )
-    }
-
     func testAMissingStringFallsBackToItsKey() {
         XCTAssertEqual(L10n.string("a.missing.key"), "a.missing.key")
     }

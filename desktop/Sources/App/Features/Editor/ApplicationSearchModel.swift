@@ -537,12 +537,14 @@ final class ApplicationSearchModel {
     ///   - names: The names of the application.
     ///   - text: The text that is searched.
     ///   - known: The paths that are already in the application.
+    ///   - query: Spotlight query boundary, replaceable for deterministic tests.
     /// - Returns: The files that were found.
     nonisolated static func spotlightSearch(
         names: [String],
         matching text: String,
         known: Set<String>,
-        cancellation: CommandCancellation? = nil
+        cancellation: CommandCancellation? = nil,
+        query: (String, CommandCancellation?) -> [String] = { mdfind($0, cancellation: $1) }
     ) -> [FoundFile] {
         var found: [FoundFile] = []
         var seen: Set<String> = []
@@ -552,8 +554,8 @@ final class ApplicationSearchModel {
             let trimmed: String = name.trimmingCharacters(in: .whitespaces)
             guard !trimmed.isEmpty else { continue }
 
-            for path: String in mdfind(
-                "kMDItemFSName == '*\(Self.escapedQuery(trimmed))*'c", cancellation: cancellation)
+            for path: String in query(
+                "kMDItemFSName == '*\(Self.escapedQuery(trimmed))*'c", cancellation)
             {
                 guard !seen.contains(path) else { continue }
                 seen.insert(path)

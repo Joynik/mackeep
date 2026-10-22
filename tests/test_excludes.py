@@ -1,5 +1,8 @@
 """Tests for the gitignore-like exclusion matcher."""
 
+import json
+from pathlib import Path
+
 from mackeep.excludes import Matcher
 
 
@@ -251,3 +254,17 @@ def test_a_pattern_may_be_escaped():
     matcher = Matcher(["\\!important"])
     assert matcher.is_excluded("!important")
     assert not matcher.is_excluded("important")
+
+
+def test_shared_desktop_and_cli_exclusion_contract():
+    """Both implementations must satisfy these independently specified results."""
+
+    cases = json.loads(
+        (Path(__file__).parent / "fixtures/exclusion-cases.json").read_text(),
+    )
+    assert cases
+    for case in cases:
+        assert (
+            Matcher(case["patterns"]).is_excluded(case["path"], case["is_directory"])
+            == case["excluded"]
+        ), case

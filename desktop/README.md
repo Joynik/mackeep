@@ -39,6 +39,12 @@ current application to finish, then stops before the next one. This requires a
 CLI advertising `supports_safe_cancellation`; older tools have no execution
 cancel button. File-size estimates are calculated when an application is selected.
 
+Dry runs, backups, and restores share an action table with an operation heading.
+Execution rows come from CLI events; up to 5,000 rows are shown, with a truncation
+notice and full-run totals. History can be cleared from its window without
+removing backup files. The information icon explains copy mode and the CLI-only
+link mode.
+
 ## Build and test
 
 Use Xcode with a macOS SDK compatible with the sources and
@@ -50,6 +56,19 @@ cd desktop
 make build     # Generate the Xcode project and build Debug
 make test      # Unit and UI tests
 make run       # Build and open the application
+```
+
+The unit suite includes a real CLI round trip using the repository's
+`.venv/bin/python`. Prepare the existing development environment with
+`uv sync --locked --dev` from the repository root before running Swift tests.
+This integration test uses temporary HOME/storage and never invokes an installed
+Mackeep binary. CI runs the unit target separately from UI tests:
+
+```bash
+xcodebuild -project MackeepDesktop.xcodeproj -scheme MackeepDesktop \
+  -destination 'platform=macOS,arch=arm64' -derivedDataPath build \
+  MACKEEP_BUNDLE_IDENTIFIER=com.joynik.mackeep.testing CODE_SIGNING_ALLOWED=NO \
+  -only-testing:MackeepDesktopTests test
 ```
 
 `project.yml` is the source of the generated, untracked Xcode project. Build

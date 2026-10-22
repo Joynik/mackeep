@@ -36,3 +36,24 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: uv sync --locked --dev
       - run: uv run --no-sync python -m pytest --cov=mackeep --cov=mackeep_cli --cov-report=term --cov-fail-under=80
+
+  desktop-unit:
+    timeout-minutes: 20
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+          python-version: "3.14"
+      - run: uv sync --locked --dev
+      - run: brew install xcodegen
+      - run: xcodegen generate --spec desktop/project.yml
+      - name: Run Swift unit and real-CLI integration tests
+        run: |
+          xcodebuild -project desktop/MackeepDesktop.xcodeproj -scheme MackeepDesktop \
+            -destination 'platform=macOS,arch=arm64' -derivedDataPath logs/desktop-tests \
+            MACKEEP_BUNDLE_IDENTIFIER=com.joynik.mackeep.testing CODE_SIGNING_ALLOWED=NO \
+            -only-testing:MackeepDesktopTests test

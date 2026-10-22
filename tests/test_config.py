@@ -21,20 +21,8 @@ def assert_correct_config_read(expected_directory):
     assert expected_directory == Config().directory
 
 
+@pytest.mark.usefixtures("fixture_home")
 class TestConfig(unittest.TestCase):
-    def setUp(self):
-        realpath = os.path.dirname(os.path.realpath(__file__))
-        os.environ["HOME"] = os.path.join(realpath, "fixtures")
-
-        # these may be set on some user's systems
-        os.environ.pop("XDG_CONFIG_HOME", None)
-        os.environ.pop("MACKEEP_CONFIG", None)
-
-    def tearDown(self):
-        # The config file is created when it does not exist, it is removed
-        # after the test.
-        (Path.home() / MACKEEP_CONFIG_FILE).unlink(missing_ok=True)
-
     def test_config_envvar(self):
         os.environ["MACKEEP_CONFIG"] = "~/mackeep-envarcheck.cfg"
         assert_correct_config_read("test_config_envvar")
@@ -179,7 +167,9 @@ class TestConfig(unittest.TestCase):
 
         assert isinstance(cfg.fullpath, str)
         assert cfg.fullpath == os.path.join(
-            os.environ["HOME"], "some/relative/folder", "Mackeep",
+            os.environ["HOME"],
+            "some/relative/folder",
+            "Mackeep",
         )
 
         assert cfg.apps_to_ignore == set()

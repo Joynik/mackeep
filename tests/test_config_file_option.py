@@ -1,4 +1,5 @@
 """Tests for the --config-file command line option."""
+
 import os
 import unittest
 from pathlib import Path
@@ -9,20 +10,8 @@ from mackeep.config import Config
 from mackeep.mackeep import Mackeep
 
 
+@pytest.mark.usefixtures("fixture_home")
 class TestConfigFileOption(unittest.TestCase):
-    def setUp(self):
-        realpath = os.path.dirname(os.path.realpath(__file__))
-        os.environ["HOME"] = os.path.join(realpath, "fixtures")
-
-        # Clear environment variables that could interfere
-        os.environ.pop("XDG_CONFIG_HOME", None)
-        os.environ.pop("MACKEEP_CONFIG", None)
-
-    def tearDown(self):
-        # The config file is created when it does not exist, it is removed
-        # after the test.
-        (Path(os.environ["HOME"]) / ".mackeep.cfg").unlink(missing_ok=True)
-
     def test_config_with_relative_path(self):
         """Test that a relative path to config file works."""
         cfg = Config("mackeep-apps_to_ignore.cfg")
@@ -42,7 +31,7 @@ class TestConfigFileOption(unittest.TestCase):
         mckp = Mackeep("mackeep-empty.cfg")
 
         # Verify that the config was properly initialized
-        assert isinstance(mckp.mackeep_folder, str)
+        assert mckp.mackeep_folder == "/home/some_user/Dropbox/Mackeep"
 
     def test_mackeep_without_config_file(self):
         """Test that Mackeep class works without config_file parameter."""
@@ -50,7 +39,8 @@ class TestConfigFileOption(unittest.TestCase):
         mckp = Mackeep()
 
         # Verify that the config was properly initialized
-        assert isinstance(mckp.mackeep_folder, str)
+        assert mckp.mackeep_folder == ""
+        assert (Path.home() / ".mackeep.cfg").is_file()
 
     def test_config_file_does_not_exist(self):
         """Test that specifying a non-existent config file raises an error."""
