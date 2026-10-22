@@ -17,6 +17,11 @@ class TestCLI(unittest.TestCase):
 
     def setUp(self):
         """Set up test environment before each test."""
+        # Root policy is tested separately; these workflows model a regular user.
+        self.enterContext(patch("os.geteuid", return_value=501))
+        self.enterContext(patch.dict(os.environ))
+        os.environ.pop("MACKEEP_CONFIG", None)
+
         # Create temporary directories for testing
         self.test_home = tempfile.mkdtemp(prefix="mackeep_test_home_")
         self.test_storage = tempfile.mkdtemp(prefix="mackeep_test_storage_")

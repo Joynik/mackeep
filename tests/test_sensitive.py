@@ -80,8 +80,9 @@ def run_json(capsys, *args):
 def test_the_sensitive_paths_are_found():
     """The paths that hold secrets are found."""
     assert utils.sensitive_reason(".ssh/id_rsa") == "A private key of SSH"
-    assert utils.sensitive_reason(".gnupg") == "The keys of GnuPG"
-    assert utils.sensitive_reason(".gnupg/secring.gpg") == "The keys of GnuPG"
+    reason = "GnuPG configuration and potentially private keys"
+    assert utils.sensitive_reason(".gnupg") == reason
+    assert utils.sensitive_reason(".gnupg/secring.gpg") == reason
     assert utils.sensitive_reason(".aws/credentials") == "The credentials of AWS"
     assert utils.sensitive_reason("Library/Keychains") == "The keychain of macOS"
     assert (

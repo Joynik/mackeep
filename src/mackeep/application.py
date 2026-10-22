@@ -7,6 +7,7 @@ Mackeep. Name, files, ...
 
 import os
 import shutil
+import sys
 from collections.abc import Callable, Iterator
 from functools import partial
 from typing import Any
@@ -42,8 +43,8 @@ class ApplicationProfile:
             dry_run (bool)
             verbose (bool)
         """
-        assert isinstance(mackeep, Mackeep)
-        assert isinstance(files, set)
+        if not isinstance(mackeep, Mackeep) or not isinstance(files, set):
+            raise TypeError("Expected a Mackeep instance and a set of file paths")
 
         self.mackeep: Mackeep = mackeep
         self.files: list[str] = sorted(files)
@@ -62,6 +63,8 @@ class ApplicationProfile:
         # The detail level of the dry-run: "entries" or "files"
         self.detail: str = "entries"
         self.failed = False
+        self.replace_backup = True
+        self._sensitive_paths: set[str] = set()
         self._pending_events: list[tuple[str, dict[str, Any]]] | None = None
         self._staged_paths: dict[str, str] = {}
         self._restoring = False
@@ -110,7 +113,7 @@ class ApplicationProfile:
             str or None: None when the XDG config home is not in the home
                          directory.
         """
-        home: str = os.environ["HOME"]
+        home: str = os.path.expanduser("~")
         xdg_config_home: str = os.environ.get(
             "XDG_CONFIG_HOME",
             os.path.join(home, ".config"),
@@ -149,7 +152,7 @@ class ApplicationProfile:
                 continue
             if self.mackeep.config.allow_external_paths is not True and not inside(
                 os.path.realpath(local),
-                os.path.realpath(os.environ["HOME"]),
+                os.path.realpath(os.path.expanduser("~")),
             ):
                 raise ConfigError(f"External paths are disabled: {local}")
             validate_pair(local, self.mackeep.mackeep_folder)
@@ -181,15 +184,15 @@ class ApplicationProfile:
                 os.path.expanduser(
                     os.environ.get(
                         "XDG_CONFIG_HOME",
-                        os.path.join(os.environ["HOME"], ".config"),
+                        os.path.join(os.path.expanduser("~"), ".config"),
                     ),
                 ),
             )
-            path = os.path.abspath(os.path.join(os.environ["HOME"], home_relative))
+            path = os.path.abspath(os.path.join(os.path.expanduser("~"), home_relative))
             return os.path.relpath(path, root) if inside(path, root) else None
         path = os.path.relpath(
-            os.path.abspath(os.path.join(os.environ["HOME"], home_relative)),
-            os.environ["HOME"],
+            os.path.abspath(os.path.join(os.path.expanduser("~"), home_relative)),
+            os.path.expanduser("~"),
         )
         if path == self._xdg_home:
             return ""
@@ -220,7 +223,9 @@ class ApplicationProfile:
         )
 
     def exclusion_reason(
-        self, home_relative: str, is_dir: bool = False,
+        self,
+        home_relative: str,
+        is_dir: bool = False,
     ) -> dict[str, str] | None:
         """
         Get the reason why a path is excluded.
@@ -296,7 +301,7 @@ class ApplicationProfile:
 
         if self.reporter is None:
             if action == "copy" and reason is not None:
-                utils.warn_sensitive_file(relative, reason)
+                self._sensitive_paths.add(relative)
             return
         payload: dict[str, Any] = {"app": self.app_name, "action": action}
         payload.update(details)
@@ -317,7 +322,7 @@ class ApplicationProfile:
         if not path:
             return ""
 
-        home: str = os.environ["HOME"]
+        home: str = os.path.expanduser("~")
         try:
             relative: str = os.path.relpath(path, home)
         except ValueError:
@@ -355,7 +360,11 @@ class ApplicationProfile:
                 yield from self._walk(path, relative_path)
 
     def _report_excluded(
-        self, path: str, relative_path: str, dst: str, reason: dict[str, str],
+        self,
+        path: str,
+        relative_path: str,
+        dst: str,
+        reason: dict[str, str],
     ) -> None:
         """
         Report an excluded path.
@@ -412,7 +421,7 @@ class ApplicationProfile:
 
         # Set the good mode to the file or folder recursively
         shutil.copystat(src, dst)
-        utils.chmod(dst)
+        utils.set_mode(dst, 0o700)
 
         return copied
 
@@ -618,7 +627,10 @@ class ApplicationProfile:
                 self._report_stale(relative_path, source, path, protected)
 
     def _link_skip_reason(
-        self, relative: str, entry_filepath: str, source_filepath: str,
+        self,
+        relative: str,
+        entry_filepath: str,
+        source_filepath: str,
     ) -> str | None:
         """
         Check if an entry must be skipped in link mode.
@@ -648,9 +660,7 @@ class ApplicationProfile:
             return None
 
         if self._contains_excluded(source_filepath, relative):
-            return (
-                "it contains excluded files and a symlink cannot exclude them"
-            )
+            return "it contains excluded files and a symlink cannot exclude them"
 
         return None
 
@@ -692,7 +702,7 @@ class ApplicationProfile:
             entry = f"{relative}/{name}"
             if self.is_excluded(entry, os.path.isdir(old)):
                 if not os.path.lexists(new):
-                    utils.copy(old, new, preserve_link=True)
+                    utils.copy(old, new, preserve_link=True, private=False)
             elif os.path.isdir(old) and not os.path.islink(old):
                 self._preserve_local_exclusions(old, new, entry)
 
@@ -718,6 +728,24 @@ class ApplicationProfile:
                 dst=destination,
                 size_bytes=os.path.getsize(source),
             )
+
+        if self._restoring:
+            paths = [staged]
+            if os.path.isdir(staged):
+                for parent, directories, files in os.walk(staged):
+                    paths.extend(
+                        os.path.join(parent, name) for name in directories + files
+                    )
+            for path in reversed(paths):
+                suffix = os.path.relpath(path, staged)
+                entry = relative if suffix == "." else f"{relative}/{suffix}"
+                if os.path.islink(path) or self.is_excluded(entry, os.path.isdir(path)):
+                    continue
+                backup = source if suffix == "." else os.path.join(source, suffix)
+                key = os.path.relpath(backup, self.mackeep.mackeep_folder)
+                mode = self._restore_modes.get(key)
+                if mode is not None:
+                    utils.set_mode(path, mode)
 
     def _prepare_entry(
         self,
@@ -774,9 +802,14 @@ class ApplicationProfile:
                 )
             changed_roots.append(backup)
             return
-        if os.path.lexists(destination) and not utils.confirm(
-            f"A file or folder named {destination} already exists. Replace it?",
+        if (
+            os.path.lexists(destination)
+            and (self._restoring or not self.replace_backup)
+            and not utils.confirm(
+                f"A file or folder named {destination} already exists. Replace it?",
+            )
         ):
+            self.failed = True
             self._report(
                 "conflict",
                 src=source,
@@ -794,6 +827,7 @@ class ApplicationProfile:
                     state.relative(os.path.join(destination, leaf))
                     for leaf in self._inventory(staged)
                 )
+                state.record_modes(source, staged, destination)
                 state.preserve_shared(self.app_name, destination, staged)
 
         transaction.prepare(destination, build)
@@ -829,9 +863,14 @@ class ApplicationProfile:
                 and os.listdir(obsolete)
             ):
                 continue
-            if not self.dry_run and not utils.confirm(
-                f"Remove obsolete backup entry {obsolete}?",
+            if (
+                not self.dry_run
+                and not self.replace_backup
+                and not utils.confirm(
+                    f"Remove obsolete backup entry {obsolete}?",
+                )
             ):
+                self.failed = True
                 owned.add(path)
                 self._report("conflict", src=obsolete, dst=obsolete)
                 continue
@@ -853,6 +892,9 @@ class ApplicationProfile:
             "copy_files_to_mackeep_folder"
             if to_backup
             else "copy_files_from_mackeep_folder",
+        )
+        self._restore_modes = (
+            BackupState(self.mackeep.mackeep_folder).modes if not to_backup else {}
         )
         state = (
             BackupState(self.mackeep.mackeep_folder)
@@ -891,6 +933,15 @@ class ApplicationProfile:
             self._pending_events = None
             self._staged_paths.clear()
             transaction.close()
+            if self._sensitive_paths:
+                paths = ", ".join(sorted(self._sensitive_paths)[:10])
+                print(
+                    f"Warning: {self.app_name or 'Application'} holds secrets in "
+                    f"{len(self._sensitive_paths)} paths ({paths}). "
+                    "Backups are unencrypted.",
+                    file=sys.stderr,
+                )
+                self._sensitive_paths.clear()
         if state and not self.dry_run and not self.failed:
             state.prune_empty_parents(self.app_name, owned)
 

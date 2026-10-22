@@ -32,18 +32,28 @@ replacement, cleanup, exclusions, and external-path behavior.
 
 Selection saves finish before preview or execution; a failed save restores the
 persisted checkboxes and prevents that operation. Editing an application does
-not enable it. Restore confirmation requires a successful current preview.
+not enable it. Restore confirmation requires a successful preview for the same
+application scope. After pending selection saves finish, the app rechecks the
+configuration and plan. A changed result refreshes the preview and requires
+another confirmation. This is not a filesystem lock: changes to file contents,
+especially with unchanged sizes, can escape a plan comparison.
 External edits to an open definition require reload or explicit overwrite.
 
 Cancellation stops previews immediately. During backup/restore it waits for the
 current application to finish, then stops before the next one. This requires a
 CLI advertising `supports_safe_cancellation`; older tools have no execution
-cancel button. File-size estimates are calculated when an application is selected.
+cancel button. Ordinary Quit and logout wait for preparation to stop or the
+running CLI to finish safely; older tools are allowed to finish without a signal.
+An activity prevents idle system sleep and automatic termination during an
+operation. Force Quit, forced shutdown, and power loss are not covered.
+File-size estimates are calculated when an application is selected.
 
 Dry runs, backups, and restores share an action table with an operation heading.
 Execution rows come from CLI events; up to 5,000 rows are shown, with a truncation
 notice and full-run totals. History can be cleared from its window without
-removing backup files. The information icon explains copy mode and the CLI-only
+removing backup files. History is private (`0600`); read/write errors are shown.
+Before replacing damaged history, the app preserves it as `history.json.bak`
+(or a distinct `.bak` file if one exists) in the same directory. The information icon explains copy mode and the CLI-only
 link mode.
 
 ## Build and test

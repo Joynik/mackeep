@@ -23,7 +23,7 @@ The runtime depends only on the standard library and `docopt-ng`.
 | `make ruff` | Python linting, including modernization and performance rules |
 | `make mypy` / `make ty` | Python types |
 | `make test` | Python test suite |
-| `make coverage` | Branch coverage; fails below 80%; writes HTML/XML reports |
+| `make coverage` | Combined statement/branch coverage; fails below 90%; writes HTML/XML reports |
 | `make coverage-report` | Display the last coverage result |
 
 Run a focused test with `uv run python -m pytest tests/test_excludes.py -q`.

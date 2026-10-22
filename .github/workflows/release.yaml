@@ -19,7 +19,12 @@ concurrency:
 
 jobs:
 
+  verify:
+    if: startsWith(github.ref, 'refs/tags/')
+    uses: ./.github/workflows/test.yaml
+
   build:
+    needs: verify
     if: startsWith(github.ref, 'refs/tags/')
     timeout-minutes: 60
     strategy:
@@ -125,6 +130,7 @@ jobs:
           path: dist/*.tar.gz
 
   desktop:
+    needs: verify
     if: startsWith(github.ref, 'refs/tags/')
     timeout-minutes: 60
     # The image with the newest Xcode is used: an application built with an
@@ -203,6 +209,16 @@ jobs:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           path: dist
+          merge-multiple: true
+
+      - name: Generate SHA-256 checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum mackeep-cli-*.tar.gz Mackeep-*.dmg > SHA256SUMS
+          test -s SHA256SUMS
+          sha256sum --check SHA256SUMS
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
@@ -213,5 +229,6 @@ jobs:
             The archives of the tool are the command line version, the disk
             image is the desktop application for macOS.
           files: |
-            dist/**/mackeep-cli-*.tar.gz
-            dist/**/Mackeep-*.dmg
+            dist/mackeep-cli-*.tar.gz
+            dist/Mackeep-*.dmg
+            dist/SHA256SUMS

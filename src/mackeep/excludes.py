@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
 # Characters that make a path component a wildcard.
-WILDCARD_CHARS: str = "*?["
+WILDCARD_CHARS: str = "*?"
 
 
 @dataclass(frozen=True)

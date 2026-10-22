@@ -11,7 +11,7 @@ test:
 	uv run python -m pytest
 
 coverage:
-	uv run python -m pytest --cov=mackeep --cov=mackeep_cli --cov-report=term --cov-report=html --cov-report=xml --cov-fail-under=80
+	uv run python -m pytest --cov=mackeep --cov=mackeep_cli --cov-report=term --cov-report=html --cov-report=xml
 
 coverage-report:
 	uv run python -m coverage report

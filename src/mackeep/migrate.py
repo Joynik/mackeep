@@ -32,7 +32,7 @@ def _config_files() -> list[tuple[str, str]]:
     Returns:
         list of (str, str): The legacy path and the new path.
     """
-    home: str = os.environ["HOME"]
+    home: str = os.path.expanduser("~")
     xdg_config_home: str = os.environ.get(
         "XDG_CONFIG_HOME",
         os.path.join(home, ".config"),
@@ -56,7 +56,7 @@ def _apps_dirs() -> list[tuple[str, str]]:
     Returns:
         list of (str, str): The legacy path and the new path.
     """
-    home: str = os.environ["HOME"]
+    home: str = os.path.expanduser("~")
     xdg_config_home: str = os.environ.get(
         "XDG_CONFIG_HOME",
         os.path.join(home, ".config"),

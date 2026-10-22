@@ -7,15 +7,6 @@
 /build/
 /.build-venv/
 
-# Ignore Claude stuff
-/.claude/
-
-# The local settings of the editor
-/.vscode/
-
-# The local rules of the agents
-/AGENTS.md
-
 # The Xcode project of the desktop application is generated
 /desktop/MackeepDesktop.xcodeproj/
 /desktop/build/
@@ -34,6 +25,14 @@ coverage.xml
 
 # Local verification logs and artifacts
 /logs/
+/artifacts/
+
+# The local settings of the editor
+/.vscode/
 
 # Local audit report
 /AUDIT.md
+
+# Agents settings
+.codex
+**/AGENTS.md

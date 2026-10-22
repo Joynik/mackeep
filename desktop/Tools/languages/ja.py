@@ -214,4 +214,8 @@ TRANSLATION: dict[str, str] = {
     "backup.action.copied": "コピー済み",
     "backup.action.removedStale": "古いバックアップを削除済み",
     "backup.history.clear": "履歴を消去",
+    "error.history.title": "履歴を読み込みまたは保存できませんでした",
+    "history.recovered": "破損した履歴は %@ に保存されました。新しい履歴ファイルを作成しました。",
+    "backup.restore.changed": "設定または復元プランが変更されました。更新されたプレビューを確認し、もう一度確定してください。",
+    "backup.restore.overwrites": "置き換える既存のファイルとフォルダ：%lld",
 }

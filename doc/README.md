@@ -25,8 +25,10 @@ need shell escaping or quotes inside the INI file.
 ## Storage
 
 The storage engine determines the base folder. `directory`, default `Mackeep`,
-is appended to it. The base folder must exist before backup; Mackeep asks to
-create its backup subdirectory when needed.
+is appended to it. It must be a nonempty relative path without `.` or `..`
+components, and its resolved destination must stay inside the base folder.
+The base folder must exist before backup; Mackeep asks to create its backup
+subdirectory when needed.
 
 | Engine | Base folder |
 | --- | --- |
@@ -44,7 +46,8 @@ directory = Mackeep
 ```
 
 This stores backups under `~/dotfiles/Mackeep`. The file-system `path` option
-is required; an empty value is unconfigured, not HOME. Older configs without
+is required; an empty value is unconfigured, not HOME. Both HOME-relative
+paths and `~/...` are accepted. Older configs without
 an engine retain the implicit Dropbox behavior. Provider detection depends on
 the local client layout; use `file_system` when detection cannot find the
 folder. Mackeep copies files locally; the storage provider handles remote sync.
@@ -143,7 +146,8 @@ Matching is case-sensitive. The last matching rule within a matcher wins.
 An excluded parent directory is not walked: re-include the directory before
 trying to re-include its children. A HOME exclusion still excludes a path even
 if an XDG rule would re-include it. Leading absolute-path patterns are rejected
-by the config loader. Do not assume all Git pattern features are supported.
+by the config loader. Square brackets are literal characters, not character classes. Do not assume
+all Git pattern features are supported.
 
 Patterns normally appear as bare lines. If an INI entry has a value, that value
 is the pattern: `cache_rule = my-editor/cache/`. Text after `=` is not a
@@ -189,10 +193,17 @@ I/O failures allow other applications to run, but the command exits nonzero
 when any application fails. Backup is not incremental: selected entries are
 copied again even if their contents have not changed.
 
-Existing destinations require confirmation. `--force` accepts replacements;
-`--force-no` declines them. Declining preserves the old data and ownership.
-Both options together are invalid. CLI rejects superuser execution unless
-`--root` is explicitly provided.
+Backup replaces existing snapshots and removes obsolete owned entries without
+confirmation, including in JSON mode. Restore and legacy link replacements
+require confirmation; `--force` accepts them. `--force-no` declines replacements
+and cleanup, including during backup. A declined copy or cleanup preserves old
+data and ownership, counts as skipped in JSON copy results, and makes the command
+exit nonzero. Both options together are invalid. Closed stdin counts as a refusal.
+CLI rejects superuser execution unless `--root` is explicitly provided.
+
+`config`, `list`, and `show` remain usable when an automatic cloud-storage lookup
+fails. `config` reports the lookup error and an unresolved storage path; filesystem
+operations require working storage.
 
 ### Cleanup and ownership
 
@@ -218,14 +229,26 @@ when allowed by path policy. Backup skips a link already installed by legacy
 link mode. Restoring an absolute symlink does not rewrite its target for a new
 machine.
 
-Copies retain timestamps and owner execution: ordinary files use `0600`,
-owner-executable files use `0700`, and directories use `0700`. This does not
-promise preservation of every ACL or extended attribute across filesystems.
+Backups retain timestamps and use private permissions: ordinary files use
+`0600`, owner-executable files use `0700`, and directories use `0700`. The ownership
+index also records original permission bits for copied files and directories;
+restore reapplies these bits, without setuid, setgid, or sticky bits. Excluded
+local entries retain their own permissions. Older backups without recorded modes
+retain their stored permissions on restore; missing original modes cannot be
+recovered. This does not promise preservation of every ACL or extended attribute
+across filesystems.
 
-Only one writer to a storage folder is supported. Transactions are per
-application, not for the entire command, and are not a power-loss recovery
-journal. If rollback fails, temporary previous versions are kept and the error
-reports their locations. Successful replacement removes the rollback copy;
+A nonblocking local lock under `~/.local/state/mackeep/locks/` prevents simultaneous
+writes by the same user to the same resolved storage. Dry-run creates no lock
+files. Lock files stay in place and can be reused after the process exits; they
+contain no backup data. This lock does not coordinate different computers or
+users: wait for cloud sync and finish one operation before starting another.
+Transactions are per application, not for the entire command, and are not a
+power-loss recovery journal. If rollback fails, temporary previous versions are kept and the error
+reports their locations. An ordinary cleanup failure warns with the retained
+workspace path and continues cleaning other workspaces; it does not undo a
+successful commit. Mackeep never automatically deletes workspaces from a failed
+rollback. Successful replacement removes the rollback copy;
 there is no version history. Leave enough free space for old and staged data.
 
 ### Legacy link mode
@@ -264,8 +287,8 @@ path as backup/restore dry-run.
 ## Sensitive files
 
 Backups are unencrypted. Known sensitive HOME/XDG paths are marked by
-`sensitive` and `sensitive_reason` in JSON; text output warns once when copying
-a known sensitive file. Public-key `.pub` files are not marked. Detection is
+`sensitive` and `sensitive_reason` in JSON; text copy output summarizes sensitive
+paths per application, showing up to ten paths and the full count. Public-key `.pub` files are not marked. Detection is
 advisory and does not discover arbitrary secrets inside file contents.
 
 Review the selected paths and storage permissions. See the

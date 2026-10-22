@@ -214,4 +214,8 @@ TRANSLATION: dict[str, str] = {
     "backup.action.copied": "복사됨",
     "backup.action.removedStale": "오래된 백업 삭제됨",
     "backup.history.clear": "기록 지우기",
+    "error.history.title": "기록을 읽거나 저장할 수 없습니다",
+    "history.recovered": "손상된 기록을 %@에 보존하고 새 기록 파일을 만들었습니다.",
+    "backup.restore.changed": "설정 또는 복원 계획이 변경되었습니다. 업데이트된 미리보기를 검토하고 다시 확인하세요.",
+    "backup.restore.overwrites": "바꿀 기존 파일 및 폴더: %lld",
 }

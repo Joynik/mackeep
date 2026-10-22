@@ -41,7 +41,8 @@ class Config:
             filename (str): Optional filename of the config file. If empty,
                             defaults to MACKEEP_CONFIG_FILE
         """
-        assert isinstance(filename, str) or filename is None
+        if filename is not None and not isinstance(filename, str):
+            raise TypeError("Configuration filename must be a string")
 
         self.read_only = read_only
 
@@ -62,7 +63,11 @@ class Config:
         self._engine = self._parse_engine()
 
         # Get the path where the Mackeep folder is
-        self._path = self._parse_path()
+        self._path: str | None = (
+            self._parse_path()
+            if self.engine in {ENGINE_FS, ENGINE_UNCONFIGURED}
+            else None
+        )
 
         # Get the directory replacing 'Mackeep', if any
         self._directory = self._parse_directory()
@@ -82,7 +87,9 @@ class Config:
         """Whether application entries may leave their HOME/XDG root."""
         try:
             return self._parser.getboolean(
-                "security", "allow_external_paths", fallback=False,
+                "security",
+                "allow_external_paths",
+                fallback=False,
             )
         except ValueError as exc:
             raise ConfigError("allow_external_paths must be true or false") from exc
@@ -110,7 +117,13 @@ class Config:
         Returns:
             str
         """
-        return str(self._path)
+        if self._path is None:
+            try:
+                self._path = self._parse_path()
+            except SystemExit as exc:
+                self._path = ""
+                self._errors.append(str(exc))
+        return self._path
 
     @property
     def directory(self) -> str:
@@ -133,7 +146,14 @@ class Config:
         Returns:
             str
         """
-        return os.path.join(self.path, self.directory) if self.path else ""
+        if not self.path:
+            return ""
+        root = os.path.realpath(self.path)
+        target = os.path.join(self.path, self.directory)
+        resolved = os.path.realpath(target)
+        if resolved == root or os.path.commonpath((root, resolved)) != root:
+            raise ConfigError("Storage directory leaves the configured storage path")
+        return target
 
     @property
     def apps_to_ignore(self) -> set[str]:
@@ -214,7 +234,8 @@ class Config:
         Returns:
             ConfigParser
         """
-        assert isinstance(filename, str) or filename is None
+        if filename is not None and not isinstance(filename, str):
+            raise TypeError("Configuration filename must be a string")
 
         # Keep track of the config file that is used
         self._config_path: str = self._best_config_path(filename)
@@ -299,7 +320,8 @@ class Config:
         Returns:
             str: the absolute path to the config file
         """
-        assert isinstance(filename, str) or filename is None
+        if filename is not None and not isinstance(filename, str):
+            raise TypeError("Configuration filename must be a string")
 
         # If we are not overriding the config filename
         config_path: Path
@@ -373,8 +395,6 @@ class Config:
         else:
             engine = ENGINE_DROPBOX
 
-        assert isinstance(engine, str)
-
         if engine not in [
             ENGINE_UNCONFIGURED,
             ENGINE_DROPBOX,
@@ -411,7 +431,9 @@ class Config:
                 cfg_path = self._parser.get("storage", "path")
                 if not cfg_path:
                     return ""
-                path = os.path.join(os.environ["HOME"], cfg_path)
+                path = os.path.join(
+                    os.path.expanduser("~"), os.path.expanduser(cfg_path),
+                )
             else:
                 raise ConfigError(
                     "The required 'path' can't be found while"
@@ -443,6 +465,14 @@ class Config:
         else:
             directory = MACKEEP_BACKUP_PATH
 
+        if (
+            not directory
+            or os.path.isabs(directory)
+            or any(part in {".", ".."} for part in directory.split(os.sep))
+        ):
+            raise ConfigError(
+                "Storage directory must be a nonempty relative path without . or ..",
+            )
         return str(directory)
 
     def _parse_apps_to_ignore(self) -> set[str]:
@@ -516,7 +546,9 @@ class Config:
 
         for option in self._exclusion_parser.options(section_title):
             value: str | None = self._exclusion_parser.get(
-                section_title, option, raw=True,
+                section_title,
+                option,
+                raw=True,
             )
             # A pattern listed without a value is the option itself.
             pattern: str = option if value is None else value
@@ -550,4 +582,6 @@ class Config:
 
 
 class ConfigError(Exception):
-    """Exception used for handle errors in the configuration."""
+    """Invalid configuration with a stable machine-readable error code."""
+
+    code = "config_error"

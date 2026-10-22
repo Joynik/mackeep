@@ -89,8 +89,9 @@ Use copy mode on current macOS: symlinked preferences can fail on macOS 14+.
 - Restore preserves excluded local files. It does not combine different versions
   of a configuration file; [merge them first](doc/configuration_merge_guide.md).
 - Backups are unencrypted. Sensitive-path warnings do not detect every secret.
-- Run only one operation against a storage folder at a time. Replacement rollback
-  handles errors but is not a recovery journal for power loss.
+- Local operations by the same user are locked per storage folder. Run only one
+  operation across your computers at a time; cloud sync does not share this lock.
+  Replacement rollback handles errors but is not a recovery journal for power loss.
 
 ## Documentation
 

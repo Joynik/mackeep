@@ -32,6 +32,7 @@ class ApplicationsDatabase:
 
         # The errors of the applications, by application name
         self.errors: dict[str, str] = {}
+        self.unsafe_paths: set[str] = set()
 
         for config_file in ApplicationsDatabase.get_config_files():
             self._load_config_file(config_file)
@@ -147,6 +148,7 @@ class ApplicationsDatabase:
                 if not self.allow_external_paths and (
                     path.startswith("/") or ".." in path.split("/")
                 ):
+                    self.unsafe_paths.add(app_name)
                     problems.append(
                         f"Invalid path in {config_file}: "
                         + (
@@ -181,6 +183,7 @@ class ApplicationsDatabase:
                 if not self.allow_external_paths and (
                     path.startswith("/") or ".." in path.split("/")
                 ):
+                    self.unsafe_paths.add(app_name)
                     problems.append(
                         f"Invalid path in {config_file}: "
                         + (
@@ -274,7 +277,7 @@ class ApplicationsDatabase:
         Returns:
             str
         """
-        return os.path.join(os.environ["HOME"], CUSTOM_APPS_DIR)
+        return os.path.join(os.path.expanduser("~"), CUSTOM_APPS_DIR)
 
     @staticmethod
     def get_custom_apps_dirs() -> list[str]:
@@ -284,7 +287,7 @@ class ApplicationsDatabase:
         Returns:
             list of str
         """
-        home: str = os.environ["HOME"]
+        home: str = os.path.expanduser("~")
         xdg_config_home: str = os.environ.get(
             "XDG_CONFIG_HOME", os.path.join(home, ".config"),
         )
@@ -302,7 +305,7 @@ class ApplicationsDatabase:
         Returns:
             list of (str, str): The legacy directory and the new one.
         """
-        home: str = os.environ["HOME"]
+        home: str = os.path.expanduser("~")
         xdg_config_home: str = os.environ.get(
             "XDG_CONFIG_HOME", os.path.join(home, ".config"),
         )

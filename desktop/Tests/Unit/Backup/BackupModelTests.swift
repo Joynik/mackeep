@@ -153,8 +153,8 @@ final class BackupModelTests: XCTestCase {
             bytes: 42
         )
 
-        store.append(record)
-        let loaded: [RunRecord] = store.load()
+        try store.append(record)
+        let loaded: [RunRecord] = try store.load()
 
         XCTAssertEqual(loaded.count, 1)
         XCTAssertEqual(loaded.first?.command, "backup")
@@ -259,16 +259,16 @@ final class BackupModelTests: XCTestCase {
         XCTAssertEqual(model.lastRun?.command, "restore")
     }
 
-    func testHistoryIsClearedFromTheModelAndDisk() {
+    func testHistoryIsClearedFromTheModelAndDisk() throws {
         let store = HistoryStore(url: directory.appendingPathComponent("history.json"))
-        store.append(RunRecord(command: "backup", succeeded: true))
+        try store.append(RunRecord(command: "backup", succeeded: true))
         let model = BackupModel(command: nil, historyStore: store)
         XCTAssertEqual(model.history.count, 1)
 
         model.clearHistory()
 
         XCTAssertTrue(model.history.isEmpty)
-        XCTAssertTrue(store.load().isEmpty)
+        XCTAssertTrue(try store.load().isEmpty)
         XCTAssertNil(model.presentedError)
         model.clearHistory()
         XCTAssertNil(model.presentedError)
@@ -306,7 +306,7 @@ final class BackupModelTests: XCTestCase {
     func testFailedHistoryCleanupPreservesRecordsAndUnexpectedContents() throws {
         let url = directory.appendingPathComponent("history.json")
         let store = HistoryStore(url: url)
-        store.append(RunRecord(command: "backup", succeeded: true))
+        try store.append(RunRecord(command: "backup", succeeded: true))
         let model = BackupModel(command: nil, historyStore: store)
         try FileManager.default.removeItem(at: url)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: false)
@@ -345,8 +345,9 @@ final class BackupModelTests: XCTestCase {
             contentsOf: directory.appendingPathComponent("arguments"), encoding: .utf8)
             .split(separator: "\n").map(String.init)
         XCTAssertEqual(arguments, [
-            "--json backup demo --dry-run", "--json config", "--json backup demo",
-            "--json restore demo --dry-run", "--json config", "--json restore demo --force",
+            "--json config", "--json backup demo --dry-run", "--json config", "--json backup demo",
+            "--json config", "--json restore demo --dry-run", "--json config",
+            "--json restore demo --dry-run", "--json restore demo --force",
         ])
         XCTAssertEqual(model.history.map(\.command).sorted(), ["backup", "restore"])
         XCTAssertTrue(model.history.allSatisfy(\.succeeded))
@@ -375,7 +376,7 @@ final class BackupModelTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: directory.appendingPathComponent("arguments").path))
     }
 
-    func testCancellationDuringStreamingRecordsAnUnsuccessfulCompletedRun() async throws {
+    func testTerminationDuringStreamingWaitsForTheChildToExit() async throws {
         let command = try makeTool()
         let tool = URL(fileURLWithPath: command.path)
         var script = try String(contentsOf: tool, encoding: .utf8)
@@ -401,8 +402,8 @@ final class BackupModelTests: XCTestCase {
             FileManager.default.fileExists(atPath: directory.appendingPathComponent("stream-started").path)
         }
         XCTAssertTrue(model.canCancel)
-        model.cancel()
-        try await waitForThePlan(model)
+        await model.stopForTermination()
+        XCTAssertFalse(model.isRunning)
         XCTAssertFalse(model.canCancel)
         XCTAssertEqual(model.lastRun?.succeeded, false)
         XCTAssertEqual(model.history.first?.succeeded, false)
@@ -471,7 +472,13 @@ final class BackupModelTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: backup.appendingPathComponent("app/settings")), bytes)
         XCTAssertFalse(FileManager.default.fileExists(atPath: backup.appendingPathComponent("ignored").path))
         XCTAssertFalse(FileManager.default.fileExists(atPath: backup.appendingPathComponent("app/cache").path))
-        try Data("changed".utf8).write(to: local.appendingPathComponent("settings"))
+        let updatedBytes = Data("updated snapshot".utf8)
+        try updatedBytes.write(to: local.appendingPathComponent("settings"))
+        model.backup()
+        try await waitForThePlan(model)
+        XCTAssertEqual(model.lastRun?.succeeded, true)
+        XCTAssertEqual(try Data(contentsOf: backup.appendingPathComponent("app/settings")), updatedBytes)
+        try Data("local changes".utf8).write(to: local.appendingPathComponent("settings"))
         model.dryRunRestore()
         try await waitForThePlan(model)
         XCTAssertEqual(model.plannedCommand, "restore")
@@ -480,19 +487,19 @@ final class BackupModelTests: XCTestCase {
         try await waitForThePlan(model)
         XCTAssertNil(model.presentedError)
         XCTAssertEqual(model.lastRun?.succeeded, true)
-        XCTAssertEqual(try Data(contentsOf: local.appendingPathComponent("settings")), bytes)
+        XCTAssertEqual(try Data(contentsOf: local.appendingPathComponent("settings")), updatedBytes)
         XCTAssertEqual(try String(contentsOf: local.appendingPathComponent("cache"), encoding: .utf8), "local cache")
-        XCTAssertEqual(model.history.count, 3)
-        XCTAssertEqual(model.history.filter(\.succeeded).count, 2)
-        XCTAssertEqual(model.lastRun?.bytes, bytes.count)
+        XCTAssertEqual(model.history.count, 4)
+        XCTAssertEqual(model.history.filter(\.succeeded).count, 3)
+        XCTAssertEqual(model.lastRun?.bytes, updatedBytes.count)
     }
 
-    func testHistoryKeepsOnlyTheNewestFiftyRecordsInDateOrder() {
+    func testHistoryKeepsOnlyTheNewestFiftyRecordsInDateOrder() throws {
         let store = HistoryStore(url: directory.appendingPathComponent("history.json"))
         let records = (0..<55).map { index in
             RunRecord(date: Date(timeIntervalSince1970: Double(index)), command: "backup", succeeded: true, files: index)
         }
-        for record in records.reversed() { store.append(record) }
-        XCTAssertEqual(store.load().map(\.files), Array((5..<55).reversed()))
+        for record in records.reversed() { try store.append(record) }
+        XCTAssertEqual(try store.load().map(\.files), Array((5..<55).reversed()))
     }
 }

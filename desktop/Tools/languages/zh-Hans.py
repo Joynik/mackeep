@@ -214,4 +214,8 @@ TRANSLATION: dict[str, str] = {
     "backup.action.copied": "已复制",
     "backup.action.removedStale": "已删除过期备份",
     "backup.history.clear": "清除历史记录",
+    "error.history.title": "无法读取或保存历史记录",
+    "history.recovered": "损坏的历史记录已保存在 %@，并已创建新的历史记录文件。",
+    "backup.restore.changed": "配置或恢复计划已更改。请检查更新后的预览并再次确认。",
+    "backup.restore.overwrites": "将替换的现有文件和文件夹：%lld",
 }

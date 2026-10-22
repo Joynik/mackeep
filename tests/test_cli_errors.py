@@ -208,15 +208,6 @@ def test_the_force_and_the_force_no_options_are_exclusive(home):
         run("--force", "--force-no", "backup")
 
 
-def test_the_force_no_option_answers_no_to_the_questions(home):
-    """The force-no option answers no to every question."""
-    setup(home)
-
-    run("--force-no", "backup")
-
-    assert utils.FORCE_NO is True
-
-
 def test_the_root_option_allows_to_run_as_root(home):
     """The root option allows Mackeep to run as root."""
     setup(home)

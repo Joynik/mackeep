@@ -14,10 +14,8 @@ from mackeep import utils
 def clear_warnings():
     """The legacy warnings are kept in a module level list."""
     utils.LEGACY_WARNINGS.clear()
-    utils.SENSITIVE_WARNINGS.clear()
     yield
     utils.LEGACY_WARNINGS.clear()
-    utils.SENSITIVE_WARNINGS.clear()
 
 
 @pytest.fixture

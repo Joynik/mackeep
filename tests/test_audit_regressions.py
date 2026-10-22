@@ -81,8 +81,11 @@ def test_restore_preserves_excluded_local_files(home):
     (backup / "app/keep").write_text("backup")
     (home / "app").mkdir()
     (home / "app/cache").write_text("local")
+    local_mode = 0o640
+    (home / "app/cache").chmod(local_mode)
     assert run("--force", "restore") == 0
     assert (home / "app/cache").read_text() == "local"
+    assert (home / "app/cache").stat().st_mode & 0o777 == local_mode
 
 
 @pytest.mark.parametrize("operation", ["backup", "restore"])
@@ -187,8 +190,8 @@ def test_round_trip_restores_bytes_execution_and_time(home):
     os.utime(file, (original_time + 100, original_time + 100))
     assert run("--force", "restore") == 0
     assert file.read_bytes() == b"#!/bin/sh\n"
-    private_executable = 0o700
-    assert file.stat().st_mode & 0o777 == private_executable
+    original_executable = 0o755
+    assert file.stat().st_mode & 0o777 == original_executable
     assert int(file.stat().st_mtime) == original_time
 
 
@@ -407,7 +410,7 @@ def test_declining_replacement_keeps_ownership_and_previous_data(home):
     old_index = index.read_bytes()
     (home / "app").write_text("new")
     utils.FORCE_YES = False
-    assert run("--force-no", "backup") == 0
+    assert run("--force-no", "backup") == 1
     assert (backup / "app").read_text() == "old"
     assert index.read_bytes() == old_index
 
@@ -440,7 +443,7 @@ def test_declining_cleanup_does_not_remove_old_entries(home):
     assert run("--force", "backup") == 0
     definition(home, "")
     utils.FORCE_YES = False
-    assert run("--force-no", "backup") == 0
+    assert run("--force-no", "backup") == 1
     assert (backup / "app").read_text() == "old"
 
 
@@ -531,6 +534,7 @@ def test_failed_rollback_retains_recovery_data_after_close(home, monkeypatch):
     first.write_bytes(b"first old")
     second.write_bytes(b"second old")
     transaction = Transaction()
+
     def stage_first(path: str) -> None:
         Path(path).write_bytes(b"first new")
 
@@ -550,7 +554,8 @@ def test_failed_rollback_retains_recovery_data_after_close(home, monkeypatch):
 
     monkeypatch.setattr("mackeep.transaction.os.replace", fail_commit_and_rollback)
     with pytest.raises(
-        OSError, match="Rollback failed; previous data retained",
+        OSError,
+        match="Rollback failed; previous data retained",
     ) as error:
         transaction.commit()
     transaction.close()

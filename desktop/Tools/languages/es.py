@@ -214,4 +214,8 @@ TRANSLATION: dict[str, str] = {
     "backup.action.copied": "Copiado",
     "backup.action.removedStale": "Copia obsoleta eliminada",
     "backup.history.clear": "Borrar historial",
+    "error.history.title": "No se pudo leer o guardar el historial",
+    "history.recovered": "El historial dañado se conservó en %@. Se creó un historial nuevo.",
+    "backup.restore.changed": "La configuración o el plan de restauración cambió. Revisa la vista previa actualizada y confirma de nuevo.",
+    "backup.restore.overwrites": "Archivos y carpetas existentes que se reemplazarán: %lld",
 }

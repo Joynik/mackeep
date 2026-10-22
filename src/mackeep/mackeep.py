@@ -22,7 +22,10 @@ class Mackeep:
         """Mackeep Constructor."""
         self._config: Config = Config(config_file, read_only=read_only)
 
-        self.mackeep_folder: str = self._config.fullpath
+    @property
+    def mackeep_folder(self) -> str:
+        """Resolve storage only when a command needs it."""
+        return self._config.fullpath
 
     @property
     def config(self) -> Config:
@@ -54,13 +57,6 @@ class Mackeep:
             utils.error(
                 f"Unable to find the storage folder: {self._config.path}",
             )
-
-        # Is Sublime Text running?
-        # if is_process_running('Sublime Text'):
-        #    error("Sublime Text is running. It is known to cause problems"
-        #          " when Sublime Text is running while I backup or restore"
-        #          " its configuration files. Please close Sublime Text and"
-        #          " run me again.")
 
     def check_for_usable_backup_env(self) -> None:
         """Check if the current env can be used to back up files."""

@@ -72,22 +72,29 @@ only after commit or successful rollback. If rollback fails, workspaces remain
 and their locations are reported.
 
 The boundary is one application, not the entire command. This is rollback for
-handled errors, not a durable crash-recovery journal or a lock against other
-processes. Concurrent writers are unsupported. Copy events are buffered during
+handled errors, not a durable crash-recovery journal. `locking.storage_lock`
+uses a nonblocking local `flock`, keyed by the resolved storage path, around
+mutating CLI commands. It serializes this user's local processes, not different
+machines connected through cloud sync. Copy events are buffered during
 staging and published after commit, so consumers do not mistake staged data for
 completed writes.
 
 ## Ownership and exclusions
 
 The backup index `.mackeep-state/owners.json` maps application identifiers to
-relative leaf paths, including links and empty directories. Its update is
+relative leaf paths, including links and empty directories. An optional `modes`
+map records original ordinary permission bits; old version-1 indices remain
+readable without it. Backup data keeps private modes while restore reapplies
+recorded modes. Its update is
 staged with the data. This supports cleanup when a definition removes a path,
 while retaining other applications' leaves in shared directories.
 
 On the first indexed backup, the CLI infers a baseline from current definitions,
 including configured ignored apps. Historical paths removed before that index
 cannot be inferred. A still-listed missing source or declined replacement
-retains its previous ownership. Malformed index data refuses cleanup.
+retains its previous ownership. Malformed index data refuses cleanup with a
+configuration error. Cleanup failures warn and leave the relevant workspace for
+manual inspection; workspaces retained after failed rollback are never purged.
 
 HOME and XDG matchers are separate. Global rules precede per-app rules; the
 last match wins within a matcher. `Matcher` searches backward for that rule,
@@ -131,7 +138,20 @@ accumulating. Previews, search, and exclusion-mask scans support cancellation.
 Execution cancellation uses SIGUSR1 only when the CLI advertises support. The
 signal sets a flag; `_run_action` checks it between application transactions.
 It never interrupts staging, commit, or rollback. The CLI reports cancellation
-with a nonzero exit status after the current application finishes.
+with a nonzero exit status after the current application finishes. The application
+delegate defers ordinary termination until this stop completes. Operation-scoped
+activities disable idle sleep, automatic termination, and sudden termination.
+A stop requested during preparation prevents the writer from being launched.
+
+Restore retains the confirmed scope, configuration, and plan. After preparation,
+it rereads configuration and regenerates the plan before adding `--force`.
+A mismatch refreshes the preview and requires another confirmation. This is a
+best-effort plan comparison, not an atomic check of filesystem contents.
+
+`HistoryStore` is isolated to the main actor. Reads distinguish missing files
+from failures; writes propagate errors, preserve malformed history separately,
+and atomically replace history with a private staged file. A history failure
+does not relabel an otherwise completed backup as a failed copy.
 
 `MainConfig` serializes writes within the process and merges edited keys/sections
 into the latest file, avoiding stale settings and selection snapshots overwriting

@@ -85,17 +85,23 @@ final class BackupModel {
     private(set) var plannedCommand: String?
     private(set) var canCancel = false
     private(set) var isStopping = false
+    private var plannedApplication: String?
+    private var plannedConfig: MackeepConfig?
+    private var activity: NSObjectProtocol?
+    private var terminationRequested = false
+    private var stopRequested = false
+    private var terminationWaiters: [CheckedContinuation<Void, Never>] = []
     private let prepare: @MainActor () async throws -> Void
 
     init(
         command: MackeepCommand?,
-        historyStore: HistoryStore = HistoryStore(),
+        historyStore: HistoryStore? = nil,
         prepare: @escaping @MainActor () async throws -> Void = {}
     ) {
         self.command = command
         self.prepare = prepare
-        self.historyStore = historyStore
-        self.history = historyStore.load()
+        self.historyStore = historyStore ?? HistoryStore()
+        loadHistory()
     }
 
     /// The actions of the plan, after the filter.
@@ -108,15 +114,57 @@ final class BackupModel {
 
     /// Read the history.
     func loadHistory() {
-        history = historyStore.load()
+        do { history = try historyStore.load() }
+        catch { presentHistoryError(error) }
     }
 
     /// Clear persisted history and update the table only after success.
     func clearHistory() {
         do {
             try historyStore.clear()
-            loadHistory()
-        } catch { present(error) }
+            history = try historyStore.load()
+            presentedError = nil
+        } catch { presentHistoryError(error) }
+    }
+
+    private func presentHistoryError(_ error: Error) {
+        presentedError = AppError(
+            title: L10n.string("error.history.title"), message: error.localizedDescription)
+    }
+
+    private func beginOperation() {
+        isRunning = true
+        ProcessInfo.processInfo.disableSuddenTermination()
+        ProcessInfo.processInfo.disableAutomaticTermination("Mackeep operation")
+        activity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiated, .idleSystemSleepDisabled], reason: "Mackeep operation")
+    }
+
+    private func finishOperation() {
+        isRunning = false
+        canCancel = false
+        cancellation = nil
+        if let activity {
+            ProcessInfo.processInfo.endActivity(activity)
+            self.activity = nil
+        }
+        ProcessInfo.processInfo.enableAutomaticTermination("Mackeep operation")
+        ProcessInfo.processInfo.enableSuddenTermination()
+        let waiters = terminationWaiters
+        terminationWaiters = []
+        terminationRequested = false
+        stopRequested = false
+        for waiter in waiters { waiter.resume() }
+    }
+
+    /// Wait for preparation to stop or for the CLI to reach a safe transaction boundary.
+    func stopForTermination() async {
+        guard isRunning else { return }
+        await withCheckedContinuation { waiter in
+            terminationWaiters.append(waiter)
+            terminationRequested = true
+            cancel()
+        }
     }
 
     private func resetResults(command: String, preview: Bool) {
@@ -157,7 +205,7 @@ final class BackupModel {
         let token = CommandCancellation()
         command.cancellation = token
         cancellation = token
-        isRunning = true
+        beginOperation()
         presentedError = nil
         canCancel = true
         isStopping = false
@@ -167,14 +215,22 @@ final class BackupModel {
         if let application { arguments.append(application) }
         arguments.append("--dry-run")
         Task {
-            defer { isRunning = false; canCancel = false; cancellation = nil }
+            defer { finishOperation() }
             do {
                 try await prepare()
                 try Task.checkCancellation()
-                let plan = try await Task.detached(priority: .userInitiated) {
-                    try command.runJSON(arguments, as: MackeepPlan.self)
+                if token.isCancelled || terminationRequested { throw CancellationError() }
+                let (config, plan) = try await Task.detached(priority: .userInitiated) {
+                    let config = try command.runJSON(["--json", "config"], as: MackeepConfig.self)
+                    let plan = try command.runJSON(arguments, as: MackeepPlan.self)
+                    return (config, plan)
                 }.value
-                if !token.isCancelled { self.plan = plan; plannedCommand = action }
+                if !token.isCancelled {
+                    self.plan = plan
+                    plannedCommand = action
+                    plannedApplication = application
+                    plannedConfig = config
+                }
             } catch is CancellationError {} catch { present(error) }
         }
     }
@@ -195,9 +251,10 @@ final class BackupModel {
 
     /// Stop the command that is running.
     func cancel() {
-        guard canCancel else { return }
+        guard isRunning, canCancel || cancellation == nil else { return }
+        stopRequested = true
         isStopping = true
-        cancellation?.cancel()
+        if canCancel { cancellation?.cancel() }
     }
 
     private func present(_ error: Error) {
@@ -208,19 +265,51 @@ final class BackupModel {
     /// Persist selection first; a failed save must never launch filesystem work.
     private func run(command name: String, application: String?) {
         guard let command, !isRunning else { return }
-        if name == "restore", plannedCommand != "restore" || plan == nil { return }
-        isRunning = true
+        if name == "restore" {
+            guard plannedCommand == "restore", plan != nil,
+                  plannedApplication == application else { return }
+        }
+        let confirmedPlan = plan
+        let confirmedConfig = plannedConfig
+        beginOperation()
         presentedError = nil
         isStopping = false
         canCancel = false
-        resetResults(command: name, preview: false)
+        if name != "restore" { resetResults(command: name, preview: false) }
         Task {
-            defer { isRunning = false; canCancel = false; cancellation = nil }
+            defer { finishOperation() }
             do {
                 try await prepare()
+                if terminationRequested || stopRequested { throw CancellationError() }
                 let config = try await Task.detached {
                     try command.runJSON(["--json", "config"], as: MackeepConfig.self)
                 }.value
+                if terminationRequested || stopRequested { throw CancellationError() }
+                if name == "restore" {
+                    var previewCommand = command
+                    let previewToken = CommandCancellation()
+                    previewCommand.cancellation = previewToken
+                    cancellation = previewToken
+                    canCancel = true
+                    var arguments = ["--json", "restore"]
+                    if let application { arguments.append(application) }
+                    arguments.append("--dry-run")
+                    let current = try await Task.detached {
+                        try previewCommand.runJSON(arguments, as: MackeepPlan.self)
+                    }.value
+                    if terminationRequested || stopRequested || previewToken.isCancelled {
+                        throw CancellationError()
+                    }
+                    if config != confirmedConfig || current != confirmedPlan {
+                        plan = current
+                        plannedConfig = config
+                        presentedError = AppError(
+                            title: L10n.string("backup.restore.title"),
+                            message: L10n.string("backup.restore.changed"))
+                        return
+                    }
+                    resetResults(command: name, preview: false)
+                }
                 let token = CommandCancellation(signal: SIGUSR1)
                 cancellation = token
                 canCancel = config.supportsSafeCancellation == true
@@ -253,8 +342,15 @@ final class BackupModel {
                     succeeded: message == nil, files: result.summary.files ?? 0,
                     bytes: result.summary.totalBytes, message: message)
                 lastRun = record
-                historyStore.append(record)
-                loadHistory()
+                do {
+                    let recovery = try historyStore.append(record)
+                    history = try historyStore.load()
+                    if let recovery {
+                        presentedError = AppError(
+                            title: L10n.string("error.history.title"),
+                            message: L10n.string("history.recovered", recovery.path))
+                    }
+                } catch { presentHistoryError(error) }
                 if let message, !token.isCancelled {
                     presentedError = AppError(
                         title: L10n.string("error.backup.title"), message: message)
@@ -265,7 +361,7 @@ final class BackupModel {
                     message: message ?? L10n.string("backup.done.message"))
                 plannedCommand = nil
                 plan = nil
-            } catch { present(error) }
+            } catch is CancellationError {} catch { present(error) }
         }
     }
 

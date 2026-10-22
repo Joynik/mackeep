@@ -126,14 +126,13 @@ class TestApplicationProfile(unittest.TestCase):
         with open(mackeep_filepath, "w") as f:
             f.write("existing backup")
 
+        self.app_profile.replace_backup = False
         with (
             patch("mackeep.application.utils.confirm", return_value=False),
-            patch("mackeep.application.utils.delete") as mock_delete,
             patch("mackeep.application.utils.copy") as mock_copy,
         ):
             self.app_profile.copy_files_to_mackeep_folder()
 
-            mock_delete.assert_not_called()
             mock_copy.assert_not_called()
 
         with open(mackeep_filepath) as f:
@@ -152,12 +151,10 @@ class TestApplicationProfile(unittest.TestCase):
 
         with (
             patch("mackeep.application.utils.confirm", return_value=False),
-            patch("mackeep.application.utils.delete") as mock_delete,
             patch("mackeep.application.utils.copy") as mock_copy,
         ):
             self.app_profile.copy_files_from_mackeep_folder()
 
-            mock_delete.assert_not_called()
             mock_copy.assert_not_called()
 
         with open(home_filepath) as f:
@@ -178,9 +175,8 @@ class TestApplicationProfile(unittest.TestCase):
         with open(home_filepath, "w") as f:
             f.write("home content")
 
-        # Patch utils.delete and utils.copy
+        # Patch copying
         with (
-            patch("mackeep.application.utils.delete") as mock_delete,
             patch("mackeep.application.utils.copy") as mock_copy,
         ):
             # Capture stdout
@@ -191,7 +187,6 @@ class TestApplicationProfile(unittest.TestCase):
 
 
             # Verify that delete and copy were NOT called
-            mock_delete.assert_not_called()
             mock_copy.assert_not_called()
 
             # Verify that the warning message was printed
@@ -221,9 +216,8 @@ class TestApplicationProfile(unittest.TestCase):
         # Create the home file as a symbolic link pointing to the wrong target
         os.symlink(wrong_target, home_filepath)
 
-        # Patch utils.delete and utils.copy
+        # Patch copying
         with (
-            patch("mackeep.application.utils.delete") as mock_delete,
             patch("mackeep.application.utils.copy") as mock_copy,
         ):
             # Capture stdout
@@ -234,7 +228,6 @@ class TestApplicationProfile(unittest.TestCase):
 
 
             # Verify that delete and copy were NOT called
-            mock_delete.assert_not_called()
             mock_copy.assert_not_called()
 
             # Verify that the warning message was printed
@@ -281,9 +274,8 @@ class TestApplicationProfile(unittest.TestCase):
         # (simulating what link install does)
         os.symlink(mackeep_filepath, home_filepath)
 
-        # Patch utils.delete and utils.copy
+        # Patch copying
         with (
-            patch("mackeep.application.utils.delete") as mock_delete,
             patch("mackeep.application.utils.copy") as mock_copy,
         ):
             # Capture stdout
@@ -294,7 +286,6 @@ class TestApplicationProfile(unittest.TestCase):
 
 
             # Verify that delete and copy were NOT called (should skip)
-            mock_delete.assert_not_called()
             mock_copy.assert_not_called()
 
             # Verify that the skipping message was NOT printed (non-verbose)
@@ -333,9 +324,8 @@ class TestApplicationProfile(unittest.TestCase):
         # (simulating what link install does)
         os.symlink(mackeep_filepath, home_filepath)
 
-        # Patch utils.delete and utils.copy
+        # Patch copying
         with (
-            patch("mackeep.application.utils.delete") as mock_delete,
             patch("mackeep.application.utils.copy") as mock_copy,
         ):
             # Capture stdout
@@ -346,7 +336,6 @@ class TestApplicationProfile(unittest.TestCase):
 
 
             # Verify that delete and copy were NOT called (should skip)
-            mock_delete.assert_not_called()
             mock_copy.assert_not_called()
 
             # Verify that the skipping message WAS printed (verbose mode)

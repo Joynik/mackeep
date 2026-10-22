@@ -44,7 +44,10 @@ Modes of action:
 backup, restore, link install, link uninstall and link act on every configured
 application by default. Name a single application (e.g. `mackeep-cli backup vim`) to
 limit a command to that app, overriding the applications_to_sync and
-applications_to_ignore settings in your config.
+applications_to_ignore settings in your config. Backup replaces the selected
+snapshots without confirmation. Restore requires confirmation or --force.
+The --force-no option preserves existing data and exits nonzero if replacement
+is declined.
 
 Choose a storage engine and path in .mackeep.cfg or in the desktop settings
 before the first backup. A new configuration does not select storage automatically.
@@ -90,6 +93,7 @@ from mackeep.constants import (
     VERSION,
 )
 from mackeep.excludes import Matcher, Rule
+from mackeep.locking import storage_lock
 from mackeep.mackeep import Mackeep
 from mackeep.migrate import plan as migration_plan
 from mackeep.migrate import run as run_migration
@@ -109,6 +113,12 @@ def _request_cancel(_signum: int, _frame: object) -> None:
     """Request cancellation at the next application boundary."""
     global _cancel_requested  # noqa: PLW0603 - signal handler state
     _cancel_requested = True
+
+
+class _UnsupportedApplicationError(ConfigError):
+    """A requested application is missing from the loaded catalog."""
+
+    code = "unsupported_application"
 
 
 class ColorFormatCodes:
@@ -137,6 +147,7 @@ class _Context:
     reporter: Reporter | None = None
     detail: str = "entries"
     max_actions: int = 5000
+    replace_backup: bool = True
 
 
 def _print_app_header(app_name: str, verbose: bool) -> None:
@@ -148,8 +159,12 @@ def _print_app_header(app_name: str, verbose: bool) -> None:
 def _make_profile(ctx: _Context, app_name: str) -> ApplicationProfile:
     """Create the profile of an application, with its exclusion rules."""
     app: ApplicationProfile = ApplicationProfile(
-        ctx.mckp, ctx.app_db.get_files(app_name), ctx.dry_run, ctx.verbose,
+        ctx.mckp,
+        ctx.app_db.get_files(app_name),
+        ctx.dry_run,
+        ctx.verbose,
     )
+    app.replace_backup = ctx.replace_backup
     config_file: str = ctx.mckp.config.config_path
     app_file: str = ctx.app_db.get_config_file(app_name)
     app.configure(
@@ -195,12 +210,14 @@ def _resolve_apps(app_name: str | None, ctx: _Context) -> set[str]:
     """
     if app_name:
         if app_name not in ctx.app_db.get_app_names():
-            sys.exit(f"Unsupported application: {app_name}")
+            raise _UnsupportedApplicationError(f"Unsupported application: {app_name}")
         return {app_name}
     names = ctx.mckp.get_apps_to_backup(ctx.app_db)
     unknown = names - ctx.app_db.get_app_names()
     if unknown:
-        sys.exit(f"Unsupported application: {', '.join(sorted(unknown))}")
+        raise _UnsupportedApplicationError(
+            f"Unsupported application: {', '.join(sorted(unknown))}",
+        )
     return names
 
 
@@ -217,7 +234,7 @@ def _preflight(
     profiles = [(name, _make_profile(ctx, name)) for name in sorted(app_names)]
     for name, profile in profiles:
         problem = ctx.app_db.get_error(name)
-        if problem and ("Invalid path" in problem or "parent traversal" in problem):
+        if problem and name in ctx.app_db.unsafe_paths:
             raise ConfigError(problem)
         profile.preflight(action)
     return profiles
@@ -275,7 +292,7 @@ def _run_action(
             ctx.reporter("start", {"app": app_name, "action": label or action})
         try:
             getattr(app, action)()
-        except OSError as exc:
+        except (OSError, ConfigError, ValueError) as exc:
             app.failed = True
             print(f"Error: {app_name}: {exc}", file=sys.stderr)
             if ctx.reporter is not None:
@@ -324,7 +341,9 @@ def _cmd_show(args: dict[str, Any], app_db: ApplicationsDatabase) -> None:
 
     # Make sure the app exists
     if requested_app_name not in app_db.get_app_names():
-        sys.exit(f"Unsupported application: {requested_app_name}")
+        raise _UnsupportedApplicationError(
+            f"Unsupported application: {requested_app_name}",
+        )
     print(f"Name: {app_db.get_name(requested_app_name)}")
     print("Configuration files:")
     for file in app_db.get_files(requested_app_name):
@@ -420,13 +439,7 @@ def _cmd_link_uninstall(args: dict[str, Any], ctx: _Context) -> None:
 
         # Restore the Mackeep config before any other config, as we might
         # need it to know about custom settings
-        mackeep_app = _make_profile(ctx, MACKEEP_APP_NAME)
-        mackeep_app.link_uninstall()
-
-        # Delete the Mackeep folder in Dropbox
-        # Don't delete this as there might be other Macs that aren't
-        # uninstalled yet
-        # delete(mckp.mackeep_folder)
+        _run_action(ctx, {MACKEEP_APP_NAME}, "link_uninstall")
 
         print(
             "\n"
@@ -454,9 +467,8 @@ def _cmd_link(args: dict[str, Any], ctx: _Context) -> None:
 
     # Restore the Mackeep config before any other config, as we might
     # need it to know about custom settings
-    mackeep_app = _make_profile(ctx, MACKEEP_APP_NAME)
-    _print_app_header(MACKEEP_APP_NAME, ctx.verbose)
-    mackeep_app.link()
+    original_storage = os.path.realpath(ctx.mckp.mackeep_folder)
+    _run_action(ctx, {MACKEEP_APP_NAME}, "link")
 
     # Initialize again the apps db, as the Mackeep config might have
     # changed it
@@ -470,7 +482,14 @@ def _cmd_link(args: dict[str, Any], ctx: _Context) -> None:
     # Mackeep has already been done
     app_names.discard(MACKEEP_APP_NAME)
 
-    _run_action(ctx, app_names, "link")
+    if (
+        not ctx.dry_run
+        and os.path.realpath(ctx.mckp.mackeep_folder) != original_storage
+    ):
+        with storage_lock(ctx.mckp.mackeep_folder):
+            _run_action(ctx, app_names, "link")
+    else:
+        _run_action(ctx, app_names, "link")
 
 
 class _JsonReporter:
@@ -554,7 +573,7 @@ class _JsonReporter:
         elif action == "copy":
             self.files += 1
             self.bytes += int(payload.get("size_bytes") or 0)
-        elif action.startswith("skip"):
+        elif action.startswith("skip") or action == "conflict":
             self.skipped += 1
 
         details: dict[str, Any] = dict(payload)
@@ -580,9 +599,10 @@ def _app_json(app_db: ApplicationsDatabase, app_name: str) -> dict[str, Any]:
     Returns:
         dict
     """
-    home: str = os.environ["HOME"]
+    home: str = os.path.expanduser("~")
     xdg_config_home: str = os.environ.get(
-        "XDG_CONFIG_HOME", os.path.join(home, ".config"),
+        "XDG_CONFIG_HOME",
+        os.path.join(home, ".config"),
     )
 
     files: list[dict[str, Any]] = []
@@ -638,6 +658,7 @@ def _config_json(ctx: _Context) -> dict[str, Any]:
         dict
     """
     config = ctx.mckp.config
+    resolved_backup = config.fullpath
 
     return {
         "schema_version": jsonapi.SCHEMA_VERSION,
@@ -650,8 +671,8 @@ def _config_json(ctx: _Context) -> dict[str, Any]:
             "engine": config.engine,
             "path": config.path,
             "directory": config.directory,
-            "resolved_backup_dir": config.fullpath,
-            "exists": os.path.isdir(config.fullpath),
+            "resolved_backup_dir": resolved_backup,
+            "exists": os.path.isdir(resolved_backup),
         },
         "apps_to_sync": sorted(config.apps_to_sync),
         "apps_to_ignore": sorted(config.apps_to_ignore),
@@ -729,9 +750,7 @@ def _cmd_json_migrate(dry_run: bool, stream: TextIO) -> None:
     if not dry_run:
         copied = run_migration(actions)
     skipped: int = sum(1 for action in actions if action["action"] == "skip")
-    updated: int = sum(
-        1 for action in actions if action["action"] == "set_directory"
-    )
+    updated: int = sum(1 for action in actions if action["action"] == "set_directory")
     jsonapi.emit(
         {
             "schema_version": jsonapi.SCHEMA_VERSION,
@@ -761,7 +780,7 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
     elif args["show"]:
         app_name: str = args["<application>"]
         if app_name not in ctx.app_db.get_app_names():
-            sys.exit(f"Unsupported application: {app_name}")
+            raise _UnsupportedApplicationError(f"Unsupported application: {app_name}")
         jsonapi.emit(_app_json(ctx.app_db, app_name), stream)
     elif args["backup"] or args["restore"]:
         action: str = (
@@ -815,22 +834,6 @@ def _clean_error(message: str) -> str:
     return text.removeprefix("Error: ")
 
 
-def _error_code(message: str) -> str:
-    """
-    Guess the code of an error from its message.
-
-    Args:
-        message (str): The message of the error.
-
-    Returns:
-        str
-    """
-    if message.startswith("Unsupported application"):
-        return "unsupported_application"
-    if "config" in message.lower():
-        return "config_error"
-    return "error"
-
 
 def main() -> None:
     """Main function."""
@@ -859,6 +862,7 @@ def main() -> None:
 
     global _cancel_requested  # noqa: PLW0603 - signal handler state
     _cancel_requested = False
+    previous_flags = utils.FORCE_YES, utils.FORCE_NO, utils.CAN_RUN_AS_ROOT
     previous_handler = signal.signal(signal.SIGUSR1, _request_cancel)
     try:
         args: dict[str, Any] = docopt(docstring, version=f"Mackeep {VERSION}")
@@ -867,7 +871,7 @@ def main() -> None:
         _handle_exit(e, json_mode, stdout)
     except ConfigError as e:
         if json_mode:
-            jsonapi.emit_error("config_error", str(e), stdout)
+            jsonapi.emit_error(e.code, str(e), stdout)
             sys.exit(1)
         sys.exit(str(e))
     except Exception as exc:
@@ -880,6 +884,7 @@ def main() -> None:
     finally:
         signal.signal(signal.SIGUSR1, previous_handler)
         utils.print_legacy_warnings()
+        utils.FORCE_YES, utils.FORCE_NO, utils.CAN_RUN_AS_ROOT = previous_flags
         sys.stdout = stdout
 
 
@@ -939,7 +944,7 @@ def _handle_exit(exc: SystemExit, json_mode: bool, stdout: TextIO) -> None:
 
     if isinstance(code, str):
         message: str = _clean_error(code)
-        error_code: str = _error_code(message)
+        error_code: str = "error"
     elif code == CANCELLED_EXIT_CODE:
         message = "Cancelled after the current application."
         error_code = "cancelled"
@@ -988,34 +993,46 @@ def _run(args: dict[str, Any], json_mode: bool, stdout: TextIO) -> None:
         verbose=args["--verbose"],
         detail=_detail_level(args.get("--detail")),
         max_actions=_max_actions(args.get("--max-actions")),
+        replace_backup=not args["--force-no"],
     )
 
-    # If we want to answer mackeep with "yes" for each question
     if args["--force"]:
         utils.FORCE_YES = True
-
-    # If we want to answer mackeep with "no" for each question
+    if args["--force-no"] or json_mode:
+        utils.FORCE_NO = True
     if args["--force-no"]:
-        utils.FORCE_NO = True
-    elif json_mode:
-        # No question can be asked in JSON mode
-        utils.FORCE_NO = True
+        utils.FORCE_YES = False
 
     # Allow mackeep to be run as root
     if args["--root"]:
         utils.CAN_RUN_AS_ROOT = True
 
+    if args["config"]:
+        _ = mckp.config.path
     _print_warnings(ctx)
 
+    if (
+        not ctx.dry_run
+        and (args["backup"] or args["restore"] or args["link"])
+        and mckp.config.path
+    ):
+        with storage_lock(mckp.mackeep_folder):
+            _dispatch(args, ctx, json_mode, stdout)
+    else:
+        _dispatch(args, ctx, json_mode, stdout)
+
+
+def _dispatch(
+    args: dict[str, Any], ctx: _Context, json_mode: bool, stdout: TextIO,
+) -> None:
+    """Dispatch after acquiring a local lock for filesystem writes."""
     if json_mode:
         _cmd_json(args, ctx, stdout)
         return
 
     if args["list"]:
-        ctx.mckp.check_for_usable_environment()
         _cmd_list(ctx.app_db)
     elif args["show"]:
-        ctx.mckp.check_for_usable_environment()
         _cmd_show(args, ctx.app_db)
     elif args["config"]:
         _cmd_config(ctx)

@@ -4,19 +4,15 @@ import json
 import os
 from unittest.mock import Mock, patch
 
+import pytest
+
 from mackeep import utils
 from mackeep.application import ApplicationProfile
 from mackeep.mackeep import Mackeep
 from mackeep_cli.main import main
 
 # The content of the config file of the test application
-APP_CONFIG = (
-    "[application]\n"
-    "name = Test App\n"
-    "\n"
-    "[configuration_files]\n"
-    ".testrc\n"
-)
+APP_CONFIG = "[application]\nname = Test App\n\n[configuration_files]\n.testrc\n"
 
 # The content of the main config file
 MAIN_CONFIG = (
@@ -58,9 +54,7 @@ def run(*args):
 
 def events_of(captured):
     """Read the events of a JSON output."""
-    return [
-        json.loads(line) for line in captured.out.splitlines() if line
-    ]
+    return [json.loads(line) for line in captured.out.splitlines() if line]
 
 
 def test_the_backup_reports_a_conflict(home, capsys):
@@ -71,13 +65,12 @@ def test_the_backup_reports_a_conflict(home, capsys):
     utils.FORCE_YES = False
     utils.FORCE_NO = True
 
-    run("--json", "backup", "test-app")
+    with pytest.raises(SystemExit):
+        run("--json", "--force-no", "backup", "test-app")
     captured = capsys.readouterr()
 
     conflicts: list[dict] = [
-        event
-        for event in events_of(captured)
-        if event.get("action") == "conflict"
+        event for event in events_of(captured) if event.get("action") == "conflict"
     ]
 
     assert len(conflicts) == 1
@@ -133,13 +126,12 @@ def test_the_restore_reports_a_conflict(home, capsys):
     utils.FORCE_YES = False
     utils.FORCE_NO = True
 
-    run("--json", "restore", "test-app")
+    with pytest.raises(SystemExit):
+        run("--json", "restore", "test-app")
     captured = capsys.readouterr()
 
     conflicts: list[dict] = [
-        event
-        for event in events_of(captured)
-        if event.get("action") == "conflict"
+        event for event in events_of(captured) if event.get("action") == "conflict"
     ]
 
     assert len(conflicts) == 1

@@ -214,4 +214,8 @@ TRANSLATION: dict[str, str] = {
     "backup.action.copied": "Copiato",
     "backup.action.removedStale": "Copia obsoleta rimossa",
     "backup.history.clear": "Cancella cronologia",
+    "error.history.title": "Impossibile leggere o salvare la cronologia",
+    "history.recovered": "La cronologia danneggiata è stata conservata in %@. È stata creata una nuova cronologia.",
+    "backup.restore.changed": "La configurazione o il piano di ripristino è cambiato. Controlla l’anteprima aggiornata e conferma di nuovo.",
+    "backup.restore.overwrites": "File e cartelle esistenti da sostituire: %lld",
 }

@@ -5,12 +5,13 @@ on:
     branches:
       - master
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-tests-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,7 +36,7 @@ jobs:
           enable-cache: true
           python-version: ${{ matrix.python-version }}
       - run: uv sync --locked --dev
-      - run: uv run --no-sync python -m pytest --cov=mackeep --cov=mackeep_cli --cov-report=term --cov-fail-under=80
+      - run: uv run --no-sync python -m pytest --cov=mackeep --cov=mackeep_cli --cov-report=term
 
   desktop-unit:
     timeout-minutes: 20

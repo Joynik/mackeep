@@ -5113,6 +5113,77 @@
         }
       }
     },
+    "backup.restore.changed": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konfiguration oder Wiederherstellungsplan haben sich geändert. Prüfe die aktualisierte Vorschau und bestätige erneut."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The configuration or restore plan changed. Review the updated preview and confirm again."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuración o el plan de restauración cambió. Revisa la vista previa actualizada y confirma de nuevo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuration ou le plan de restauration a changé. Vérifiez l’aperçu actualisé et confirmez à nouveau."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configurazione o il piano di ripristino è cambiato. Controlla l’anteprima aggiornata e conferma di nuovo."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定または復元プランが変更されました。更新されたプレビューを確認し、もう一度確定してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "설정 또는 복원 계획이 변경되었습니다. 업데이트된 미리보기를 검토하고 다시 확인하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A configuração ou o plano de restauração mudou. Revise a prévia atualizada e confirme novamente."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки или план восстановления изменились. Проверьте обновлённый предпросмотр и подтвердите ещё раз."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Налаштування або план відновлення змінилися. Перевірте оновлений попередній перегляд і підтвердьте ще раз."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置或恢复计划已更改。请检查更新后的预览并再次确认。"
+          }
+        }
+      }
+    },
     "backup.restore.confirm": {
       "comment": "The string of the backup section",
       "extractionState": "manual",
@@ -5181,6 +5252,77 @@
           "stringUnit": {
             "state": "translated",
             "value": "恢复"
+          }
+        }
+      }
+    },
+    "backup.restore.overwrites": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vorhandene Dateien und Ordner zum Ersetzen: %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Existing files and folders to replace: %lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archivos y carpetas existentes que se reemplazarán: %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fichiers et dossiers existants à remplacer : %lld"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File e cartelle esistenti da sostituire: %lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "置き換える既存のファイルとフォルダ：%lld"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "바꿀 기존 파일 및 폴더: %lld"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arquivos e pastas existentes a substituir: %lld"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Существующих файлов и папок для замены: %lld"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Наявних файлів і папок для заміни: %lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将替换的现有文件和文件夹：%lld"
           }
         }
       }
@@ -10297,6 +10439,77 @@
         }
       }
     },
+    "error.history.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verlauf konnte nicht gespeichert oder gelesen werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not read or save history"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo leer o guardar el historial"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de lire ou d’enregistrer l’historique"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile leggere o salvare la cronologia"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "履歴を読み込みまたは保存できませんでした"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기록을 읽거나 저장할 수 없습니다"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível ler ou salvar o histórico"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось прочитать или сохранить историю"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося прочитати або зберегти історію"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取或保存历史记录"
+          }
+        }
+      }
+    },
     "error.load.title": {
       "comment": "The title of the error when the applications cannot be loaded",
       "extractionState": "manual",
@@ -10869,6 +11082,77 @@
           "stringUnit": {
             "state": "translated",
             "value": "库"
+          }
+        }
+      }
+    },
+    "history.recovered": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der beschädigte Verlauf wurde hier gesichert: %@. Ein neuer Verlauf wurde angelegt."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Damaged history was preserved at %@. A new history file was created."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El historial dañado se conservó en %@. Se creó un historial nuevo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’historique endommagé a été conservé dans %@. Un nouvel historique a été créé."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cronologia danneggiata è stata conservata in %@. È stata creata una nuova cronologia."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "破損した履歴は %@ に保存されました。新しい履歴ファイルを作成しました。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "손상된 기록을 %@에 보존하고 새 기록 파일을 만들었습니다."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O histórico danificado foi preservado em %@. Um novo histórico foi criado."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повреждённая история сохранена в %@. Создан новый файл истории."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пошкоджену історію збережено в %@. Створено новий файл історії."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "损坏的历史记录已保存在 %@，并已创建新的历史记录文件。"
           }
         }
       }

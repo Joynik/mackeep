@@ -214,4 +214,8 @@ TRANSLATION: dict[str, str] = {
     "backup.action.copied": "Kopiert",
     "backup.action.removedStale": "Veraltete Sicherung entfernt",
     "backup.history.clear": "Verlauf löschen",
+    "error.history.title": "Verlauf konnte nicht gespeichert oder gelesen werden",
+    "history.recovered": "Der beschädigte Verlauf wurde hier gesichert: %@. Ein neuer Verlauf wurde angelegt.",
+    "backup.restore.changed": "Konfiguration oder Wiederherstellungsplan haben sich geändert. Prüfe die aktualisierte Vorschau und bestätige erneut.",
+    "backup.restore.overwrites": "Vorhandene Dateien und Ordner zum Ersetzen: %lld",
 }

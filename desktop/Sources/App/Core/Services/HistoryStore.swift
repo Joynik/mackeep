@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 /// A run of Mackeep, as it is kept in the history.
@@ -50,6 +51,7 @@ struct RunRecord: Codable, Equatable, Identifiable {
 /// The history of the runs of Mackeep.
 ///
 /// The history is a JSON file in the application support folder.
+@MainActor
 final class HistoryStore {
     /// The name of the file of the history.
     static let fileName: String = "history.json"
@@ -99,39 +101,61 @@ final class HistoryStore {
     /// Read the history.
     ///
     /// - Returns: The runs, the most recent first.
-    func load() -> [RunRecord] {
-        guard
-            let data: Data = try? Data(contentsOf: url),
-            let records: [RunRecord] = try? HistoryStore.decoder.decode(
-                [RunRecord].self,
-                from: data
-            )
-        else {
+    func load() throws -> [RunRecord] {
+        do {
+            try validateFile()
+            let data = try Data(contentsOf: url)
+            return try Self.decoder.decode([RunRecord].self, from: data)
+                .sorted { $0.date > $1.date }
+        } catch let error as CocoaError where
+            error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile {
             return []
         }
-        return records.sorted { $0.date > $1.date }
     }
 
-    /// Write a run in the history.
-    ///
-    /// - Parameter record: The run.
-    func append(_ record: RunRecord) {
-        var records: [RunRecord] = load()
-        records.append(record)
-        records = records
-            .sorted { $0.date > $1.date }
-            .prefix(HistoryStore.maximumRuns)
-            .map { $0 }
-
-        guard let data: Data = try? HistoryStore.encoder.encode(records) else {
-            return
+    /// Preserve malformed history before starting a new history file.
+    @discardableResult
+    func append(_ record: RunRecord) throws -> URL? {
+        var records: [RunRecord]
+        var recovery: URL?
+        do {
+            records = try load()
+        } catch is DecodingError {
+            var backup = url.appendingPathExtension("bak")
+            if fileManager.fileExists(atPath: backup.path) {
+                backup = url.appendingPathExtension("\(UUID().uuidString).bak")
+            }
+            try fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+            try fileManager.moveItem(at: url, to: backup)
+            recovery = backup
+            records = []
         }
+        records.append(record)
+        let newest = Array(records.sorted { $0.date > $1.date }.prefix(Self.maximumRuns))
+        let data = try Self.encoder.encode(newest)
+        let parent = url.deletingLastPathComponent()
+        try fileManager.createDirectory(
+            at: parent, withIntermediateDirectories: true,
+            attributes: [.posixPermissions: 0o700])
+        let staging = parent.appendingPathComponent(".history-\(UUID().uuidString)")
+        try fileManager.createDirectory(
+            at: staging, withIntermediateDirectories: false,
+            attributes: [.posixPermissions: 0o700])
+        defer { try? fileManager.removeItem(at: staging) }
+        let file = staging.appendingPathComponent("history.json")
+        try data.write(to: file)
+        try fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
+        guard Darwin.rename(file.path, url.path) == 0 else {
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+        }
+        return recovery
+    }
 
-        try? fileManager.createDirectory(
-            at: url.deletingLastPathComponent(),
-            withIntermediateDirectories: true
-        )
-        try? data.write(to: url, options: .atomic)
+    private func validateFile() throws {
+        let attributes = try fileManager.attributesOfItem(atPath: url.path)
+        guard attributes[.type] as? FileAttributeType == .typeRegular else {
+            throw CocoaError(.fileReadUnsupportedScheme)
+        }
     }
 
     /// Remove the history.

@@ -295,6 +295,8 @@ struct RestoreConfirmationView: View {
                 .font(.callout)
             }
 
+            Text(L10n.string("backup.restore.overwrites", model.summary?.actions["conflict"] ?? 0))
+                .font(.callout)
             if model.isRunning { ProgressView() }
             if model.summary?.truncated == true {
                 Text(L10n.string("backup.plan.truncated")).foregroundStyle(.orange)
@@ -311,14 +313,14 @@ struct RestoreConfirmationView: View {
                 }
                 Button(L10n.string("backup.restore.confirm")) {
                     model.restore()
-                    dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
                 .disabled(model.isRunning || model.plannedCommand != "restore" || model.plan == nil)
             }
         }
         .appError($model.presentedError)
-        .onDisappear { if model.plannedCommand == nil { model.cancel() } }
+        .onChange(of: model.isPreview) { _, preview in if !preview { dismiss() } }
+        .onDisappear { if model.isPreview { model.cancel() } }
         .padding(20)
         .frame(width: 720, height: 560)
         .onAppear {

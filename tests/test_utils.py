@@ -1,4 +1,5 @@
 import os
+import shutil
 import sqlite3
 import stat
 import tempfile
@@ -43,45 +44,7 @@ class TestMackeep(unittest.TestCase):
                 assert utils.confirm("Retry invalid input") is expected
                 assert prompt.call_count == len(["unexpected", answer])
 
-    def test_delete_file(self):
-        # Create a tmp file
-        with tempfile.NamedTemporaryFile(delete=False) as tfile:
-            tfpath = tfile.name
 
-        # Make sure the created file exists
-        assert os.path.isfile(tfpath)
-
-        # Check if mackeep can really delete it
-        utils.delete(tfpath)
-        assert not os.path.exists(tfpath)
-
-    def test_delete_folder_recursively(self):
-        # Create a tmp folder
-        tfpath = tempfile.mkdtemp()
-
-        # Let's put a file in it just for fun
-        with tempfile.NamedTemporaryFile(dir=tfpath, delete=False) as tfile:
-            filepath = tfile.name
-
-        # Let's put another folder in it
-        subfolder_path = tempfile.mkdtemp(dir=tfpath)
-
-        # And a file in the subfolder
-        with tempfile.NamedTemporaryFile(dir=subfolder_path, delete=False) as tfile:
-            subfilepath = tfile.name
-
-        # Make sure the created files and folders exists
-        assert os.path.isdir(tfpath)
-        assert os.path.isfile(filepath)
-        assert os.path.isdir(subfolder_path)
-        assert os.path.isfile(subfilepath)
-
-        # Check if mackeep can really delete it
-        utils.delete(tfpath)
-        assert not os.path.exists(tfpath)
-        assert not os.path.exists(filepath)
-        assert not os.path.exists(subfolder_path)
-        assert not os.path.exists(subfilepath)
 
     def test_copy_file(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -121,8 +84,8 @@ class TestMackeep(unittest.TestCase):
         assert not os.path.exists(dstfile)
 
         # Let's clean up
-        utils.delete(srcfile)
-        utils.delete(dstpath)
+        os.unlink(srcfile)
+        shutil.rmtree(dstpath)
 
     def test_copy_file_to_dir(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -198,8 +161,8 @@ class TestMackeep(unittest.TestCase):
         assert os.readlink(dstfile) == srcfile
 
         # Let's clean up
-        utils.delete(srcfile)
-        utils.delete(dstpath)
+        os.unlink(srcfile)
+        shutil.rmtree(dstpath)
 
     def test_chmod_file(self):
         # Create a tmp file
@@ -253,8 +216,8 @@ class TestMackeep(unittest.TestCase):
         utils.chmod(dir_name)
 
         # # Let's clean up
-        utils.delete(file_name)
-        utils.delete(dir_name)
+        os.unlink(file_name)
+        shutil.rmtree(dir_name)
 
     def test_error(self):
         test_string = "Hello World"
@@ -378,14 +341,6 @@ class TestMackeep(unittest.TestCase):
 
             assert utils.get_google_drive_folder_location() == expected_path
 
-    def test_is_process_running(self):
-        with patch.object(utils.os.path, "isfile", return_value=True):
-            with patch.object(utils.subprocess, "call", return_value=0):
-                assert utils.is_process_running("application")
-            with patch.object(utils.subprocess, "call", return_value=1):
-                assert not utils.is_process_running("application")
-            with patch.object(utils.subprocess, "call", return_value=2):
-                assert not utils.is_process_running("application")
 
     def test_can_file_be_synced_on_current_platform(self):
         # Any file path will do, even if it doesn't exist

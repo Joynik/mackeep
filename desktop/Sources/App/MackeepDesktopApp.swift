@@ -5,6 +5,7 @@ import SwiftUI
 struct MackeepDesktopApp: App {
     /// The state of the application, shared by the windows.
     @State private var environment = AppEnvironment()
+    @NSApplicationDelegateAdaptor(MackeepAppDelegate.self) private var delegate
 
     var body: some Scene {
         WindowGroup {
@@ -12,6 +13,7 @@ struct MackeepDesktopApp: App {
                 .environment(environment)
                 .environment(\.locale, environment.language.resolvedLocale)
                 .preferredColorScheme(environment.appearance.colorScheme)
+                .onAppear { delegate.backup = environment.backup }
                 .onReceive(
                     NotificationCenter.default.publisher(
                         for: NSApplication.willTerminateNotification)
@@ -40,5 +42,25 @@ struct MackeepDesktopApp: App {
             }
         }
         .defaultSize(width: 780, height: 640)
+    }
+}
+
+/// Defer ordinary quit and logout until filesystem work has stopped safely.
+@MainActor
+final class MackeepAppDelegate: NSObject, NSApplicationDelegate {
+    weak var backup: BackupModel?
+    private var waitingForTermination = false
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let backup, backup.isRunning else { return .terminateNow }
+        if !waitingForTermination {
+            waitingForTermination = true
+            Task {
+                await backup.stopForTermination()
+                waitingForTermination = false
+                sender.reply(toApplicationShouldTerminate: true)
+            }
+        }
+        return .terminateLater
     }
 }

@@ -2,6 +2,7 @@
 
 import base64
 import binascii
+import errno
 import fnmatch
 import os
 import platform
@@ -10,6 +11,8 @@ import sqlite3
 import stat
 import subprocess
 import sys
+from contextlib import closing
+from pathlib import Path
 from typing import NoReturn
 
 from . import constants
@@ -26,8 +29,6 @@ CAN_RUN_AS_ROOT: bool = False
 # The legacy paths that were used during this run
 LEGACY_WARNINGS: list[str] = []
 
-# The warning about the sensitive files is printed once per run
-SENSITIVE_WARNINGS: list[str] = []
 
 # The files that hold a public key, they are not secrets
 SAFE_SUFFIXES: tuple[str, ...] = (".pub",)
@@ -59,10 +60,12 @@ def sensitive_path_reason(path: str) -> str | None:
     if not path:
         return None
     absolute = os.path.abspath(path)
-    home = os.path.abspath(os.environ["HOME"])
-    xdg = os.path.abspath(os.path.expanduser(
-        os.environ.get("XDG_CONFIG_HOME", os.path.join(home, ".config")),
-    ))
+    home = os.path.abspath(os.path.expanduser("~"))
+    xdg = os.path.abspath(
+        os.path.expanduser(
+            os.environ.get("XDG_CONFIG_HOME", os.path.join(home, ".config")),
+        ),
+    )
     for root in (home, xdg):
         if os.path.commonpath((absolute, root)) == root:
             reason = sensitive_reason(os.path.relpath(absolute, root))
@@ -71,23 +74,6 @@ def sensitive_path_reason(path: str) -> str | None:
     return sensitive_reason(absolute)
 
 
-def warn_sensitive_file(path: str, reason: str) -> None:
-    """
-    Warn about a file that holds secrets, once per run.
-
-    Args:
-        path (str): The path of the file, relative to the home directory.
-        reason (str): Why the file is sensitive.
-    """
-    if SENSITIVE_WARNINGS:
-        return
-
-    SENSITIVE_WARNINGS.append(path)
-    print(
-        f"Warning: {path} holds secrets ({reason}), it is copied in plain"
-        " text to the backup.",
-        file=sys.stderr,
-    )
 
 
 def legacy_warning(message: str) -> None:
@@ -139,7 +125,10 @@ def confirm(question: str) -> bool:
         return False
 
     while True:
-        answer: str = input(question + " <Yes|No> ").lower()
+        try:
+            answer: str = input(question + " <Yes|No> ").lower()
+        except EOFError:
+            return False
 
         if answer in {"yes", "y"}:
             confirmed: bool = True
@@ -151,29 +140,15 @@ def confirm(question: str) -> bool:
     return confirmed
 
 
-def delete(filepath: str) -> None:
-    """
-    Delete the given file, directory or link.
-
-    It Should support undelete later on.
-
-    Args:
-        filepath (str): Absolute full path to a file. e.g. /path/to/file
-    """
-    # Some files have ACLs, let's remove them recursively
-    remove_acl(filepath)
-
-    # Some files have immutable attributes, let's remove them recursively
-    remove_immutable_attribute(filepath)
-
-    # Finally remove the files and folders
-    if os.path.isfile(filepath) or os.path.islink(filepath):
-        os.remove(filepath)
-    elif os.path.isdir(filepath):
-        shutil.rmtree(filepath)
 
 
-def copy(src: str, dst: str, *, preserve_link: bool = False) -> None:
+def copy(
+    src: str,
+    dst: str,
+    *,
+    preserve_link: bool = False,
+    private: bool = True,
+) -> None:
     """
     Copy a file or a folder (recursively) from src to dst.
 
@@ -191,9 +166,10 @@ def copy(src: str, dst: str, *, preserve_link: bool = False) -> None:
         src (str): Source file or folder
         dst (str): Destination file or folder
     """
-    assert isinstance(src, str)
-    assert os.path.lexists(src)
-    assert isinstance(dst, str)
+    if not isinstance(src, str) or not isinstance(dst, str):
+        raise TypeError("Copy paths must be strings")
+    if not os.path.lexists(src):
+        raise FileNotFoundError(src)
 
     # Create the path to the dst file if it does not exist
     abs_path = os.path.dirname(os.path.abspath(dst))
@@ -213,7 +189,11 @@ def copy(src: str, dst: str, *, preserve_link: bool = False) -> None:
     # We need to copy a whole folder
     elif os.path.isdir(src):
         shutil.copytree(
-            src, dst, dirs_exist_ok=True, symlinks=True, copy_function=shutil.copy2,
+            src,
+            dst,
+            dirs_exist_ok=True,
+            symlinks=True,
+            copy_function=shutil.copy2,
         )
 
     # What the heck is this?
@@ -221,7 +201,8 @@ def copy(src: str, dst: str, *, preserve_link: bool = False) -> None:
         raise ValueError(f"Unsupported file: {src}")
 
     # Set the good mode to the file or folder recursively
-    chmod(dst)
+    if private:
+        chmod(dst)
 
 
 def link(target: str, link_to: str) -> None:
@@ -241,9 +222,12 @@ def link(target: str, link_to: str) -> None:
         target (str): file or folder the link will point to
         link_to (str): Link to create
     """
-    assert isinstance(target, str)
-    assert os.path.exists(target)
-    assert isinstance(link_to, str)
+    if not isinstance(target, str):
+        raise TypeError("Target must be a string")
+    if not os.path.exists(target):
+        raise FileNotFoundError(target)
+    if not isinstance(link_to, str):
+        raise TypeError("Link path must be a string")
 
     # Create the path to the link if it does not exist
     abs_path = os.path.dirname(os.path.abspath(link_to))
@@ -266,36 +250,35 @@ def chmod(target: str) -> None:
     Args:
         target (str): Root file or folder
     """
-    assert isinstance(target, str)
-    assert os.path.exists(target)
+    if not isinstance(target, str):
+        raise TypeError("Target must be a string")
+    if not os.path.exists(target):
+        raise FileNotFoundError(target)
 
     file_mode = stat.S_IRUSR | stat.S_IWUSR
     folder_mode = stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR
 
-    # Remove the immutable attribute recursively if there is one
-    remove_immutable_attribute(target)
-
     if os.path.islink(target):
         return
     if os.path.isfile(target):
-        os.chmod(target, file_mode | (os.stat(target).st_mode & stat.S_IXUSR))
+        set_mode(target, file_mode | (os.stat(target).st_mode & stat.S_IXUSR))
 
     elif os.path.isdir(target):
         # chmod the root item
-        os.chmod(target, folder_mode)
+        set_mode(target, folder_mode)
 
         # chmod recursively in the folder it it's one
         for root, dirs, files in os.walk(target):
             for cur_dir in dirs:
                 directory = os.path.join(root, cur_dir)
                 if not os.path.islink(directory):
-                    os.chmod(directory, folder_mode)
+                    set_mode(directory, folder_mode)
             for cur_file in files:
                 fullpath = os.path.join(root, cur_file)
                 if os.path.islink(fullpath):
                     continue
                 try:
-                    os.chmod(
+                    set_mode(
                         fullpath,
                         file_mode | (os.stat(fullpath).st_mode & stat.S_IXUSR),
                     )
@@ -321,7 +304,8 @@ def error(message: str) -> NoReturn:
     """
     fail: str = "\033[91m"
     end: str = "\033[0m"
-    sys.exit(fail + f"Error: {message}" + end)
+    text = f"Error: {message}"
+    sys.exit(fail + text + end if sys.stderr.isatty() else text)
 
 
 def get_dropbox_folder_location() -> str:
@@ -331,7 +315,7 @@ def get_dropbox_folder_location() -> str:
     Returns:
         (str) Full path to the current Dropbox folder
     """
-    host_db_path = os.path.join(os.environ["HOME"], ".dropbox/host.db")
+    host_db_path = os.path.join(os.path.expanduser("~"), ".dropbox/host.db")
     min_host_db_fields = 2
     try:
         with open(host_db_path, encoding="utf-8") as f_hostdb:
@@ -362,7 +346,7 @@ def get_google_drive_folder_location() -> str:
     yosemite_gdrive_db_path = (
         "Library/Application Support/Google/Drive/user_default/sync_config.db"
     )
-    yosemite_gdrive_db = os.path.join(os.environ["HOME"], yosemite_gdrive_db_path)
+    yosemite_gdrive_db = os.path.join(os.path.expanduser("~"), yosemite_gdrive_db_path)
     if os.path.isfile(yosemite_gdrive_db):
         gdrive_db_path = yosemite_gdrive_db
 
@@ -371,11 +355,13 @@ def get_google_drive_folder_location() -> str:
     gdrive_db = (
         gdrive_db_path
         if os.path.isabs(gdrive_db_path)
-        else os.path.join(os.environ["HOME"], gdrive_db_path)
+        else os.path.join(os.path.expanduser("~"), gdrive_db_path)
     )
     if os.path.isfile(gdrive_db):
         try:
-            with sqlite3.connect(gdrive_db) as con:
+            with closing(
+                sqlite3.connect(Path(gdrive_db).as_uri() + "?mode=ro", uri=True),
+            ) as con:
                 cur = con.cursor()
                 query = (
                     "SELECT data_value FROM data "
@@ -415,71 +401,25 @@ def get_icloud_folder_location() -> str:
     return str(icloud_home)
 
 
-def is_process_running(process_name: str) -> bool:
-    """
-    Check if a process with the given name is running.
-
-    Args:
-        (str): Process name, e.g. "Sublime Text"
-
-    Returns:
-        (bool): True if the process is running
-    """
-    is_running: bool = False
-
-    # On systems with pgrep, check if the given process is running
-    if os.path.isfile("/usr/bin/pgrep"):
-        with open(os.devnull, "wb") as dev_null:
-            returncode: int = subprocess.call(
-                ["/usr/bin/pgrep", process_name],
-                stdout=dev_null,
-            )
-            is_running = bool(returncode == 0)
-
-    return is_running
 
 
-def remove_acl(path: str) -> None:
-    """
-    Remove the ACL of the file or folder located on the given path.
-
-    Also remove the ACL of any file and folder below the given one,
-    recursively.
-
-    Args:
-        path (str): Path to the file or folder to remove the ACL for,
-                    recursively.
-    """
-    # Some files have ACLs, let's remove them recursively
-    if platform.system() == constants.PLATFORM_DARWIN and os.path.isfile("/bin/chmod"):
-        subprocess.call(["/bin/chmod", "-R", "-N", path])
-    elif (platform.system() == constants.PLATFORM_LINUX) and os.path.isfile(
-        "/bin/setfacl",
-    ):
-        subprocess.call(["/bin/setfacl", "-R", "-b", path])
 
 
-def remove_immutable_attribute(path: str) -> None:
-    """
-    Remove the immutable attribute of the given path.
-
-    Remove the immutable attribute of the file or folder located on the given
-    path. Also remove the immutable attribute of any file and folder below the
-    given one, recursively.
-
-    Args:
-        path (str): Path to the file or folder to remove the immutable
-                    attribute for, recursively.
-    """
-    # Some files have ACLs, let's remove them recursively
-    if (platform.system() == constants.PLATFORM_DARWIN) and os.path.isfile(
-        "/usr/bin/chflags",
-    ):
-        subprocess.call(["/usr/bin/chflags", "-R", "nouchg", path])
-    elif platform.system() == constants.PLATFORM_LINUX and os.path.isfile(
-        "/usr/bin/chattr",
-    ):
-        subprocess.call(["/usr/bin/chattr", "-R", "-f", "-i", path])
+def set_mode(path: str, mode: int) -> None:
+    """Set permissions, clearing an immutable flag only after an EPERM failure."""
+    try:
+        os.chmod(path, mode)
+    except PermissionError as exc:
+        if exc.errno != errno.EPERM or os.path.islink(path):
+            raise
+        if hasattr(os, "chflags"):
+            flags = os.stat(path).st_flags & ~(stat.UF_IMMUTABLE | stat.UF_APPEND)
+            os.chflags(path, flags)
+        elif os.path.isfile("/usr/bin/chattr"):
+            subprocess.run(["/usr/bin/chattr", "-f", "-i", "-a", path], check=True)
+        else:
+            raise
+        os.chmod(path, mode)
 
 
 def can_file_be_synced_on_current_platform(path: str) -> bool:
@@ -503,12 +443,12 @@ def can_file_be_synced_on_current_platform(path: str) -> bool:
     can_be_synced: bool = True
 
     # If the given path is relative, prepend home
-    fullpath: str = os.path.join(os.environ["HOME"], path)
+    fullpath: str = os.path.join(os.path.expanduser("~"), path)
 
     # Compute the ~/Library path on macOS
     # End it with a slash because we are looking for this specific folder and
     # not any file/folder named LibrarySomething
-    library_path: str = os.path.join(os.environ["HOME"], "Library/")
+    library_path: str = os.path.join(os.path.expanduser("~"), "Library/")
 
     is_linux = platform.system() == constants.PLATFORM_LINUX
     if is_linux and fullpath.startswith(library_path):

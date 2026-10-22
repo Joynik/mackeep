@@ -30,7 +30,7 @@ def entry_paths(
     Returns:
         The absolute local path and backup path.
     """
-    home = os.environ["HOME"]
+    home = os.path.expanduser("~")
     local = os.path.abspath(os.path.join(home, entry))
     external = os.path.isabs(entry) or ".." in Path(entry).parts
     if external and not allow_external:
