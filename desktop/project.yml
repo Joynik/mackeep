@@ -11,7 +11,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.22.0"
+    MARKETING_VERSION: "0.22.1"
     # The build number is not shown in the About window
     CURRENT_PROJECT_VERSION: ""
     # A real identity is needed to run the UI tests.
