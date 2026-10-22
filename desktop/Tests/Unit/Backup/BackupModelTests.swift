@@ -117,4 +117,20 @@ final class BackupModelTests: XCTestCase {
         XCTAssertEqual(loaded.first?.files, 2)
         XCTAssertEqual(loaded.first?.bytes, 42)
     }
+    func testRunTotalsIncludeEveryApplication() async throws {
+        let command = try makeTool()
+        let toolURL = URL(fileURLWithPath: command.path)
+        var script = try String(contentsOf: toolURL, encoding: .utf8)
+        script += "\necho '{\"schema_version\":4,\"event\":\"done\",\"app\":\"second\",\"action\":\"backup\",\"files\":2,\"bytes\":8}'\n"
+        try script.write(to: toolURL, atomically: true, encoding: .utf8)
+        let model = BackupModel(
+            command: command,
+            historyStore: HistoryStore(url: directory.appendingPathComponent("run-history.json"))
+        )
+        model.backup()
+        await waitForThePlan(model)
+        XCTAssertEqual(model.history.first?.files, 3)
+        XCTAssertEqual(model.history.first?.bytes, 20)
+    }
+
 }

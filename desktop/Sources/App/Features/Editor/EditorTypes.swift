@@ -27,6 +27,7 @@ struct EditorPath: Identifiable, Equatable {
     ///   - isXDG: Whether the path is an XDG one.
     /// - Returns: The absolute path.
     static func absoluteURL(of path: String, isXDG: Bool) -> URL {
+        if path.hasPrefix("/") { return URL(fileURLWithPath: path) }
         let root: URL = isXDG ? EditorPath.xdgDirectory : EditorPath.homeDirectory
         return root.appendingPathComponent(path)
     }
@@ -71,7 +72,7 @@ struct EditorPath: Identifiable, Equatable {
     ///   - text: The path or the mask, as it is written.
     ///   - isXDG: Whether it belongs to the XDG section.
     /// - Returns: The relative path.
-    static func corrected(_ text: String, isXDG: Bool) -> String {
+    static func corrected(_ text: String, isXDG: Bool, allowExternalPaths: Bool = false) -> String {
         let trimmed: String = text.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return trimmed }
 
@@ -85,6 +86,10 @@ struct EditorPath: Identifiable, Equatable {
         let prefix: String = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
         if expanded.hasPrefix(prefix) {
             return String(expanded.dropFirst(prefix.count))
+        }
+
+        if allowExternalPaths, expanded.hasPrefix("/") {
+            return URL(fileURLWithPath: expanded).standardizedFileURL.path
         }
 
         // The path is outside of the root, the leading slash is cut.

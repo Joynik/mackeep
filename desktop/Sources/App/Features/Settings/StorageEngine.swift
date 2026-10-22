@@ -2,6 +2,9 @@ import Foundation
 
 /// The engines of the storage of Mackeep.
 enum StorageEngine: String, CaseIterable, Identifiable, Codable {
+    /// No storage is selected on a fresh installation.
+    case unconfigured
+
     /// The Dropbox folder of the home directory.
     case dropbox
 
@@ -19,6 +22,8 @@ enum StorageEngine: String, CaseIterable, Identifiable, Codable {
     /// The title of the engine.
     var title: String {
         switch self {
+        case .unconfigured:
+            return L10n.string("settings.storage.unconfigured")
         case .dropbox:
             return L10n.string("settings.storage.dropbox")
         case .googleDrive:
@@ -42,7 +47,7 @@ enum StorageEngine: String, CaseIterable, Identifiable, Codable {
             return home.appendingPathComponent(
                 "Library/Mobile Documents/com~apple~CloudDocs"
             ).path
-        case .fileSystem:
+        case .fileSystem, .unconfigured:
             return nil
         }
     }

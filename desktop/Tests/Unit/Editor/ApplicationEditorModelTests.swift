@@ -110,12 +110,13 @@ final class ApplicationEditorModelTests: XCTestCase {
         XCTAssertEqual(editor.paths.map(\.path).last, ".Test")
     }
 
-    func testTheAbsolutePathOutsideOfTheHomeFolderIsCut() throws {
+    func testTheExternalHomePathIsKeptAndRejectedWhenDisabled() throws {
         let (editor, _) = try makeEditor()
 
         editor.addPath("/.Test", isXDG: false)
 
-        XCTAssertEqual(editor.paths.map(\.path).last, ".Test")
+        XCTAssertEqual(editor.paths.map(\.path).last, "/.Test")
+        XCTAssertFalse(editor.canSave)
     }
 
     func testTheAbsolutePathInTheConfigFolderIsCut() throws {
@@ -128,12 +129,13 @@ final class ApplicationEditorModelTests: XCTestCase {
         XCTAssertEqual(editor.xdgPaths.map(\.path).last, "git/config")
     }
 
-    func testTheAbsolutePathOutsideOfTheConfigFolderIsCut() throws {
+    func testTheExternalConfigPathIsKeptAndRejectedWhenDisabled() throws {
         let (editor, _) = try makeEditor()
 
         editor.addPath("/.config/git/config", isXDG: true)
 
-        XCTAssertEqual(editor.xdgPaths.map(\.path).last, "git/config")
+        XCTAssertEqual(editor.xdgPaths.map(\.path).last, "/.config/git/config")
+        XCTAssertFalse(editor.canSave)
     }
 
     func testTheNameIsRequired() throws {
@@ -231,4 +233,18 @@ final class ApplicationEditorModelTests: XCTestCase {
         XCTAssertFalse(model.canCreate)
         XCTAssertTrue(model.issues.contains { $0.severity == .error })
     }
+    func testExternalPathIsAcceptedWhenEnabledInSharedConfig() throws {
+        let mainURL = directory.appendingPathComponent("main.cfg")
+        try "[security]\nallow_external_paths = true\n".write(to: mainURL, atomically: true, encoding: .utf8)
+        let url = directory.appendingPathComponent("external.cfg")
+        let editor = ApplicationEditorModel(
+            appName: "external", url: url,
+            document: INIDocument(text: "[application]\nname = External\n"),
+            mainConfig: try MainConfig.load(from: mainURL)
+        )
+        editor.addPath("/Volumes/External/config", isXDG: false)
+        XCTAssertEqual(editor.paths.first?.path, "/Volumes/External/config")
+        XCTAssertTrue(editor.canSave)
+    }
+
 }

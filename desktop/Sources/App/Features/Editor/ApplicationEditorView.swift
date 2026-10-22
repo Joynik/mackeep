@@ -118,24 +118,30 @@ struct ApplicationEditorView: View {
     private var form: some View {
         Form {
             Section {
-                TextField(
-                    "",
-                    text: Binding(
-                        get: { model.displayName },
-                        set: { newValue in
-                            model.remember()
-                            model.displayName = newValue
-                        }
+                HStack(alignment: .center, spacing: 16) {
+                    Text(L10n.string("editor.create.name.placeholder"))
+                    TextField(
+                        "",
+                        text: Binding(
+                            get: { model.displayName },
+                            set: { newValue in
+                                model.remember()
+                                model.displayName = newValue
+                            }
+                        )
                     )
-                )
-                .textFieldStyle(AppFieldStyle())
-                .overlay(alignment: .leading) {
-                    // The name of the application, when it is not written.
-                    if model.displayName.isEmpty {
-                        Text(L10n.string("editor.name.placeholder"))
-                            .foregroundStyle(.secondary)
-                            .padding(.leading, 6)
-                            .allowsHitTesting(false)
+                    .textFieldStyle(AppFieldStyle())
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityLabel(L10n.string("editor.create.name.placeholder"))
+                    .overlay(alignment: .leading) {
+                        // The name of the application, when it is not written.
+                        if model.displayName.isEmpty {
+                            Text(L10n.string("editor.name.placeholder"))
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 6)
+                                .allowsHitTesting(false)
+                        }
                     }
                 }
             } header: {

@@ -7,7 +7,7 @@ import Foundation
 /// version of Mackeep can be read.
 enum MackeepSchema {
     /// The version of the schema of the answers.
-    static let version: Int = 3
+    static let version: Int = 4
 }
 
 /// The storage of Mackeep.
@@ -73,7 +73,13 @@ struct MackeepConfig: Codable, Equatable, Sendable {
     /// The broken rules are skipped, they do not stop Mackeep from working.
     let errors: [String]?
 
+    /// Missing on older CLI versions, which do not support this setting.
+    var allowExternalPaths: Bool? = nil
+    var storageConfigured: Bool? = nil
+
     enum CodingKeys: String, CodingKey {
+        case allowExternalPaths = "allow_external_paths"
+        case storageConfigured = "storage_configured"
         case schemaVersion = "schema_version"
         case version
         case configFile = "config_file"
@@ -206,6 +212,9 @@ struct MackeepAction: Codable, Equatable, Identifiable, Sendable {
     /// Whether the file would be overwritten.
     let wouldOverwrite: Bool?
 
+    /// Schema 4 explicitly marks stale paths that will be deleted.
+    var willRemove: Bool? = nil
+
     var id: String { "\(app)|\(action)|\(src)" }
 
     enum CodingKeys: String, CodingKey {
@@ -216,6 +225,7 @@ struct MackeepAction: Codable, Equatable, Identifiable, Sendable {
         case sizeBytes = "size_bytes"
         case reason
         case wouldOverwrite = "would_overwrite"
+        case willRemove = "will_remove"
     }
 }
 

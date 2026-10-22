@@ -184,4 +184,9 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.path": "Mackeep のパス",
     "settings.tool.title": "ターミナル版",
     "settings.tool.version": "バージョン",
+    "settings.security.title": 'セキュリティ',
+    "settings.security.externalPaths": 'ホームフォルダ外のパスを許可',
+    "settings.security.externalPaths.help": '既定では無効です。外部ファイルはバックアップ内に個別に保存され、設定した絶対パスに復元されます。対応するCLIが必要です。',
+    "backup.action.removeStale": '古いバックアップを削除',
+    "settings.storage.unconfigured": '未設定',
 }

@@ -74,6 +74,9 @@ final class ApplicationsModel {
     /// The command line tool of Mackeep.
     private let command: MackeepCommand?
 
+    /// The latest save, chained after earlier writes to preserve click order.
+    private var pendingSave: Task<Void, Never>?
+
     /// The editors of the applications, by identifier.
     private var editors: [String: ApplicationEditorModel] = [:]
 
@@ -215,14 +218,36 @@ final class ApplicationsModel {
         guard let config else { return }
 
         config.setSyncedApplications(Array(syncedApps), ignored: Array(ignoredApps))
-        do {
-            try config.save()
-        } catch {
-            presentedError = AppError(
-                title: L10n.string("error.save.title"),
-                message: "\(error)"
-            )
+        let document = config.document
+        let url = config.url
+        let previous = pendingSave
+        pendingSave = Task {
+            await previous?.value
+            let message: String? = await Task.detached(priority: .userInitiated) {
+                do {
+                    let saving = MainConfig(url: url, document: document)
+                    saving.setSyncedApplications(
+                        document.values(inSection: "applications_to_sync"),
+                        ignored: document.values(inSection: "applications_to_ignore")
+                    )
+                    try saving.save()
+                    return nil
+                } catch {
+                    return error.localizedDescription
+                }
+            }.value
+            if let message {
+                presentedError = AppError(
+                    title: L10n.string("error.save.title"),
+                    message: message
+                )
+            }
         }
+    }
+
+    /// Wait until the queued configuration writes finish.
+    func waitForPendingSaves() async {
+        await pendingSave?.value
     }
 
     /// The model of the editor of an application.
@@ -323,6 +348,7 @@ final class ApplicationsModel {
         guard let command else { return }
 
         Task { [weak self] in
+            await self?.waitForPendingSaves()
             let result: LoadResult = await Task.detached(priority: .userInitiated) {
                 Self.load(with: command)
             }.value

@@ -187,7 +187,9 @@ struct PlanTableView: View {
             }
             TableColumn(L10n.string("backup.table.action")) { action in
                 Label {
-                    Text(action.action)
+                    Text(action.willRemove == true
+                         ? L10n.string("backup.action.removeStale")
+                         : action.action)
                 } icon: {
                     Image(systemName: icon(for: action.action))
                         .foregroundStyle(color(for: action.action))

@@ -128,38 +128,54 @@ struct ExclusionsEditorView: View {
                 }
             )
         ) {
-            ForEach(children(of: path.url), id: \.self) { child in
-                HStack(spacing: 8) {
-                    Toggle(
-                        "",
-                        isOn: Binding(
-                            get: { !isExcluded(child, in: path) },
-                            set: { isChecked in
-                                if isChecked {
-                                    removePattern(of: child, in: path)
-                                } else {
-                                    addPattern(of: child, in: path)
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(children(of: path.url), id: \.self) { child in
+                    HStack(spacing: 8) {
+                        Toggle(
+                            "",
+                            isOn: Binding(
+                                get: { !isExcluded(child, in: path) },
+                                set: { isChecked in
+                                    if isChecked {
+                                        removePattern(of: child, in: path)
+                                    } else {
+                                        addPattern(of: child, in: path)
+                                    }
                                 }
-                            }
+                            )
                         )
-                    )
-                    .labelsHidden()
-                    .appSwitchSize()
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
 
-                    Image(systemName: child.hasDirectoryPath ? "folder" : "doc")
-                        .foregroundStyle(.secondary)
+                        Image(systemName: child.hasDirectoryPath ? "folder" : "doc")
+                            .foregroundStyle(.secondary)
 
-                    Text(child.lastPathComponent)
-                        .font(.callout)
+                        Text(child.lastPathComponent)
+                            .font(.callout)
 
-                    Spacer(minLength: 0)
+                        Spacer(minLength: 0)
+                    }
+                    // The files of the list are on the left of the block.
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                // The files of the list are on the left of the block.
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .padding(.vertical, 8)
+            .padding(.leading, 12)
         } label: {
-            Text(path.path)
-                .font(.callout.monospaced())
+            Button {
+                if expanded.contains(path.path) {
+                    expanded.remove(path.path)
+                } else {
+                    expanded.insert(path.path)
+                }
+            } label: {
+                Text(path.path)
+                    .font(.callout.monospaced())
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
     }
 

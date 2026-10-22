@@ -217,11 +217,10 @@ struct ApplicationsView: View {
 
             Section {
                 ForEach(model.visibleApplications) { application in
-                    ApplicationRow(application: application, model: model)
+                    ApplicationRow(application: application, model: model) {
+                        edit(application)
+                    }
                         .tag(application.name)
-                        .onTapGesture(count: 2) {
-                            edit(application)
-                        }
                         .contextMenu {
                             if application.isCustom {
                                 Button(L10n.string("applications.edit")) {
@@ -369,6 +368,9 @@ private struct ApplicationRow: View {
     /// The model of the list.
     let model: ApplicationsModel
 
+    /// Open the editor without delaying clicks on the toggle.
+    let onEdit: () -> Void
+
     var body: some View {
         HStack(spacing: 10) {
             Toggle(
@@ -384,43 +386,47 @@ private struct ApplicationRow: View {
                 L10n.string("applications.sync.label", application.displayName)
             )
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(application.displayName)
-                    .font(.body)
-                Text(application.name)
-                    .font(.caption)
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(application.displayName)
+                        .font(.body)
+                    Text(application.name)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityIdentifier("applications.list.item")
+
+                Spacer(minLength: 8)
+
+                if let error: String = application.error {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                        .help(error)
+                        .accessibilityLabel(L10n.string("applications.error.label"))
+                }
+
+                if model.isInstalled(application) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.tint)
+                        .help(L10n.string("applications.installed.label"))
+                        .accessibilityLabel(L10n.string("applications.installed.label"))
+                }
+
+                Image(systemName: application.isCustom ? "person.crop.circle" : "shippingbox")
                     .foregroundStyle(.secondary)
+                    .help(
+                        application.isCustom
+                            ? L10n.string("applications.source.custom")
+                            : L10n.string("applications.source.builtin")
+                    )
+                    .accessibilityLabel(
+                        application.isCustom
+                            ? L10n.string("applications.source.custom")
+                            : L10n.string("applications.source.builtin")
+                    )
             }
-            .accessibilityIdentifier("applications.list.item")
-
-            Spacer(minLength: 8)
-
-            if let error: String = application.error {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-                    .help(error)
-                    .accessibilityLabel(L10n.string("applications.error.label"))
-            }
-
-            if model.isInstalled(application) {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.tint)
-                    .help(L10n.string("applications.installed.label"))
-                    .accessibilityLabel(L10n.string("applications.installed.label"))
-            }
-
-            Image(systemName: application.isCustom ? "person.crop.circle" : "shippingbox")
-                .foregroundStyle(.secondary)
-                .help(
-                    application.isCustom
-                        ? L10n.string("applications.source.custom")
-                        : L10n.string("applications.source.builtin")
-                )
-                .accessibilityLabel(
-                    application.isCustom
-                        ? L10n.string("applications.source.custom")
-                        : L10n.string("applications.source.builtin")
-                )
+            .contentShape(Rectangle())
+            .onTapGesture(count: 2, perform: onEdit)
         }
         .padding(.vertical, 2)
     }

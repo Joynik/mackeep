@@ -43,6 +43,8 @@ struct AppFieldStyle: TextFieldStyle {
         configuration
             .textFieldStyle(.plain)
             .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 6)
             .frame(height: Self.height)
             .background {

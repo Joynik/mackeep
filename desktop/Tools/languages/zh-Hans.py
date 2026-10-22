@@ -184,4 +184,9 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.path": "Mackeep 的路径",
     "settings.tool.title": "终端版本",
     "settings.tool.version": "版本",
+    "settings.security.title": '安全性',
+    "settings.security.externalPaths": '允许主文件夹之外的路径',
+    "settings.security.externalPaths.help": '默认关闭。外部文件单独备份，并恢复到配置的绝对路径。需要兼容的 CLI。',
+    "backup.action.removeStale": '删除过期备份',
+    "settings.storage.unconfigured": '未配置',
 }

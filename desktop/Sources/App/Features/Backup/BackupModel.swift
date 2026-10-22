@@ -199,8 +199,12 @@ final class BackupModel {
                     var command: MackeepCommand = command
                     command.cancellation = token
                     try command.streamEvents(arguments) { event in
+                        if event.event == "done" {
+                            counters.files += event.files ?? 0
+                            counters.bytes += event.bytes ?? 0
+                        }
                         Task { @MainActor in
-                            self?.handle(event, counters: counters)
+                            self?.handle(event)
                         }
                     }
                 }.value
@@ -252,7 +256,7 @@ final class BackupModel {
     }
 
     /// Take an event of the running command.
-    private func handle(_ event: MackeepEvent, counters: Counters) {
+    private func handle(_ event: MackeepEvent) {
         switch event.event {
         case "start":
             log.append(L10n.string("backup.log.start", event.app ?? ""))
@@ -263,8 +267,6 @@ final class BackupModel {
                 L10n.string("backup.log.file", event.action ?? "", name)
             )
         case "done":
-            counters.files = event.files ?? 0
-            counters.bytes = event.bytes ?? 0
             log.append(
                 L10n.string(
                     "backup.log.done",

@@ -22,15 +22,26 @@ struct SettingsView: View {
         case directory
     }
 
+    /// The same inset on both sides of every settings row.
+    private let rowInsets = EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12)
+
     var body: some View {
         Form {
             appearance
+                .listRowInsets(rowInsets)
             locations
+                .listRowInsets(rowInsets)
             tool
+                .listRowInsets(rowInsets)
             storage
+                .listRowInsets(rowInsets)
             exclusions
+                .listRowInsets(rowInsets)
+            security
+                .listRowInsets(rowInsets)
         }
         .formStyle(.grouped)
+        .labeledContentStyle(CenteredSettingsRowStyle())
         .navigationTitle(L10n.string("section.settings.title"))
         // The controls of the window have the same height, so they line up.
         .appControlSize()
@@ -54,6 +65,26 @@ struct SettingsView: View {
         }
     }
 
+    /// The path policy shared with the command line tool.
+    private var security: some View {
+        Section(L10n.string("settings.security.title")) {
+            LabeledContent(L10n.string("settings.security.externalPaths")) {
+                Toggle("", isOn: $model.allowExternalPaths)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .accessibilityLabel(L10n.string("settings.security.externalPaths"))
+                    .disabled(!model.supportsExternalPaths)
+                    .onChange(of: model.allowExternalPaths) {
+                        model.save()
+                    }
+            }
+            Text(L10n.string("settings.security.externalPaths.help"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     /// The storage of Mackeep.
     private var storage: some View {
         Section(L10n.string("settings.storage.title")) {
@@ -63,6 +94,7 @@ struct SettingsView: View {
                 }
             }
             .labelsHidden()
+            .frame(maxWidth: .infinity, alignment: .trailing)
             .onChange(of: model.engine) {
                 model.save()
             }
@@ -79,32 +111,44 @@ struct SettingsView: View {
                 .foregroundStyle(model.engine.isAvailable ? .green : .orange)
             }
 
-            if model.engine == .fileSystem {
-                LabeledContent(L10n.string("settings.storage.path")) {
-                    HStack {
-                        TextField("", text: $model.storagePath)
-                            .textFieldStyle(AppFieldStyle())
-                            .focused($focusedField, equals: .storagePath)
-                            .onSubmit {
-                                model.save()
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 10) {
+                if model.engine == .fileSystem {
+                    GridRow(alignment: .center) {
+                        storageFieldLabel("settings.storage.path")
+                        HStack {
+                            TextField("", text: $model.storagePath)
+                                .textFieldStyle(AppFieldStyle())
+                                .multilineTextAlignment(.leading)
+                                .accessibilityLabel(L10n.string("settings.storage.path"))
+                                .focused($focusedField, equals: .storagePath)
+                                .onSubmit {
+                                    model.save()
+                                }
+                            Button {
+                                chooseFolder()
+                            } label: {
+                                Image(systemName: "folder")
                             }
-                        Button {
-                            chooseFolder()
-                        } label: {
-                            Image(systemName: "folder")
+                            .help(L10n.string("settings.storage.choose"))
                         }
-                        .help(L10n.string("settings.storage.choose"))
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    Divider()
+                        .gridCellUnsizedAxes(.horizontal)
                 }
-            }
 
-            LabeledContent(L10n.string("settings.storage.directory")) {
-                TextField("", text: $model.directory)
-                    .textFieldStyle(AppFieldStyle())
-                    .focused($focusedField, equals: .directory)
-                    .onSubmit {
-                        model.save()
-                    }
+                GridRow(alignment: .center) {
+                    storageFieldLabel("settings.storage.directory")
+                    TextField("", text: $model.directory)
+                        .textFieldStyle(AppFieldStyle())
+                        .multilineTextAlignment(.leading)
+                        .accessibilityLabel(L10n.string("settings.storage.directory"))
+                        .focused($focusedField, equals: .directory)
+                        .onSubmit {
+                            model.save()
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
 
             LabeledContent(L10n.string("settings.storage.resolved")) {
@@ -114,6 +158,23 @@ struct SettingsView: View {
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
+        }
+    }
+
+    /// Size the field labels using every translated label in the storage section.
+    private func storageFieldLabel(_ key: String) -> some View {
+        ZStack(alignment: .leading) {
+            ForEach([
+                "settings.storage.available",
+                "settings.storage.path",
+                "settings.storage.directory",
+                "settings.storage.resolved",
+            ], id: \.self) { label in
+                Text(L10n.string(label))
+                    .hidden()
+                    .accessibilityHidden(true)
+            }
+            Text(L10n.string(key))
         }
     }
 
@@ -166,6 +227,8 @@ struct SettingsView: View {
                         .buttonStyle(.plain)
                         .foregroundStyle(.secondary)
                     }
+                    .frame(minHeight: AppControl.height, alignment: .center)
+                    .listRowInsets(rowInsets)
                 }
             }
         }
@@ -176,11 +239,11 @@ struct SettingsView: View {
         Section(L10n.string("settings.locations.title")) {
             LabeledContent(L10n.string("settings.locations.config")) {
                 HStack {
+                    Spacer(minLength: 8)
                     Text(model.configFilePath)
                         .font(.callout.monospaced())
                         .lineLimit(1)
                         .truncationMode(.middle)
-                    Spacer(minLength: 8)
                     Button {
                         reveal(model.configFilePath)
                     } label: {
@@ -193,12 +256,12 @@ struct SettingsView: View {
 
             LabeledContent(L10n.string("settings.locations.apps")) {
                 HStack {
+                    Spacer(minLength: 8)
                     Text(model.customAppsDir)
                         .font(.callout.monospaced())
                         .lineLimit(1)
                         .truncationMode(.middle)
                         .accessibilityIdentifier("settings.customAppsDir")
-                    Spacer(minLength: 8)
                     Button {
                         reveal(model.customAppsDir)
                     } label: {
@@ -250,31 +313,31 @@ struct SettingsView: View {
         @Bindable var environment: AppEnvironment = environment
 
         return Section(L10n.string("settings.appearance.title")) {
-            Picker(
-                L10n.string("settings.appearance.language"),
-                selection: $environment.language
-            ) {
-                Text(L10n.string("settings.language.system")).tag(AppLanguage.system)
-                Text(L10n.string("settings.language.russian")).tag(AppLanguage.russian)
-                Text(L10n.string("settings.language.english")).tag(AppLanguage.english)
-                Text(L10n.string("settings.language.ukrainian")).tag(AppLanguage.ukrainian)
-                Text(L10n.string("settings.language.spanish")).tag(AppLanguage.spanish)
-                Text(L10n.string("settings.language.german")).tag(AppLanguage.german)
-                Text(L10n.string("settings.language.french")).tag(AppLanguage.french)
-                Text(L10n.string("settings.language.italian")).tag(AppLanguage.italian)
-                Text(L10n.string("settings.language.portuguese")).tag(AppLanguage.portuguese)
-                Text(L10n.string("settings.language.japanese")).tag(AppLanguage.japanese)
-                Text(L10n.string("settings.language.korean")).tag(AppLanguage.korean)
-                Text(L10n.string("settings.language.chinese")).tag(AppLanguage.chinese)
+            LabeledContent(L10n.string("settings.appearance.language")) {
+                Picker(L10n.string("settings.appearance.language"), selection: $environment.language) {
+                    Text(L10n.string("settings.language.system")).tag(AppLanguage.system)
+                    Text(L10n.string("settings.language.russian")).tag(AppLanguage.russian)
+                    Text(L10n.string("settings.language.english")).tag(AppLanguage.english)
+                    Text(L10n.string("settings.language.ukrainian")).tag(AppLanguage.ukrainian)
+                    Text(L10n.string("settings.language.spanish")).tag(AppLanguage.spanish)
+                    Text(L10n.string("settings.language.german")).tag(AppLanguage.german)
+                    Text(L10n.string("settings.language.french")).tag(AppLanguage.french)
+                    Text(L10n.string("settings.language.italian")).tag(AppLanguage.italian)
+                    Text(L10n.string("settings.language.portuguese")).tag(AppLanguage.portuguese)
+                    Text(L10n.string("settings.language.japanese")).tag(AppLanguage.japanese)
+                    Text(L10n.string("settings.language.korean")).tag(AppLanguage.korean)
+                    Text(L10n.string("settings.language.chinese")).tag(AppLanguage.chinese)
+                }
+                .labelsHidden()
             }
 
-            Picker(
-                L10n.string("settings.appearance.theme"),
-                selection: $environment.appearance
-            ) {
-                Text(L10n.string("settings.theme.system")).tag(AppAppearance.system)
-                Text(L10n.string("settings.theme.light")).tag(AppAppearance.light)
-                Text(L10n.string("settings.theme.dark")).tag(AppAppearance.dark)
+            LabeledContent(L10n.string("settings.appearance.theme")) {
+                Picker(L10n.string("settings.appearance.theme"), selection: $environment.appearance) {
+                    Text(L10n.string("settings.theme.system")).tag(AppAppearance.system)
+                    Text(L10n.string("settings.theme.light")).tag(AppAppearance.light)
+                    Text(L10n.string("settings.theme.dark")).tag(AppAppearance.dark)
+                }
+                .labelsHidden()
             }
         }
     }
@@ -296,5 +359,17 @@ struct SettingsView: View {
     private func reveal(_ path: String) {
         guard !path.isEmpty else { return }
         NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+    }
+}
+
+/// Keep labels and controls centered even when their heights differ.
+private struct CenteredSettingsRowStyle: LabeledContentStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(alignment: .center) {
+            configuration.label
+            Spacer(minLength: 16)
+            configuration.content
+                .foregroundStyle(.secondary)
+        }
     }
 }

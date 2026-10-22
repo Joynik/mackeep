@@ -184,4 +184,9 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.path": "La ruta de Mackeep",
     "settings.tool.title": "La versión de terminal",
     "settings.tool.version": "La versión",
+    "settings.security.title": 'Seguridad',
+    "settings.security.externalPaths": 'Permitir rutas fuera de la carpeta de inicio',
+    "settings.security.externalPaths.help": 'Desactivado de forma predeterminada. Los archivos externos se guardan por separado y se restauran en sus rutas absolutas configuradas. Requiere una CLI compatible.',
+    "backup.action.removeStale": 'Eliminar copia obsoleta',
+    "settings.storage.unconfigured": 'Sin configurar',
 }

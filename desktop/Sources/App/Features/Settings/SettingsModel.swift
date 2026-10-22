@@ -5,13 +5,19 @@ import Foundation
 @MainActor
 final class SettingsModel {
     /// The engine of the storage.
-    var engine: StorageEngine = .dropbox
+    var engine: StorageEngine = .unconfigured
 
     /// The path of the storage, for the file system engine.
     var storagePath: String = ""
 
     /// The name of the folder of the backup inside the storage.
     var directory: String = "Mackeep"
+
+    /// Allow explicitly configured files outside the home directory.
+    var allowExternalPaths: Bool = false
+
+    /// Whether the CLI understands the external path setting.
+    private(set) var supportsExternalPaths: Bool = false
 
     /// The global exclusion rules.
     var globalExclude: [String] = []
@@ -26,6 +32,9 @@ final class SettingsModel {
 
     /// The directory where the custom application configs are read.
     private(set) var customAppsDir: String = ""
+
+    /// False when a fresh CLI configuration has no chosen storage yet.
+    private(set) var storageIsConfigured: Bool = true
 
     /// The folder where the backup is written, as the tool of Mackeep sees it.
     private(set) var resolvedBackupDirectory: String = ""
@@ -77,6 +86,7 @@ final class SettingsModel {
     /// The tool of Mackeep knows the real path of the storage, it is used
     /// when it is known. Otherwise the folder is counted by the settings.
     var backupDirectory: String {
+        if !storageIsConfigured { return "—" }
         if !resolvedBackupDirectory.isEmpty {
             return resolvedBackupDirectory
         }
@@ -180,8 +190,11 @@ final class SettingsModel {
 
         configFilePath = config.configFile
         customAppsDir = config.customAppsDir ?? config.customAppsDirs.first ?? ""
+        allowExternalPaths = config.allowExternalPaths ?? false
+        supportsExternalPaths = config.allowExternalPaths != nil
         globalExclude = config.globalExclude
         configErrors = config.errors ?? []
+        storageIsConfigured = config.storageConfigured ?? true
         resolvedBackupDirectory = config.storage.resolvedBackupDir
 
         let raw: String = config.storage.engine
@@ -208,9 +221,14 @@ final class SettingsModel {
             directory: directory
         )
         mainConfig.setGlobalExclude(globalExclude)
+        if supportsExternalPaths {
+            mainConfig.setAllowExternalPaths(allowExternalPaths)
+        }
 
         do {
             try mainConfig.save()
+            resolvedBackupDirectory = ""
+            storageIsConfigured = engine == .fileSystem ? !storagePath.isEmpty : engine.isAvailable
         } catch {
             presentedError = AppError(
                 title: L10n.string("error.save.title"),

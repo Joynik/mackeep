@@ -48,7 +48,8 @@ final class SettingsModelTests: XCTestCase {
     private func makeConfig(
         engine: String = "file_system",
         path: String = "/Users/user/dotfiles",
-        directory: String = "Mackeep"
+        directory: String = "Mackeep",
+        allowExternalPaths: Bool = false
     ) throws -> MackeepCommand {
         try makeTool(config: """
         {
@@ -67,7 +68,9 @@ final class SettingsModelTests: XCTestCase {
           "apps_to_sync": [],
           "apps_to_ignore": [],
           "global_exclude": ["**/.DS_Store"],
-          "global_xdg_exclude": []
+          "global_xdg_exclude": [],
+          "allow_external_paths": \(allowExternalPaths),
+          "storage_configured": \(engine != "unconfigured")
         }
         """)
     }
@@ -264,4 +267,20 @@ final class SettingsModelTests: XCTestCase {
         XCTAssertEqual(saved.storageDirectory, "Backups")
         XCTAssertEqual(saved.globalExclude, ["**/.DS_Store"])
     }
+    func testTheExternalPathPolicyIsRead() async throws {
+        let model = SettingsModel(command: try makeConfig(allowExternalPaths: true), capabilities: nil)
+        model.load()
+        await waitForTheSettings(model)
+        XCTAssertTrue(model.allowExternalPaths)
+        XCTAssertTrue(model.supportsExternalPaths)
+    }
+
+    func testUnconfiguredStorageDoesNotShowAnInventedBackupPath() async throws {
+        let model = SettingsModel(command: try makeConfig(engine: "unconfigured", path: ""), capabilities: nil)
+        model.load()
+        await waitForTheSettings(model)
+        XCTAssertEqual(model.engine, .unconfigured)
+        XCTAssertEqual(model.backupDirectory, "—")
+    }
+
 }

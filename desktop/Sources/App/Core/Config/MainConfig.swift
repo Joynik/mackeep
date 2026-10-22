@@ -5,6 +5,11 @@ import Foundation
 /// The file is the one Mackeep uses, it is given by `mackeep --json config`.
 /// The applications to sync and the ones to ignore are written in it.
 final class MainConfig {
+    /// Serialize writes from settings and background application selection saves.
+    private static let writeLock = NSLock()
+    private var listUpdates: [String: [String]] = [:]
+    private var valueUpdates: [String: [String: String]] = [:]
+
     /// The path of the config file.
     let url: URL
 
@@ -47,6 +52,7 @@ final class MainConfig {
             # See https://github.com/Joynik/mackeep/blob/master/doc/README.md
 
             [storage]
+            engine = unconfigured
             directory = Mackeep
 
             """)
@@ -64,6 +70,20 @@ final class MainConfig {
     /// The names of the applications to ignore.
     var appsToIgnore: [String] {
         document.values(inSection: "applications_to_ignore")
+    }
+
+    /// Whether definitions may refer to files outside HOME.
+    var allowExternalPaths: Bool {
+        ["true", "yes", "1", "on"].contains(
+            document.value(forKey: "allow_external_paths", inSection: "security")?.lowercased() ?? "false"
+        )
+    }
+
+    /// Store the shared CLI and desktop path policy.
+    func setAllowExternalPaths(_ allowed: Bool) {
+        let value = allowed ? "true" : "false"
+        document.setValue(value, forKey: "allow_external_paths", inSection: "security")
+        valueUpdates["security", default: [:]]["allow_external_paths"] = value
     }
 
     /// The global exclusion rules.
@@ -101,6 +121,8 @@ final class MainConfig {
     func setSyncedApplications(_ synced: [String], ignored: [String]) {
         document.setOptionKeys(synced.sorted(), inSection: "applications_to_sync")
         document.setOptionKeys(ignored.sorted(), inSection: "applications_to_ignore")
+        listUpdates["applications_to_sync"] = synced.sorted()
+        listUpdates["applications_to_ignore"] = ignored.sorted()
     }
 
     /// Set the storage of Mackeep.
@@ -111,11 +133,14 @@ final class MainConfig {
     ///   - directory: The name of the folder of the backup.
     func setStorage(engine: String, path: String?, directory: String?) {
         document.setValue(engine, forKey: "engine", inSection: "storage")
+        valueUpdates["storage", default: [:]]["engine"] = engine
         if let path {
             document.setValue(path, forKey: "path", inSection: "storage")
+            valueUpdates["storage", default: [:]]["path"] = path
         }
         if let directory {
             document.setValue(directory, forKey: "directory", inSection: "storage")
+            valueUpdates["storage", default: [:]]["directory"] = directory
         }
     }
 
@@ -124,12 +149,29 @@ final class MainConfig {
     /// - Parameter patterns: The patterns.
     func setGlobalExclude(_ patterns: [String]) {
         document.setOptionKeys(patterns, inSection: "exclude")
+        listUpdates["exclude"] = patterns
     }
 
     /// Write the config file.
     ///
     /// The file is written atomically, and the previous version is kept.
     func save() throws {
-        try INIFile.save(document, to: url)
+        Self.writeLock.lock()
+        defer { Self.writeLock.unlock() }
+        var latest = FileManager.default.fileExists(atPath: url.path)
+            ? try INIFile.load(from: url, stripsInlineComments: true)
+            : document
+        for section in listUpdates.keys.sorted() {
+            latest.setOptionKeys(listUpdates[section]!, inSection: section)
+        }
+        for section in valueUpdates.keys.sorted() {
+            for key in valueUpdates[section]!.keys.sorted() {
+                latest.setValue(valueUpdates[section]![key]!, forKey: key, inSection: section)
+            }
+        }
+        try INIFile.save(latest, to: url)
+        document = latest
+        listUpdates.removeAll()
+        valueUpdates.removeAll()
     }
 }

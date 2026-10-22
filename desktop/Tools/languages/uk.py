@@ -184,4 +184,9 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.path": "Шлях до Mackeep",
     "settings.tool.title": "Термінальна версія",
     "settings.tool.version": "Версія",
+    "settings.security.title": 'Безпека',
+    "settings.security.externalPaths": 'Дозволяти шляхи поза домашньою текою',
+    "settings.security.externalPaths.help": 'Типово вимкнено. Зовнішні файли зберігаються окремо в резервній копії та відновлюються за налаштованими абсолютними шляхами. Потрібна сумісна версія CLI.',
+    "backup.action.removeStale": 'Видалити застарілу копію',
+    "settings.storage.unconfigured": 'Не налаштовано',
 }

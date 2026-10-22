@@ -157,7 +157,7 @@ final class ApplicationEditorModel {
     ///   - path: The path of the file or of the folder.
     ///   - isXDG: Whether the path is an XDG one.
     func addPath(_ path: String, isXDG: Bool) {
-        let relative: String = EditorPath.corrected(path, isXDG: isXDG)
+        let relative: String = EditorPath.corrected(path, isXDG: isXDG, allowExternalPaths: true)
         guard !relative.isEmpty else { return }
 
         var paths: [EditorPath] = isXDG ? xdgPaths : self.paths
@@ -246,6 +246,13 @@ final class ApplicationEditorModel {
         hasUnsavedChanges = true
     }
 
+    /// Read the latest shared policy when settings changed in another window.
+    private var allowsExternalPaths: Bool {
+        guard let mainConfig else { return false }
+        return (try? MainConfig.load(from: mainConfig.url))?.allowExternalPaths
+            ?? mainConfig.allowExternalPaths
+    }
+
     /// Check the config file of the application.
     func validate() {
         var issues: [ValidationIssue] = []
@@ -270,7 +277,8 @@ final class ApplicationEditorModel {
                     )
                 )
             }
-            if path.path.hasPrefix("/") {
+            if !allowsExternalPaths,
+               path.path.hasPrefix("/") || path.path.split(separator: "/").contains("..") {
                 issues.append(
                     ValidationIssue(
                         severity: .error,

@@ -151,4 +151,26 @@ final class MainConfigTests: XCTestCase {
         let backup: URL = url.appendingPathExtension("bak")
         XCTAssertTrue(FileManager.default.fileExists(atPath: backup.path))
     }
+    func testExternalPathsAreDisabledByDefaultAndCanBeEnabled() throws {
+        let url = try makeConfig("[storage]\nengine = file_system\n")
+        let config = try MainConfig.load(from: url)
+        XCTAssertFalse(config.allowExternalPaths)
+        config.setAllowExternalPaths(true)
+        try config.save()
+        XCTAssertTrue(try MainConfig.load(from: url).allowExternalPaths)
+    }
+
+    func testSavingSettingsKeepsApplicationsChangedByAnotherModel() throws {
+        let url = try makeConfig("[storage]\nengine = file_system\n")
+        let settings = try MainConfig.load(from: url)
+        let applications = try MainConfig.load(from: url)
+        applications.setSyncedApplications(["vim"], ignored: [])
+        try applications.save()
+        settings.setAllowExternalPaths(true)
+        try settings.save()
+        let saved = try MainConfig.load(from: url)
+        XCTAssertEqual(saved.appsToSync, ["vim"])
+        XCTAssertTrue(saved.allowExternalPaths)
+    }
+
 }

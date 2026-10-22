@@ -32,6 +32,7 @@ struct ApplicationSearchView: View {
                 Text(L10n.string("editor.search.count", model.results.count))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .padding(.leading, 5)
 
                 Spacer()
 
@@ -97,7 +98,10 @@ struct ApplicationSearchView: View {
                             }
                         }
                     }
+                    .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
                 }
+                .listStyle(.plain)
+                .contentMargins(.horizontal, 0, for: .scrollContent)
             }
 
             HStack {

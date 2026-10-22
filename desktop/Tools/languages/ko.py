@@ -184,4 +184,9 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.path": "Mackeep의 경로",
     "settings.tool.title": "터미널 버전",
     "settings.tool.version": "버전",
+    "settings.security.title": '보안',
+    "settings.security.externalPaths": '홈 폴더 외부 경로 허용',
+    "settings.security.externalPaths.help": '기본적으로 꺼져 있습니다. 외부 파일은 별도로 백업되며 설정된 절대 경로로 복원됩니다. 호환되는 CLI가 필요합니다.',
+    "backup.action.removeStale": '오래된 백업 삭제',
+    "settings.storage.unconfigured": '설정되지 않음',
 }
