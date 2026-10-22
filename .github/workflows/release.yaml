@@ -111,8 +111,68 @@ jobs:
           name: mackeep-cli-${{ matrix.suffix }}
           path: dist/*.tar.gz
 
+  desktop:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: "3.14"
+
+      - name: Check the version of the tag
+        run: |
+          set -euo pipefail
+          VERSION="$(uv version --short)"
+          TAG="${GITHUB_REF_NAME}"
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "The tag $TAG does not match the version $VERSION of the project"
+            exit 1
+          fi
+          echo "The tag $TAG matches the version $VERSION of the project"
+
+      - name: Check the version of the application
+        run: |
+          set -euo pipefail
+          APP_VERSION="$(sed -n 's/^[[:space:]]*MARKETING_VERSION:[[:space:]]*"\(.*\)".*/\1/p' \
+            desktop/project.yml)"
+          VERSION="$(uv version --short)"
+          if [ "$APP_VERSION" != "$VERSION" ]; then
+            echo "The version of the application $APP_VERSION does not match the version $VERSION of the project"
+            exit 1
+          fi
+          echo "The version of the application is $APP_VERSION"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build and package the application
+        working-directory: desktop
+        env:
+          # There is no certificate of the developer on the runner, so the
+          # application is signed ad-hoc
+          XCODEBUILD_FLAGS: "CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="
+        run: make package
+
+      - name: Check the disk image
+        run: |
+          set -euo pipefail
+          VERSION="$(uv version --short)"
+          IMAGE="dist/Mackeep-$VERSION-macos-arm64.dmg"
+          hdiutil verify "$IMAGE"
+          MOUNT_DIR="$(mktemp -d)"
+          hdiutil attach "$IMAGE" -mountpoint "$MOUNT_DIR" -nobrowse
+          codesign --verify --verbose "$MOUNT_DIR/Mackeep.app"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
+            "$MOUNT_DIR/Mackeep.app/Contents/Info.plist"
+          hdiutil detach "$MOUNT_DIR"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mackeep-desktop-macos-arm64
+          path: dist/*.dmg
+
   release:
-    needs: build
+    needs: [build, desktop]
     runs-on: ubuntu-latest
     permissions:
       contents: write  # create the GitHub release
@@ -125,4 +185,9 @@ jobs:
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           generate_release_notes: true
-          files: dist/**/mackeep-cli-*.tar.gz
+          body: |
+            The archives of the tool are the command line version, the disk
+            image is the desktop application for macOS.
+          files: |
+            dist/**/mackeep-cli-*.tar.gz
+            dist/**/Mackeep-*.dmg

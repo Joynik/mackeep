@@ -23,28 +23,37 @@ and pushes. The workflow takes over from the tag push:
 
 - Builds the standalone binary with [Nuitka](https://nuitka.net), one per
   platform (macOS and Linux)
-- Creates the GitHub release with auto-generated notes and the binaries
+- Builds the desktop application for macOS and packs it in a disk image
+- Creates the GitHub release with auto-generated notes and the artifacts
 
 The application of the desktop is released with the tool, they share the same
 version. The `make release` command writes the version of the release in
 `desktop/project.yml`, so the version of the application is always the one of
 the release, in the "About" window too.
 
+The release workflow builds the application on macOS and packs it in a disk
+image, so the release holds the tool and the application of the desktop. The
+image is signed ad-hoc: there is no certificate of the developer in the
+workflow, and macOS asks to confirm the first time the application is opened.
+
 The application is built from the `desktop/` folder of the repository:
 
 ```bash
 cd desktop
 make release   # The application is built in the Release configuration
+make package   # The disk image of the release is built
 ```
 
-The built application is in `desktop/build/Build/Products/Release/Mackeep.app`.
-It is not signed and not notarized yet, so it is not published anywhere.
+The built application is in `desktop/build/Build/Products/Release/Mackeep.app`,
+the disk image is in `dist/`.
 
-The releases hold one package per platform:
+The releases hold one package per platform, and the disk image of the
+application:
 
 ```text
 mackeep-cli-0.14.0-macos-arm64.tar.gz
 mackeep-cli-0.14.0-linux-x86_64.tar.gz
+Mackeep-0.14.0-macos-arm64.dmg
 ```
 
 Each package holds the `mackeep-cli` folder with the binary and the runtime

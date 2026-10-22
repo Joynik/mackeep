@@ -781,14 +781,26 @@ The public keys (`.pub`) are not secrets, they are never marked.
 ## The desktop application
 
 The desktop application of Mackeep is written in SwiftUI for macOS 15 and
-above. It is not released yet, but it is built from the `desktop/` folder of
-the repository:
+above. It is released with the tool, they share the same version. The disk
+image is in the releases of the repository:
+
+```text
+Mackeep-0.21.0-macos-arm64.dmg
+```
+
+The image holds the application and a link to the `Applications` folder, so the
+application is dragged there. It is signed ad-hoc and not notarized yet, so
+macOS asks to confirm the first time the application is opened: right-click on
+the application, then "Open".
+
+The application is built from the `desktop/` folder of the repository:
 
 ```bash
 cd desktop
 make project   # The project of XcodeGen is generated
 make build     # The application is built
 make release   # The application is built for the release
+make package   # The disk image of the release is built
 make test      # The unit tests and the UI tests are run
 ```
 
