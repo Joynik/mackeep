@@ -412,7 +412,7 @@ def set_mode(path: str, mode: int) -> None:
     except PermissionError as exc:
         if exc.errno != errno.EPERM or os.path.islink(path):
             raise
-        if hasattr(os, "chflags"):
+        if sys.platform == "darwin":
             flags = os.stat(path).st_flags & ~(stat.UF_IMMUTABLE | stat.UF_APPEND)
             os.chflags(path, flags)
         elif os.path.isfile("/usr/bin/chattr"):

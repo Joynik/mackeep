@@ -300,8 +300,9 @@ def test_copy_error_still_finishes_the_application_event(home, capsys):
     assert not (root / "app").exists()
 
 
-@pytest.mark.skipif(not hasattr(os, "chflags"), reason="Requires BSD file flags")
 def test_copy_immutable_file_keeps_source_flags_and_clears_only_backup(home):
+    if sys.platform != "darwin":
+        pytest.skip("Requires macOS file flags")
     root = setup(home)
     source = home / "app"
     source.write_bytes(b"protected configuration")
