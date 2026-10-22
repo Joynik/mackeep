@@ -1,9 +1,9 @@
 """Package used to manage the .mackeep.cfg config file."""
 
-import configparser
 import os
 import os.path
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .constants import (
     CUSTOM_APPS_DIR,
@@ -16,12 +16,17 @@ from .constants import (
     MACKEEP_BACKUP_PATH,
     MACKEEP_CONFIG_FILE,
 )
+from .inifile import IniFile
+from .inifile import read as read_ini
 from .utils import (
     error,
     get_dropbox_folder_location,
     get_google_drive_folder_location,
     get_icloud_folder_location,
 )
+
+if TYPE_CHECKING:
+    import configparser
 
 
 class Config:
@@ -36,6 +41,9 @@ class Config:
                             defaults to MACKEEP_CONFIG_FILE
         """
         assert isinstance(filename, str) or filename is None
+
+        # The problems of the config file, they do not stop Mackeep
+        self._errors: list[str] = []
 
         # Initialize the parser
         self._parser = self._setup_parser(filename)
@@ -168,6 +176,18 @@ class Config:
         """
         return list(self._global_xdg_exclude)
 
+    @property
+    def errors(self) -> list[str]:
+        """
+        Get the problems of the config file.
+
+        The broken rules are skipped, they do not stop Mackeep from working.
+
+        Returns:
+            list of str
+        """
+        return list(self._errors)
+
     def _setup_parser(
         self, filename: str | None = None,
     ) -> configparser.ConfigParser:
@@ -182,17 +202,20 @@ class Config:
         """
         assert isinstance(filename, str) or filename is None
 
-        parser = configparser.ConfigParser(
-            allow_no_value=True, inline_comment_prefixes=(";", "#"),
-        )
         # Keep track of the config file that is used
         self._config_path: str = self._best_config_path(filename)
         if not filename and not Path(self._config_path).is_file():
             # The config file is created when it does not exist
             self._create_config_file()
-        parser.read(self._config_path)
 
-        return parser
+        file: IniFile = read_ini(
+            self._config_path,
+            allow_no_value=True,
+            inline_comment_prefixes=(";", "#"),
+            keep_case=False,
+        )
+
+        return file.parser
 
     def _create_config_file(self) -> None:
         """Create the config file with the default content."""
@@ -218,18 +241,17 @@ class Config:
         Returns:
             ConfigParser
         """
-        parser = configparser.ConfigParser(
-            allow_no_value=True, inline_comment_prefixes=(";", "#"),
+        file: IniFile = read_ini(
+            self._config_path,
+            allow_no_value=True,
+            inline_comment_prefixes=(";", "#"),
+            keep_case=True,
         )
-        parser.optionxform = str  # type: ignore
-        try:
-            parser.read(self._config_path)
-        except configparser.Error as e:
-            raise ConfigError(
-                f"Invalid config file {self._config_path}: {e}",
-            ) from e
+        # The problems of the file are reported once, the file is read by
+        # both parsers.
+        self._add_problems(file.problems)
 
-        return parser
+        return file.parser
 
     def _best_config_path(self, filename: str | None = None) -> str:
         """
@@ -445,6 +467,9 @@ class Config:
         config file. A pattern may also be given as a value, e.g.
         ``*.log = some log files``.
 
+        The patterns that are not valid are skipped, they do not stop Mackeep
+        from working, and they are reported.
+
         Args:
             section_title (str): The name of the section to read.
 
@@ -465,13 +490,29 @@ class Config:
             if not pattern:
                 continue
             if pattern.startswith("/"):
-                raise ConfigError(
-                    f"Invalid exclusion pattern in {self._config_path}: "
-                    f"unsupported absolute path: {pattern}",
+                self._add_problems(
+                    [
+                        f"Invalid exclusion pattern in {self._config_path}: "
+                        f"unsupported absolute path: {pattern}",
+                    ],
                 )
+                continue
             patterns.append(pattern)
 
         return patterns
+
+    def _add_problems(self, problems: list[str]) -> None:
+        """
+        Report the problems of the config file.
+
+        The same problem is only reported once, the file is read twice.
+
+        Args:
+            problems (list of str): The problems of the file.
+        """
+        for problem in problems:
+            if problem not in self._errors:
+                self._errors.append(problem)
 
 
 class ConfigError(Exception):

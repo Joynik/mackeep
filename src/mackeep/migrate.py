@@ -34,7 +34,8 @@ def _config_files() -> list[tuple[str, str]]:
     """
     home: str = os.environ["HOME"]
     xdg_config_home: str = os.environ.get(
-        "XDG_CONFIG_HOME", os.path.join(home, ".config"),
+        "XDG_CONFIG_HOME",
+        os.path.join(home, ".config"),
     )
     return [
         (
@@ -57,7 +58,8 @@ def _apps_dirs() -> list[tuple[str, str]]:
     """
     home: str = os.environ["HOME"]
     xdg_config_home: str = os.environ.get(
-        "XDG_CONFIG_HOME", os.path.join(home, ".config"),
+        "XDG_CONFIG_HOME",
+        os.path.join(home, ".config"),
     )
     return [
         (
@@ -111,8 +113,12 @@ def plan() -> list[dict[str, str]]:
             if not filename.endswith(".cfg"):
                 continue
             name: str = APP_NAME if filename == LEGACY_APP_NAME else filename
-            actions.append(_action(os.path.join(legacy_dir, filename),
-                                   os.path.join(new_dir, name)))
+            actions.append(
+                _action(
+                    os.path.join(legacy_dir, filename),
+                    os.path.join(new_dir, name),
+                ),
+            )
 
     return actions
 
@@ -159,7 +165,8 @@ def _has_directory_option(config_path: str) -> bool:
         bool
     """
     parser: configparser.ConfigParser = configparser.ConfigParser(
-        allow_no_value=True, inline_comment_prefixes=(";", "#"),
+        allow_no_value=True,
+        inline_comment_prefixes=(";", "#"),
     )
     try:
         parser.read(config_path)

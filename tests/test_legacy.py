@@ -12,10 +12,8 @@ import mackeep
 from mackeep import utils
 from mackeep.appsdb import ApplicationsDatabase
 from mackeep.config import Config
+from mackeep.jsonapi import SCHEMA_VERSION
 from mackeep_cli.main import main
-
-# The version of the schema of the JSON answers
-SCHEMA_VERSION = 2
 
 # The content of a config file of an application
 APP_CONFIG = (

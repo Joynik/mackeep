@@ -301,7 +301,7 @@ def get_dropbox_folder_location() -> str:
     host_db_path = os.path.join(os.environ["HOME"], ".dropbox/host.db")
     min_host_db_fields = 2
     try:
-        with open(host_db_path) as f_hostdb:
+        with open(host_db_path, encoding="utf-8") as f_hostdb:
             data = f_hostdb.read().split()
         if len(data) < min_host_db_fields:
             raise ValueError("Malformed Dropbox host.db")
@@ -345,8 +345,7 @@ def get_google_drive_folder_location() -> str:
             with sqlite3.connect(gdrive_db) as con:
                 cur = con.cursor()
                 query = (
-                    "SELECT data_value "
-                    "FROM data "
+                    "SELECT data_value FROM data "
                     "WHERE entry_key = 'local_sync_root_path';"
                 )
                 cur.execute(query)
@@ -399,7 +398,8 @@ def is_process_running(process_name: str) -> bool:
     if os.path.isfile("/usr/bin/pgrep"):
         with open(os.devnull, "wb") as dev_null:
             returncode: int = subprocess.call(
-                ["/usr/bin/pgrep", process_name], stdout=dev_null,
+                ["/usr/bin/pgrep", process_name],
+                stdout=dev_null,
             )
             is_running = bool(returncode == 0)
 

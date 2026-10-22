@@ -14,7 +14,11 @@ from typing import Any, TextIO
 #
 # Version 2 removed the fields about the legacy paths of Mackup, they are
 # not used any more.
-SCHEMA_VERSION: int = 2
+#
+# Version 3 added the field "error" to the applications and the field
+# "errors" to the configuration, they tell what is not used of the config
+# files.
+SCHEMA_VERSION: int = 3
 
 
 def dumps(obj: Any) -> str:

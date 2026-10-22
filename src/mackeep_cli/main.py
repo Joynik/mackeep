@@ -203,6 +203,25 @@ def _cmd_list(app_db: ApplicationsDatabase) -> None:
     print(output)
 
 
+def _print_warnings(ctx: _Context) -> None:
+    """
+    Tell the user about the rules that were skipped.
+
+    The broken rules do not stop Mackeep from working, they are reported
+    here, so the user can fix them.
+
+    Args:
+        ctx (_Context): The context of the command.
+    """
+    for message in ctx.mckp.config.errors:
+        print(f"Warning: {message}", file=sys.stderr)
+
+    for app_name in sorted(ctx.app_db.get_app_names()):
+        error: str | None = ctx.app_db.get_error(app_name)
+        if error:
+            print(f"Warning: {error}", file=sys.stderr)
+
+
 def _cmd_show(args: dict[str, Any], app_db: ApplicationsDatabase) -> None:
     requested_app_name: str = args["<application>"]
 
@@ -466,6 +485,7 @@ def _app_json(app_db: ApplicationsDatabase, app_name: str) -> dict[str, Any]:
         "xdg_files": xdg_files,
         "exclude": app_db.get_exclude(app_name),
         "xdg_exclude": app_db.get_xdg_exclude(app_name),
+        "error": app_db.get_error(app_name),
     }
 
 
@@ -487,6 +507,7 @@ def _config_json(ctx: _Context) -> dict[str, Any]:
         "config_file": config.config_path,
         "custom_apps_dir": ApplicationsDatabase.get_custom_apps_dir(),
         "custom_apps_dirs": ApplicationsDatabase.get_custom_apps_dirs(),
+        "errors": config.errors,
         "storage": {
             "engine": config.engine,
             "path": config.path,
@@ -714,7 +735,7 @@ def main() -> None:
 
     # The version is shown with -v, -V and --version. docopt only knows
     # one short option per line, so they are handled here.
-    if any(argument in ("-v", "-V", "--version") for argument in sys.argv[1:]):
+    if any(argument in {"-v", "-V", "--version"} for argument in sys.argv[1:]):
         print(f"Mackeep {VERSION}")
         sys.exit(0)
 
@@ -856,6 +877,8 @@ def _run(args: dict[str, Any], json_mode: bool, stdout: TextIO) -> None:
     # Allow mackeep to be run as root
     if args["--root"]:
         utils.CAN_RUN_AS_ROOT = True
+
+    _print_warnings(ctx)
 
     if json_mode:
         _cmd_json(args, ctx, stdout)

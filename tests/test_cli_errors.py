@@ -8,11 +8,9 @@ import pytest
 
 from mackeep import utils
 from mackeep.config import ConfigError
+from mackeep.jsonapi import SCHEMA_VERSION
 from mackeep_cli import main as main_module
 from mackeep_cli.main import main
-
-# The version of the schema of the JSON answers
-SCHEMA_VERSION = 2
 
 # The content of the config file of the test application
 APP_CONFIG = (

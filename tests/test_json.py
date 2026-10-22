@@ -8,10 +8,8 @@ from unittest.mock import patch
 import pytest
 
 from mackeep import utils
+from mackeep.jsonapi import SCHEMA_VERSION
 from mackeep_cli.main import main
-
-# The version of the schema of the JSON answers
-SCHEMA_VERSION = 2
 
 # The number of directories where the custom application configs are looked up
 CUSTOM_APPS_DIRS_COUNT = 2
@@ -133,6 +131,28 @@ def test_the_json_config_holds_the_global_exclusions(home, capsys):
 
     assert code == 0
     assert data["global_exclude"] == ["**/.DS_Store"]
+    assert data["errors"] == []
+
+
+def test_the_json_config_tells_the_broken_global_exclusions(home, capsys):
+    """The JSON config tells what is not used of the config file."""
+    (home / ".mackeep.cfg").write_text(
+        (home / ".mackeep.cfg").read_text()
+        + "\n[exclude]\n**/.DS_Store\n/absolute/path\n",
+    )
+
+    data, code = run_json(capsys, "config")
+
+    assert code == 0
+
+    # The broken rule is skipped, the other ones are still used
+    assert data["global_exclude"] == ["**/.DS_Store"]
+
+    # The problem is reported
+    errors = data["errors"]
+    assert len(errors) == 1
+    assert ".mackeep.cfg" in errors[0]
+    assert "/absolute/path" in errors[0]
 
 
 def test_the_json_list(home, capsys):
@@ -168,6 +188,30 @@ def test_the_json_list(home, capsys):
     assert app["files"][0]["path"] == ".testdir"
 
     assert apps["vim"]["source"] == "builtin"
+
+
+def test_the_json_list_tells_the_broken_rules(home, capsys):
+    """mackeep --json list tells what is not used of the config files."""
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[exclude]\n"
+        "/absolute/path\n",
+    )
+
+    data, code = run_json(capsys, "list")
+
+    assert code == 0
+
+    apps = {app["name"]: app for app in data}
+    error = apps["test-app"]["error"]
+    assert "test-app.cfg" in error
+    assert "/absolute/path" in error
+
+    # The applications that are fine have no error
+    assert apps["vim"]["error"] is None
 
 
 def test_the_json_show(home, capsys):

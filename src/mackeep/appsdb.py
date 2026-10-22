@@ -8,7 +8,6 @@ data from the Mackeep Database (files).
 import configparser
 import os
 
-from .config import ConfigError
 from .constants import (
     APPS_DIR,
     CUSTOM_APPS_DIR,
@@ -16,6 +15,8 @@ from .constants import (
     LEGACY_CUSTOM_APPS_DIR,
     LEGACY_CUSTOM_APPS_DIR_XDG,
 )
+from .inifile import IniFile
+from .inifile import read as read_ini
 from .utils import legacy_warning
 
 
@@ -27,31 +28,75 @@ class ApplicationsDatabase:
         # Build the dict that will contain the properties of each application
         self.apps: dict[str, dict[str, str | set[str] | list[str]]] = {}
 
+        # The errors of the applications, by application name
+        self.errors: dict[str, str] = {}
+
         for config_file in ApplicationsDatabase.get_config_files():
-            config: configparser.ConfigParser = configparser.ConfigParser(
+            self._load_config_file(config_file)
+
+    def _load_config_file(self, config_file: str) -> None:
+        """
+        Load an application from its config file.
+
+        A broken file does not stop the other applications from being loaded:
+        the problem is reported for the application it belongs to.
+
+        Args:
+            config_file (str): The path of the config file.
+        """
+        try:
+            file: IniFile = read_ini(
+                config_file,
                 allow_no_value=True,
+                keep_case=True,
             )
+        except configparser.Error as e:
+            # The file cannot be parsed at all, the application is listed
+            # with its error only.
+            self._add_broken_app(
+                config_file,
+                [f"Invalid application config file {config_file}: {e}"],
+            )
+            return
 
-            # Needed to not lowercase the configuration_files in the ini files
-            config.optionxform = str  # type: ignore
+        problems: list[str] = list(file.problems)
+        if not file.read:
+            if problems:
+                self._add_broken_app(config_file, problems)
+            return
 
-            try:
-                read: bool = bool(config.read(config_file))
-            except configparser.Error as e:
-                raise ConfigError(
-                    f"Invalid application config file {config_file}: {e}",
-                ) from e
+        self._load_app(file.parser, config_file, problems)
 
-            if read:
-                try:
-                    self._load_app(config, config_file)
-                except configparser.Error as e:
-                    raise ConfigError(
-                        f"Invalid application config file {config_file}: {e}",
-                    ) from e
+    def _add_broken_app(self, config_file: str, problems: list[str]) -> None:
+        """
+        Add an application whose config file cannot be used.
+
+        The application is listed, so the user can see it and fix it.
+
+        Args:
+            config_file (str): The path of the config file.
+            problems (list of str): The problems of the file.
+        """
+        filename: str = os.path.basename(config_file)
+        app_name: str = filename[: -len(".cfg")]
+
+        self.apps[app_name] = {
+            "name": app_name,
+            "config_file": config_file,
+            "configuration_files": set(),
+            "home_files": set(),
+            "xdg_files": set(),
+            "exclude": [],
+            "xdg_exclude": [],
+        }
+        if problems:
+            self.errors[app_name] = "; ".join(problems)
 
     def _load_app(
-        self, config: configparser.ConfigParser, config_file: str,
+        self,
+        config: configparser.ConfigParser,
+        config_file: str,
+        problems: list[str],
     ) -> None:
         """
         Load an application from its parsed config file.
@@ -59,6 +104,8 @@ class ApplicationsDatabase:
         Args:
             config (configparser.ConfigParser): The parsed config file.
             config_file (str): The path of the config file.
+            problems (list of str): The problems of the file, they are
+                                    filled with the ones of the application.
         """
         # Get the filename without the directory name
         filename: str = os.path.basename(config_file)
@@ -69,7 +116,16 @@ class ApplicationsDatabase:
         self.apps[app_name] = {}
 
         # Add the fancy name for the app, for display purpose
-        app_pretty_name: str = config.get("application", "name")
+        try:
+            app_pretty_name: str = config.get("application", "name")
+        except configparser.Error:
+            # The name is missing, the identifier of the application is used
+            # instead, and the problem is reported.
+            app_pretty_name = app_name
+            problems.append(
+                f"Invalid application config file {config_file}: "
+                "the name of the application is missing",
+            )
         self.apps[app_name]["name"] = app_pretty_name
 
         # Keep track of the config file, to know where the app comes
@@ -87,9 +143,11 @@ class ApplicationsDatabase:
         if config.has_section("configuration_files"):
             for path in config.options("configuration_files"):
                 if path.startswith("/"):
-                    raise ValueError(
-                        f"Unsupported absolute path: {path}",
+                    problems.append(
+                        f"Invalid path in {config_file}: "
+                        f"unsupported absolute path: {path}",
                     )
+                    continue
                 config_files.add(path)
                 home_files.add(path)
 
@@ -109,34 +167,48 @@ class ApplicationsDatabase:
         if config.has_section("xdg_configuration_files"):
             for path in config.options("xdg_configuration_files"):
                 if path.startswith("/"):
-                    raise ValueError(
-                        f"Unsupported absolute path: {path}",
+                    problems.append(
+                        f"Invalid path in {config_file}: "
+                        f"unsupported absolute path: {path}",
                     )
+                    continue
                 xdg_files.add(path)
                 xdg_path = os.path.join(xdg_config_home, path)
                 xdg_path = xdg_path.replace(home, "")
                 config_files.add(xdg_path)
 
         # Add the exclusion rules
-        self.apps[app_name]["exclude"] = self._parse_exclusions(
+        exclude, exclude_problems = self._parse_exclusions(
             config, "exclude", config_file,
         )
-        self.apps[app_name]["xdg_exclude"] = self._parse_exclusions(
+        self.apps[app_name]["exclude"] = exclude
+        problems.extend(exclude_problems)
+
+        xdg_exclude, xdg_problems = self._parse_exclusions(
             config, "xdg_exclude", config_file,
         )
+        self.apps[app_name]["xdg_exclude"] = xdg_exclude
+        problems.extend(xdg_problems)
+
+        # The problems of the file are reported for the application
+        if problems:
+            self.errors[app_name] = "; ".join(problems)
 
     @staticmethod
     def _parse_exclusions(
         config: configparser.ConfigParser,
         section: str,
         config_file: str,
-    ) -> list[str]:
+    ) -> tuple[list[str], list[str]]:
         """
         Parse an exclusion section of an application config file.
 
         The patterns are listed one per line, like the other sections of the
         config files. A pattern may also be given as a value, e.g.
         ``*.log = some log files``.
+
+        The patterns that are not valid are skipped, they do not stop the
+        application from being used, and they are reported.
 
         Args:
             config (configparser.ConfigParser): The parsed config file.
@@ -145,11 +217,12 @@ class ApplicationsDatabase:
                                reporting.
 
         Returns:
-            list of str: The exclusion patterns.
+            tuple of (the exclusion patterns, the problems of the section)
         """
         patterns: list[str] = []
+        problems: list[str] = []
         if not config.has_section(section):
-            return patterns
+            return patterns, problems
 
         for option in config.options(section):
             value: str | None = config.get(section, option, raw=True)
@@ -159,13 +232,14 @@ class ApplicationsDatabase:
             if not pattern:
                 continue
             if pattern.startswith("/"):
-                raise ConfigError(
+                problems.append(
                     f"Invalid exclusion pattern in {config_file}: "
                     f"unsupported absolute path: {pattern}",
                 )
+                continue
             patterns.append(pattern)
 
-        return patterns
+        return patterns, problems
 
     @staticmethod
     def get_custom_apps_dir() -> str:
@@ -403,6 +477,21 @@ class ApplicationsDatabase:
         value = self.apps[name]["config_file"]
         assert isinstance(value, str)
         return value
+
+    def get_error(self, name: str) -> str | None:
+        """
+        Return the error of an application, when it has one.
+
+        The broken rules of the config file are skipped, the application is
+        still used, and the problem is reported here.
+
+        Args:
+            name (str)
+
+        Returns:
+            str or None: The reason why the config file is not fully used.
+        """
+        return self.errors.get(name)
 
     def is_custom(self, name: str) -> bool:
         """

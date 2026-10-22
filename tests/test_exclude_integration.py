@@ -7,7 +7,6 @@ import pytest
 
 from mackeep import utils
 from mackeep.appsdb import ApplicationsDatabase
-from mackeep.config import ConfigError
 from mackeep_cli.main import main
 
 
@@ -414,8 +413,8 @@ def test_an_exclusion_may_be_written_as_a_value(home):
     assert db.get_exclude("test-app") == ["the log files"]
 
 
-def test_an_absolute_exclusion_is_a_config_error(home):
-    """An absolute path in an exclusion section is an error."""
+def test_an_absolute_exclusion_is_skipped(home):
+    """An absolute path in an exclusion section is skipped, and reported."""
     write_mackeep_config(home)
     write_app_config(
         home,
@@ -423,17 +422,24 @@ def test_an_absolute_exclusion_is_a_config_error(home):
         "name = Test App\n"
         "\n"
         "[exclude]\n"
-        "/absolute/path\n",
+        "/absolute/path\n"
+        "*.log\n",
     )
 
-    with pytest.raises(ConfigError) as context:
-        ApplicationsDatabase()
+    db = ApplicationsDatabase()
 
-    assert "test-app.cfg" in str(context.value)
+    # The broken rule is skipped, the other ones are still used
+    assert db.get_exclude("test-app") == ["*.log"]
+
+    # The problem is reported for the application
+    error = db.get_error("test-app")
+    assert error is not None
+    assert "test-app.cfg" in error
+    assert "/absolute/path" in error
 
 
-def test_a_duplicated_exclusion_is_a_config_error(home):
-    """A duplicated pattern in an exclusion section is an error."""
+def test_a_duplicated_exclusion_is_skipped(home):
+    """A duplicated pattern in an exclusion section is skipped, and reported."""
     write_mackeep_config(home)
     write_app_config(
         home,
@@ -445,7 +451,38 @@ def test_a_duplicated_exclusion_is_a_config_error(home):
         "*.log\n",
     )
 
-    with pytest.raises(ConfigError) as context:
-        ApplicationsDatabase()
+    db = ApplicationsDatabase()
 
-    assert "test-app.cfg" in str(context.value)
+    # The application is still used
+    assert db.get_name("test-app") == "Test App"
+
+    # The problem is reported for the application
+    error = db.get_error("test-app")
+    assert error is not None
+    assert "test-app.cfg" in error
+
+
+def test_a_broken_exclusion_does_not_stop_the_other_applications(home):
+    """A broken rule does not stop the other applications from being used."""
+    write_mackeep_config(home)
+    write_app_config(
+        home,
+        "[application]\n"
+        "name = Test App\n"
+        "\n"
+        "[exclude]\n"
+        "/absolute/path\n",
+    )
+    apps_dir = home / ".mackeep"
+    (apps_dir / "other-app.cfg").write_text(
+        "[application]\n"
+        "name = Other App\n"
+        "\n"
+        "[configuration_files]\n"
+        ".otherdir\n",
+    )
+
+    db = ApplicationsDatabase()
+
+    assert db.get_name("other-app") == "Other App"
+    assert db.get_error("other-app") is None

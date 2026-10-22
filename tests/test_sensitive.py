@@ -4,10 +4,8 @@ import json
 from unittest.mock import patch
 
 from mackeep import utils
+from mackeep.jsonapi import SCHEMA_VERSION
 from mackeep_cli.main import main
-
-# The version of the schema of the JSON answers
-SCHEMA_VERSION = 2
 
 # The content of the config file of the test application
 APP_CONFIG = (
