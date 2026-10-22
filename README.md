@@ -18,7 +18,7 @@ operations through the CLI. Backups are manual snapshots, not continuous sync.
 Install the standalone CLI with [Homebrew](https://brew.sh/):
 
 ```bash
-brew install Joynik/tap/mackeep-cli
+brew install joynik/tap/mackeep-cli
 mackeep-cli config
 ```
 
