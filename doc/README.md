@@ -788,6 +788,7 @@ the repository:
 cd desktop
 make project   # The project of XcodeGen is generated
 make build     # The application is built
+make release   # The application is built for the release
 make test      # The unit tests and the UI tests are run
 ```
 

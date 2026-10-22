@@ -30,6 +30,16 @@ version. The `make release` command writes the version of the release in
 `desktop/project.yml`, so the version of the application is always the one of
 the release, in the "About" window too.
 
+The application is built from the `desktop/` folder of the repository:
+
+```bash
+cd desktop
+make release   # The application is built in the Release configuration
+```
+
+The built application is in `desktop/build/Build/Products/Release/Mackeep.app`.
+It is not signed and not notarized yet, so it is not published anywhere.
+
 The releases hold one package per platform:
 
 ```text

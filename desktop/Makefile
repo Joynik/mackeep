@@ -5,8 +5,9 @@ DESTINATION := platform=macOS,arch=arm64
 ## The folder with the build products, it is inside the project
 DERIVED_DATA := build
 BUILT_PRODUCTS_DIR := $(DERIVED_DATA)/Build/Products/Debug
+RELEASE_PRODUCTS_DIR := $(DERIVED_DATA)/Build/Products/Release
 
-.PHONY: project build test run clean
+.PHONY: project build release test run clean
 
 ## Generate the Xcode project from project.yml
 project:
@@ -15,6 +16,14 @@ project:
 ## Build the application
 build: project
 	xcodebuild -project $(PROJECT) -scheme $(SCHEME) \
+		-destination $(DESTINATION) -derivedDataPath $(DERIVED_DATA) build
+
+## Build the application for the release
+##
+## The version of the application is the version of the release, it is
+## written in project.yml by the release of the tool.
+release: project
+	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Release \
 		-destination $(DESTINATION) -derivedDataPath $(DERIVED_DATA) build
 
 ## Run the tests
