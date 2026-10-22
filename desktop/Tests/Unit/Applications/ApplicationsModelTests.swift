@@ -10,7 +10,8 @@ final class ApplicationsModelTests: XCTestCase {
         name: String,
         source: MackeepAppSource = .builtin,
         files: [MackeepPath] = [],
-        displayName: String? = nil
+        displayName: String? = nil,
+        error: String? = nil
     ) -> MackeepApplication {
         MackeepApplication(
             schemaVersion: 1,
@@ -21,7 +22,8 @@ final class ApplicationsModelTests: XCTestCase {
             files: files,
             xdgFiles: [],
             exclude: [],
-            xdgExclude: []
+            xdgExclude: [],
+            error: error
         )
     }
 
@@ -186,6 +188,36 @@ final class ApplicationsModelTests: XCTestCase {
                 application(name: "vim"),
             ]
         )
+
+        XCTAssertFalse(model.isListed(model.applications[0]))
+        XCTAssertTrue(model.visibleApplications.isEmpty)
+    }
+
+    func testTheApplicationWithAnErrorIsStillInTheList() {
+        let reason: String = "Invalid exclusion pattern in /Users/user/.mackeep/vim.cfg: unsupported absolute path: /absolute/path"
+        let model: ApplicationsModel = model(
+            applications: [
+                application(name: "vim", error: reason),
+                application(name: "emacs"),
+            ],
+            sync: ["vim"]
+        )
+
+        // The application is still listed, the reason is known
+        XCTAssertEqual(model.visibleApplications.count, 1)
+        XCTAssertEqual(model.visibleApplications[0].name, "vim")
+        XCTAssertEqual(model.visibleApplications[0].error, reason)
+    }
+
+    func testTheApplicationOfTheLibraryIsRemovedFromTheList() {
+        let model: ApplicationsModel = model(
+            applications: [
+                application(name: "vim"),
+            ],
+            sync: ["vim"]
+        )
+
+        model.delete(model.applications[0])
 
         XCTAssertFalse(model.isListed(model.applications[0]))
         XCTAssertTrue(model.visibleApplications.isEmpty)

@@ -9,16 +9,10 @@ final class AppEnvironment {
     ///
     /// The language of the user is kept between the runs, the language of
     /// the system is used when nothing is chosen.
-    var language: AppLanguage {
-        get {
-            guard let raw: String = UserDefaults.standard.string(forKey: "language") else {
-                return .system
-            }
-            return AppLanguage(rawValue: raw) ?? .system
-        }
-        set {
-            UserDefaults.standard.set(newValue.rawValue, forKey: "language")
-            L10n.language = newValue
+    var language: AppLanguage = .system {
+        didSet {
+            UserDefaults.standard.set(language.rawValue, forKey: "language")
+            L10n.language = language
             NotificationCenter.default.post(
                 name: .mackeepLanguageDidChange,
                 object: nil
@@ -27,7 +21,14 @@ final class AppEnvironment {
     }
 
     /// The appearance of the interface.
-    var appearance: AppAppearance = .system
+    ///
+    /// The choice of the user is kept between the runs, the appearance of
+    /// the system is used when nothing is chosen.
+    var appearance: AppAppearance = .system {
+        didSet {
+            UserDefaults.standard.set(appearance.rawValue, forKey: "appearance")
+        }
+    }
 
     /// The path of the `mackeep-cli` binary.
     var mackeepPath: String = ""
@@ -66,6 +67,10 @@ final class AppEnvironment {
         self.backup = BackupModel(command: command)
         self.settings = SettingsModel(command: command, capabilities: nil)
 
+        // The choices of the user are kept between the runs
+        language = Self.savedLanguage()
+        appearance = Self.savedAppearance()
+
         // The strings are read in the language of the user
         L10n.language = language
 
@@ -87,6 +92,22 @@ final class AppEnvironment {
     /// Whether the tool of Mackeep is recent enough for the application.
     var isToolSupported: Bool { capabilities?.isSupported ?? false }
 
+    /// The language that was chosen the last time.
+    private static func savedLanguage() -> AppLanguage {
+        guard let raw: String = UserDefaults.standard.string(forKey: "language") else {
+            return .system
+        }
+        return AppLanguage(rawValue: raw) ?? .system
+    }
+
+    /// The appearance that was chosen the last time.
+    private static func savedAppearance() -> AppAppearance {
+        guard let raw: String = UserDefaults.standard.string(forKey: "appearance") else {
+            return .system
+        }
+        return AppAppearance(rawValue: raw) ?? .system
+    }
+
     /// The model of the editor of an application.
     ///
     /// - Parameter appName: The identifier of the application.
@@ -107,6 +128,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     case system = "system"
     case russian = "ru"
     case english = "en"
+    case ukrainian = "uk"
     case spanish = "es"
     case german = "de"
     case french = "fr"

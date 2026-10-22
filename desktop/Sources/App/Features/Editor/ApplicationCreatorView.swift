@@ -14,6 +14,9 @@ struct ApplicationCreatorView: View {
     /// The error shown to the user, when there is one.
     @State private var presentedError: AppError?
 
+    /// Closes the sheet.
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(
@@ -26,29 +29,19 @@ struct ApplicationCreatorView: View {
             Form {
                 Section {
                     TextField(
-                        L10n.string("editor.create.identifier.placeholder"),
-                        text: $model.name
-                    )
-                    TextField(
                         L10n.string("editor.create.name.placeholder"),
                         text: $model.displayName
                     )
-                }
-
-                if model.source == nil {
-                    Section(L10n.string("editor.create.template")) {
-                        Picker("", selection: $model.template) {
-                            ForEach(ApplicationTemplate.allCases) { template in
-                                Text(template.title).tag(template)
-                            }
-                        }
-                        .pickerStyle(.inline)
-                        .labelsHidden()
-                    }
+                    .textFieldStyle(AppFieldStyle())
+                    TextField(
+                        L10n.string("editor.create.identifier.placeholder"),
+                        text: $model.name
+                    )
+                    .textFieldStyle(AppFieldStyle())
                 }
             }
             .formStyle(.grouped)
-            .frame(height: model.source == nil ? 280 : 140)
+            .frame(height: 140)
 
             if !model.issues.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
@@ -65,7 +58,9 @@ struct ApplicationCreatorView: View {
 
             HStack {
                 Spacer()
-                Button(L10n.string("editor.create.cancel"), role: .cancel) {}
+                Button(L10n.string("editor.create.cancel"), role: .cancel) {
+                    dismiss()
+                }
                 Button(L10n.string("editor.create.create")) {
                     create()
                 }
@@ -75,6 +70,8 @@ struct ApplicationCreatorView: View {
         }
         .padding(20)
         .frame(width: 460)
+        // The controls of the window have the same height, so they line up.
+        .appControlSize()
         .onChange(of: model.name) {
             model.validate(existing: existing)
         }

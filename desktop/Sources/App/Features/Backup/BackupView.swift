@@ -21,6 +21,8 @@ struct BackupView: View {
             content
         }
         .navigationTitle(L10n.string("section.backup.title"))
+        // The controls of the window have the same height, so they line up.
+        .appControlSize()
         .sheet(isPresented: $showsRestoreConfirmation) {
             RestoreConfirmationView(model: model)
         }

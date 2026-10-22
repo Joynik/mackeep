@@ -59,6 +59,15 @@ final class ApplicationsModel {
     /// The main config file of Mackeep.
     private(set) var config: MainConfig?
 
+    /// The applications that are used for the backup.
+    ///
+    /// They are kept here, and not only in the config file, so the view is
+    /// told when they change.
+    private(set) var syncedApps: Set<String> = []
+
+    /// The applications of the list that are not used for the backup.
+    private(set) var ignoredApps: Set<String> = []
+
     /// The directory where the config files of the user are.
     private(set) var customAppsDir: String?
 
@@ -126,7 +135,7 @@ final class ApplicationsModel {
     /// - Parameter application: The application.
     /// - Returns: True when the application is backed up.
     func isEnabled(_ application: MackeepApplication) -> Bool {
-        (config?.appsToSync ?? []).contains(application.name)
+        syncedApps.contains(application.name)
     }
 
     /// Whether the application is in the list of the user.
@@ -137,9 +146,7 @@ final class ApplicationsModel {
     /// - Parameter application: The application.
     /// - Returns: True when the application is in the list.
     func isListed(_ application: MackeepApplication) -> Bool {
-        guard let config else { return false }
-        return config.appsToSync.contains(application.name)
-            || config.appsToIgnore.contains(application.name)
+        syncedApps.contains(application.name) || ignoredApps.contains(application.name)
     }
 
     /// Whether the application is installed on this Mac.
@@ -169,28 +176,17 @@ final class ApplicationsModel {
     ///   - application: The application.
     ///   - enabled: Whether the application is backed up.
     func setEnabled(_ enabled: Bool, for application: MackeepApplication) {
-        guard let config else { return }
-
-        var synced: Set<String> = Set(config.appsToSync)
-        var ignored: Set<String> = Set(config.appsToIgnore)
+        guard config != nil else { return }
 
         if enabled {
-            synced.insert(application.name)
-            ignored.remove(application.name)
+            syncedApps.insert(application.name)
+            ignoredApps.remove(application.name)
         } else {
-            synced.remove(application.name)
-            ignored.insert(application.name)
+            syncedApps.remove(application.name)
+            ignoredApps.insert(application.name)
         }
 
-        config.setSyncedApplications(Array(synced), ignored: Array(ignored))
-        do {
-            try config.save()
-        } catch {
-            presentedError = AppError(
-                title: L10n.string("error.save.title"),
-                message: "\(error)"
-            )
-        }
+        writeTheLists()
     }
 
     /// Add an application of the library to the list of the user.
@@ -209,14 +205,16 @@ final class ApplicationsModel {
     ///
     /// - Parameter application: The application.
     func removeFromTheList(_ application: MackeepApplication) {
+        syncedApps.remove(application.name)
+        ignoredApps.remove(application.name)
+        writeTheLists()
+    }
+
+    /// Write the lists of the applications in the config file.
+    private func writeTheLists() {
         guard let config else { return }
 
-        var synced: Set<String> = Set(config.appsToSync)
-        var ignored: Set<String> = Set(config.appsToIgnore)
-        synced.remove(application.name)
-        ignored.remove(application.name)
-
-        config.setSyncedApplications(Array(synced), ignored: Array(ignored))
+        config.setSyncedApplications(Array(syncedApps), ignored: Array(ignoredApps))
         do {
             try config.save()
         } catch {
@@ -249,7 +247,11 @@ final class ApplicationsModel {
             appName: appName,
             url: url,
             document: document,
-            mainConfig: config
+            mainConfig: config,
+            onSave: { [weak self] in
+                // The files of the application are shown in the details
+                self?.load()
+            }
         )
         editors[appName] = editor
         return editor
@@ -277,12 +279,17 @@ final class ApplicationsModel {
     /// Delete an application of the user.
     ///
     /// The config file of the application is removed, and the application is
-    /// not in the list any more. The applications of the library cannot be
-    /// deleted, they can only be copied.
+    /// not in the list any more. The applications of the library are not
+    /// deleted, they are only removed from the list, they are still in the
+    /// library.
     ///
     /// - Parameter application: The application.
     func delete(_ application: MackeepApplication) {
-        guard application.isCustom else { return }
+        guard application.isCustom else {
+            removeFromTheList(application)
+            load()
+            return
+        }
 
         let url: URL = URL(fileURLWithPath: application.cfgPath)
         do {
@@ -305,6 +312,8 @@ final class ApplicationsModel {
     /// - Parameter config: The config.
     func setConfig(_ config: MainConfig) {
         self.config = config
+        syncedApps = Set(config.appsToSync)
+        ignoredApps = Set(config.appsToIgnore)
     }
 
     /// Load the applications and the config of Mackeep.
@@ -393,7 +402,7 @@ final class ApplicationsModel {
         applications = result.applications
         customAppsDir = result.customAppsDir
         if let url: URL = result.configURL, let document: INIDocument = result.configDocument {
-            config = MainConfig(url: url, document: document)
+            setConfig(MainConfig(url: url, document: document))
         }
         estimateSizes()
     }

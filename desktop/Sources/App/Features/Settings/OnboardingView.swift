@@ -65,6 +65,8 @@ struct OnboardingView: View {
         }
         .padding(28)
         .frame(width: 560, height: 420)
+        // The controls of the window have the same height, so they line up.
+        .appControlSize()
         .onAppear {
             settings.load()
         }

@@ -3,15 +3,24 @@ import Foundation
 /// The model of the creation of an application.
 @Observable
 @MainActor
-final class ApplicationCreatorModel {
+final class ApplicationCreatorModel: Identifiable {
+    /// The identifier of the model.
+    let id: UUID = UUID()
+
     /// The identifier of the application.
-    var name: String = ""
+    ///
+    /// It holds the lowercase Latin letters, the digits, the dash and the
+    /// underscore only. The uppercase letters are lowered as they are typed.
+    var name: String {
+        get { identifier }
+        set { identifier = ApplicationCreatorModel.clean(name: newValue) }
+    }
+
+    /// The identifier, as it is written.
+    private var identifier: String = ""
 
     /// The name of the application.
     var displayName: String = ""
-
-    /// The template of the application.
-    var template: ApplicationTemplate = .empty
 
     /// The problems of the creation.
     private(set) var issues: [ValidationIssue] = []
@@ -31,6 +40,27 @@ final class ApplicationCreatorModel {
     init(directory: URL, source: MackeepApplication? = nil) {
         self.directory = directory
         self.source = source
+    }
+
+    /// Clean an identifier.
+    ///
+    /// Only the lowercase Latin letters, the digits, the dash and the
+    /// underscore are kept, the uppercase letters are lowered.
+    ///
+    /// - Parameter name: The identifier that is written.
+    /// - Returns: The identifier, cleaned.
+    static func clean(name: String) -> String {
+        let lowered: String = name.lowercased()
+        return String(
+            lowered.filter { character in
+                character.isASCII && (
+                    character.isLetter
+                        || character.isNumber
+                        || character == "-"
+                        || character == "_"
+                )
+            }
+        )
     }
 
     /// Whether the application can be created.
@@ -92,9 +122,7 @@ final class ApplicationCreatorModel {
             forKey: "name",
             inSection: "application"
         )
-        for section: EditorSection in template.sections where section != .application {
-            document.ensureSection(section.rawValue)
-        }
+        document.ensureSection(EditorSection.configurationFiles.rawValue)
 
         let url: URL = directory.appendingPathComponent("\(identifier).cfg")
         try INIFile.save(document, to: url)

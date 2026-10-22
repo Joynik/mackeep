@@ -34,7 +34,9 @@ struct ApplicationDetailView: View {
             Button(L10n.string("applications.delete"), role: .destructive) {
                 model.delete(application)
             }
-            Button(L10n.string("editor.create.cancel"), role: .cancel) {}
+            Button(L10n.string("editor.create.cancel"), role: .cancel) {
+                showsDeletion = false
+            }
         }
     }
 
@@ -46,6 +48,16 @@ struct ApplicationDetailView: View {
             Text(application.name)
                 .font(.callout)
                 .foregroundStyle(.secondary)
+            if let error: String = application.error {
+                Label {
+                    Text(error)
+                        .font(.callout)
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                }
+                .foregroundStyle(.orange)
+                .textSelection(.enabled)
+            }
             HStack(spacing: 8) {
                 Label(
                     application.isCustom
@@ -104,8 +116,21 @@ struct ApplicationDetailView: View {
                         systemImage: "trash"
                     )
                 }
+            } else {
+                // The application of the library is not deleted, it is only
+                // removed from the list of the user
+                Button(role: .destructive) {
+                    model.delete(application)
+                } label: {
+                    Label(
+                        L10n.string("applications.delete"),
+                        systemImage: "trash"
+                    )
+                }
             }
         }
+        // The controls of the panel have the same height, so they line up.
+        .appControlSize()
     }
 
     /// The paths of the application.
@@ -178,7 +203,7 @@ private struct PathRow: View {
             Spacer(minLength: 8)
 
             if isXDG {
-                Text("XDG")
+                Text(".config")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }

@@ -10,7 +10,8 @@
     ],
     "xdg_files": [],
     "exclude": ["appdir/cache"],
-    "xdg_exclude": []
+    "xdg_exclude": [],
+    "error": "Invalid exclusion pattern in /Users/user/.mackeep/demo.cfg: unsupported absolute path: /absolute/path"
   },
   {
     "schema_version": 1,

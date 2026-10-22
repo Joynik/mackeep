@@ -112,6 +112,12 @@ final class ApplicationEditorModel {
     /// The main config file of Mackeep, where the name of the application goes.
     private var mainConfig: MainConfig?
 
+    /// The callback called when the config file of the application is saved.
+    ///
+    /// The list of the applications is read again, the files of the
+    /// application are shown in the details.
+    private var onSave: (() -> Void)?
+
     /// The date when the config file was written the last time.
     private var lastModification: Date?
 
@@ -126,31 +132,15 @@ final class ApplicationEditorModel {
         appName: String,
         url: URL,
         document: INIDocument,
-        mainConfig: MainConfig? = nil
+        mainConfig: MainConfig? = nil,
+        onSave: (() -> Void)? = nil
     ) {
         self.appName = appName
         self.url = url
         self.document = document
         self.mainConfig = mainConfig
+        self.onSave = onSave
         self.lastModification = Self.modificationDate(of: url)
-    }
-
-    /// The sections of the config file.
-    var sections: [EditorSection] {
-        EditorSection.allCases.filter { section in
-            switch section {
-            case .application:
-                document.hasSection("application")
-            case .configurationFiles:
-                document.hasSection("configuration_files")
-            case .xdgConfigurationFiles:
-                document.hasSection("xdg_configuration_files")
-            case .exclude:
-                document.hasSection("exclude")
-            case .xdgExclude:
-                document.hasSection("xdg_exclude")
-            }
-        }
     }
 
     /// The name of the application, for the title of the window.
@@ -158,38 +148,59 @@ final class ApplicationEditorModel {
         displayName.isEmpty ? appName : displayName
     }
 
-    /// Add a section to the config file.
-    ///
-    /// - Parameter section: The section.
-    func addSection(_ section: EditorSection) {
-        document.ensureSection(section.rawValue)
-        validate()
-    }
-
     /// Add a path to the application.
     ///
+    /// The path is relative to the home or to the XDG config home, an
+    /// absolute path is made relative.
+    ///
     /// - Parameters:
-    ///   - url: The absolute path of the file or of the folder.
+    ///   - path: The path of the file or of the folder.
     ///   - isXDG: Whether the path is an XDG one.
-    func addPath(_ url: URL, isXDG: Bool) {
-        let path: String = EditorPath.relativePath(of: url, isXDG: isXDG)
+    func addPath(_ path: String, isXDG: Bool) {
+        let relative: String = EditorPath.corrected(path, isXDG: isXDG)
+        guard !relative.isEmpty else { return }
+
         var paths: [EditorPath] = isXDG ? xdgPaths : self.paths
-        guard !paths.contains(where: { $0.path == path }) else {
+        guard !paths.contains(where: { $0.path == relative }) else {
             issues.append(
                 ValidationIssue(
                     severity: .warning,
-                    message: L10n.string("editor.validation.duplicate", path)
+                    message: L10n.string("editor.validation.duplicate", relative)
                 )
             )
             return
         }
-        paths.append(EditorPath(path: path, isXDG: isXDG))
+        paths.append(EditorPath(path: relative, isXDG: isXDG))
         if isXDG {
             xdgPaths = paths
         } else {
             self.paths = paths
         }
         validate()
+    }
+
+    /// Add a path to the application.
+    ///
+    /// - Parameter path: The path that is added.
+    func addPath(_ path: EditorPath) {
+        remember()
+        addPath(path.path, isXDG: path.isXDG)
+    }
+
+    /// Add an exclusion rule to the application.
+    ///
+    /// The rule is relative to the home or to the XDG config home, an
+    /// absolute path is made relative.
+    ///
+    /// - Parameter path: The path that is excluded.
+    func addExclude(_ path: EditorPath) {
+        remember()
+        let rule: String = EditorPath.corrected(path.path, isXDG: path.isXDG)
+        guard !rule.isEmpty else { return }
+        var patterns: [String] = path.isXDG ? xdgExcludes : excludes
+        guard !patterns.contains(rule) else { return }
+        patterns.append(rule)
+        setExcludes(patterns, isXDG: path.isXDG)
     }
 
     /// Remove a path of the application.
@@ -269,16 +280,23 @@ final class ApplicationEditorModel {
             }
         }
 
-        for pattern: String in excludes + xdgExcludes {
-            if !pattern.contains("*") && !pattern.contains("?") {
-                let url: URL = EditorPath.absoluteURL(of: pattern, isXDG: false)
-                if !FileManager.default.fileExists(atPath: url.path) {
-                    issues.append(
-                        ValidationIssue(
-                            severity: .warning,
-                            message: L10n.string("editor.validation.missing", pattern)
+        // The rules of the exclusions are relative to the home directory, or
+        // to the XDG config home.
+        for (patterns, isXDG) in [(excludes, false), (xdgExcludes, true)] {
+            for pattern: String in patterns {
+                if !pattern.contains("*") && !pattern.contains("?") {
+                    let url: URL = EditorPath.absoluteURL(of: pattern, isXDG: isXDG)
+                    if !FileManager.default.fileExists(atPath: url.path) {
+                        issues.append(
+                            ValidationIssue(
+                                severity: .warning,
+                                message: L10n.string(
+                                    "editor.validation.missing",
+                                    pattern
+                                )
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -312,6 +330,10 @@ final class ApplicationEditorModel {
             mainConfig.setSyncedApplications(Array(names), ignored: Array(ignored))
             try mainConfig.save()
         }
+
+        // The list of the applications is read again, the new files of the
+        // application are shown in the details
+        onSave?()
     }
 
     /// Whether the config file was changed by something else.

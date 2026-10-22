@@ -27,13 +27,8 @@ struct EditorPath: Identifiable, Equatable {
     ///   - isXDG: Whether the path is an XDG one.
     /// - Returns: The absolute path.
     static func absoluteURL(of path: String, isXDG: Bool) -> URL {
-        let home: URL = URL(fileURLWithPath: NSHomeDirectory())
-        if isXDG {
-            let xdg: URL = URL(fileURLWithPath: ProcessInfo.processInfo
-                .environment["XDG_CONFIG_HOME"] ?? home.appendingPathComponent(".config").path)
-            return xdg.appendingPathComponent(path)
-        }
-        return home.appendingPathComponent(path)
+        let root: URL = isXDG ? EditorPath.xdgDirectory : EditorPath.homeDirectory
+        return root.appendingPathComponent(path)
     }
 
     /// Make a path relative to the home directory, or to the XDG config home.
@@ -43,11 +38,7 @@ struct EditorPath: Identifiable, Equatable {
     ///   - isXDG: Whether the path is an XDG one.
     /// - Returns: The relative path, the absolute one when it is outside.
     static func relativePath(of url: URL, isXDG: Bool) -> String {
-        let home: URL = URL(fileURLWithPath: NSHomeDirectory())
-        let root: URL = isXDG
-            ? URL(fileURLWithPath: ProcessInfo.processInfo
-                .environment["XDG_CONFIG_HOME"] ?? home.appendingPathComponent(".config").path)
-            : home
+        let root: URL = isXDG ? EditorPath.xdgDirectory : EditorPath.homeDirectory
 
         let rootPath: String = root.standardizedFileURL.path
         let path: String = url.standardizedFileURL.path
@@ -56,6 +47,103 @@ struct EditorPath: Identifiable, Equatable {
             return String(path.dropFirst(prefix.count))
         }
         return path
+    }
+
+    /// The home directory of the user.
+    static var homeDirectory: URL {
+        URL(fileURLWithPath: NSHomeDirectory())
+    }
+
+    /// The XDG config home of the user.
+    static var xdgDirectory: URL {
+        let home: URL = EditorPath.homeDirectory
+        return URL(fileURLWithPath: ProcessInfo.processInfo
+            .environment["XDG_CONFIG_HOME"] ?? home.appendingPathComponent(".config").path)
+    }
+
+    /// Cut the parts of a path that the tool does not accept.
+    ///
+    /// The tool only accepts relative paths, so the variables of the shell
+    /// and the root of the section are taken off, the leading slash is taken
+    /// off as well, so the path is always relative.
+    ///
+    /// - Parameters:
+    ///   - text: The path or the mask, as it is written.
+    ///   - isXDG: Whether it belongs to the XDG section.
+    /// - Returns: The relative path.
+    static func corrected(_ text: String, isXDG: Bool) -> String {
+        let trimmed: String = text.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return trimmed }
+
+        let expanded: String = EditorPath.expanded(trimmed)
+
+        // The path is inside the root of the section.
+        let rootPath: String = (isXDG
+            ? EditorPath.xdgDirectory
+            : EditorPath.homeDirectory
+        ).standardizedFileURL.path
+        let prefix: String = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
+        if expanded.hasPrefix(prefix) {
+            return String(expanded.dropFirst(prefix.count))
+        }
+
+        // The path is outside of the root, the leading slash is cut.
+        var relative: String = String(expanded.drop(while: { $0 == "/" }))
+        if isXDG, let xdg: String = EditorPath.xdgRelativePath,
+           relative.hasPrefix(xdg + "/")
+        {
+            // The XDG config home is inside the home directory, it is cut
+            // as well.
+            relative = String(relative.dropFirst(xdg.count + 1))
+        }
+        return relative
+    }
+
+    /// Replace the variables of a path by the directories they stand for.
+    ///
+    /// The tilde is the home directory, "$HOME" is the home directory too and
+    /// "$XDG_CONFIG_HOME" is the XDG config home.
+    ///
+    /// - Parameter path: The path, as it is written.
+    /// - Returns: The path with the absolute directories.
+    static func expanded(_ path: String) -> String {
+        let text: String = path
+
+        // The tilde is the home directory.
+        if text == "~" {
+            return EditorPath.homeDirectory.path
+        } else if text.hasPrefix("~/") {
+            return EditorPath.homeDirectory.path
+                + "/" + String(text.dropFirst(2))
+        }
+
+        // The variables of the shell.
+        let variables: [(name: String, directory: URL)] = [
+            ("$XDG_CONFIG_HOME", EditorPath.xdgDirectory),
+            ("${XDG_CONFIG_HOME}", EditorPath.xdgDirectory),
+            ("$HOME", EditorPath.homeDirectory),
+            ("${HOME}", EditorPath.homeDirectory),
+        ]
+        for variable: (name: String, directory: URL) in variables {
+            if text == variable.name {
+                return variable.directory.path
+            } else if text.hasPrefix(variable.name + "/") {
+                return variable.directory.path
+                    + "/" + String(text.dropFirst(variable.name.count + 1))
+            }
+        }
+        return text
+    }
+
+    /// The XDG config home, relative to the home directory.
+    ///
+    /// It is nil when the XDG config home is not inside the home directory.
+    static var xdgRelativePath: String? {
+        let root: String = EditorPath.xdgDirectory.standardizedFileURL.path
+        let home: String = EditorPath.homeDirectory.standardizedFileURL.path
+        let prefix: String = home.hasSuffix("/") ? home : home + "/"
+        guard root.hasPrefix(prefix) else { return nil }
+        return String(root.dropFirst(prefix.count))
     }
 }
 
@@ -100,44 +188,3 @@ enum EditorSection: String, CaseIterable, Identifiable {
     }
 }
 
-/// The templates of a new application.
-enum ApplicationTemplate: String, CaseIterable, Identifiable {
-    /// An empty application.
-    case empty
-
-    /// An application with a single config file.
-    case singleFile
-
-    /// An application with a folder and exclusions.
-    case folder
-
-    /// An application that uses the XDG directory.
-    case xdg
-
-    /// An application that uses a plist of the preferences.
-    case preferences
-
-    var id: String { rawValue }
-
-    /// The title of the template.
-    var title: String {
-        switch self {
-        case .empty: L10n.string("template.empty")
-        case .singleFile: L10n.string("template.singleFile")
-        case .folder: L10n.string("template.folder")
-        case .xdg: L10n.string("template.xdg")
-        case .preferences: L10n.string("template.preferences")
-        }
-    }
-
-    /// The sections of the template.
-    var sections: [EditorSection] {
-        switch self {
-        case .empty: [.application]
-        case .singleFile: [.application, .configurationFiles]
-        case .folder: [.application, .configurationFiles, .exclude]
-        case .xdg: [.application, .xdgConfigurationFiles, .xdgExclude]
-        case .preferences: [.application, .configurationFiles]
-        }
-    }
-}

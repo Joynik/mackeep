@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 /// The editor of the config file of an application.
 struct ApplicationEditorView: View {
@@ -12,6 +11,12 @@ struct ApplicationEditorView: View {
     /// Whether the file was changed by something else.
     @State private var showsReloadAlert = false
 
+    /// Whether the window of the search is shown.
+    @State private var showsSearch = false
+
+    /// The model of the search of the files.
+    @State private var search = ApplicationSearchModel()
+
     var body: some View {
         VStack(spacing: 0) {
             toolbar
@@ -22,6 +27,14 @@ struct ApplicationEditorView: View {
         }
         .frame(minWidth: 720, minHeight: 520)
         .navigationTitle(model.title)
+        // The controls of the window have the same height, so they line up.
+        .appControlSize()
+        .sheet(isPresented: $showsSearch) {
+            ApplicationSearchView(model: search, editor: model)
+                .onAppear {
+                    setThePathsOfTheSearch()
+                }
+        }
         .alert(
             L10n.string("editor.reload.title"),
             isPresented: $showsReloadAlert
@@ -29,7 +42,9 @@ struct ApplicationEditorView: View {
             Button(L10n.string("editor.reload.reload")) {
                 reload()
             }
-            Button(L10n.string("editor.reload.cancel"), role: .cancel) {}
+            Button(L10n.string("editor.reload.cancel"), role: .cancel) {
+                showsReloadAlert = false
+            }
         } message: {
             Text(L10n.string("editor.reload.message"))
         }
@@ -41,17 +56,16 @@ struct ApplicationEditorView: View {
     /// The tools of the editor.
     private var toolbar: some View {
         HStack(spacing: 8) {
-            ForEach(EditorSection.allCases) { section in
-                Button {
-                    model.remember()
-                    model.addSection(section)
-                } label: {
-                    Text("[\(section.rawValue)]")
-                        .font(.callout.monospaced())
-                }
-                .buttonStyle(.bordered)
-                .disabled(model.sections.contains(section))
+            Button {
+                openTheSearch()
+            } label: {
+                Label(
+                    L10n.string("editor.search.button"),
+                    systemImage: "magnifyingglass"
+                )
             }
+            .help(L10n.string("editor.search.button"))
+            .padding(.leading, 24)
 
             Spacer(minLength: 12)
 
@@ -64,6 +78,30 @@ struct ApplicationEditorView: View {
             .labelsHidden()
         }
         .padding(12)
+        .onChange(of: model.paths) {
+            setThePathsOfTheSearch()
+        }
+        .onChange(of: model.xdgPaths) {
+            setThePathsOfTheSearch()
+        }
+    }
+
+    /// Open the window that finds the files of the application.
+    private func openTheSearch() {
+        // The folders of the application are searched, they are read here,
+        // the paths of the application are not changed when the window opens.
+        setThePathsOfTheSearch()
+        showsSearch = true
+    }
+
+    /// Tell the search which files of the application it has to look at.
+    private func setThePathsOfTheSearch() {
+        search.setPaths(
+            model.paths,
+            xdgPaths: model.xdgPaths,
+            name: model.displayName,
+            identifier: model.appName
+        )
     }
 
     /// The form or the text of the config file.
@@ -79,9 +117,9 @@ struct ApplicationEditorView: View {
     /// The form of the config file.
     private var form: some View {
         Form {
-            Section(L10n.string("editor.section.application")) {
+            Section {
                 TextField(
-                    L10n.string("editor.name.placeholder"),
+                    "",
                     text: Binding(
                         get: { model.displayName },
                         set: { newValue in
@@ -90,9 +128,24 @@ struct ApplicationEditorView: View {
                         }
                     )
                 )
+                .textFieldStyle(AppFieldStyle())
+                .overlay(alignment: .leading) {
+                    // The name of the application, when it is not written.
+                    if model.displayName.isEmpty {
+                        Text(L10n.string("editor.name.placeholder"))
+                            .foregroundStyle(.secondary)
+                            .padding(.leading, 6)
+                            .allowsHitTesting(false)
+                    }
+                }
+            } header: {
+                BlockHeader(
+                    title: L10n.string("editor.section.application"),
+                    description: L10n.string("editor.section.application.description")
+                )
             }
 
-            Section(L10n.string("editor.section.configurationFiles")) {
+            Section {
                 PathEditorView(
                     title: L10n.string("editor.paths.title"),
                     paths: Binding(
@@ -103,18 +156,25 @@ struct ApplicationEditorView: View {
                         }
                     ),
                     isXDG: false,
-                    onAdd: { url in
+                    onAdd: { path in
                         model.remember()
-                        model.addPath(url, isXDG: false)
+                        model.addPath(path, isXDG: false)
                     },
                     onRemove: { path in
                         model.remember()
                         model.removePath(path)
                     }
                 )
+            } header: {
+                BlockHeader(
+                    title: L10n.string("editor.section.configurationFiles"),
+                    description: L10n.string(
+                        "editor.section.configurationFiles.description"
+                    )
+                )
             }
 
-            Section(L10n.string("editor.section.xdgConfigurationFiles")) {
+            Section {
                 PathEditorView(
                     title: L10n.string("editor.paths.title"),
                     paths: Binding(
@@ -125,18 +185,25 @@ struct ApplicationEditorView: View {
                         }
                     ),
                     isXDG: true,
-                    onAdd: { url in
+                    onAdd: { path in
                         model.remember()
-                        model.addPath(url, isXDG: true)
+                        model.addPath(path, isXDG: true)
                     },
                     onRemove: { path in
                         model.remember()
                         model.removePath(path)
                     }
                 )
+            } header: {
+                BlockHeader(
+                    title: L10n.string("editor.section.xdgConfigurationFiles"),
+                    description: L10n.string(
+                        "editor.section.xdgConfigurationFiles.description"
+                    )
+                )
             }
 
-            Section(L10n.string("editor.section.exclude")) {
+            Section {
                 ExclusionsEditorView(
                     paths: model.paths,
                     patterns: Binding(
@@ -148,9 +215,14 @@ struct ApplicationEditorView: View {
                     ),
                     isXDG: false
                 )
+            } header: {
+                BlockHeader(
+                    title: L10n.string("editor.section.exclude"),
+                    description: L10n.string("editor.section.exclude.description")
+                )
             }
 
-            Section(L10n.string("editor.section.xdgExclude")) {
+            Section {
                 ExclusionsEditorView(
                     paths: model.xdgPaths,
                     patterns: Binding(
@@ -161,6 +233,11 @@ struct ApplicationEditorView: View {
                         }
                     ),
                     isXDG: true
+                )
+            } header: {
+                BlockHeader(
+                    title: L10n.string("editor.section.xdgExclude"),
+                    description: L10n.string("editor.section.xdgExclude.description")
                 )
             }
         }
@@ -246,6 +323,25 @@ struct ApplicationEditorView: View {
     }
 }
 
+/// The title of a block of the config file, with its description.
+struct BlockHeader: View {
+    /// The title of the block.
+    let title: String
+
+    /// What the block does, in a few words.
+    let description: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+            Text(description)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .textCase(nil)
+    }
+}
+
 /// The list of the paths of an application.
 struct PathEditorView: View {
     /// The title of the list.
@@ -258,26 +354,20 @@ struct PathEditorView: View {
     let isXDG: Bool
 
     /// The callback called when a path is added.
-    let onAdd: (URL) -> Void
+    let onAdd: (String) -> Void
 
     /// The callback called when a path is removed.
     let onRemove: (EditorPath) -> Void
 
+    /// The path that is written.
+    @State private var newPath: String = ""
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text(title)
                     .font(.subheadline.weight(.semibold))
                 Spacer()
-                Button {
-                    choose()
-                } label: {
-                    Label(
-                        L10n.string("editor.paths.add"),
-                        systemImage: "plus"
-                    )
-                }
-                .buttonStyle(.link)
             }
 
             if paths.isEmpty {
@@ -310,18 +400,34 @@ struct PathEditorView: View {
                     }
                 }
             }
+
+            Divider()
+
+            HStack(spacing: 8) {
+                TextField(
+                    L10n.string("editor.paths.placeholder"),
+                    text: $newPath
+                )
+                .textFieldStyle(AppFieldStyle())
+                .font(.callout.monospaced())
+                .lineLimit(1)
+                .onSubmit {
+                    add()
+                }
+
+                Button(L10n.string("editor.paths.add")) {
+                    add()
+                }
+                .disabled(newPath.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
         }
     }
 
-    /// Ask for a file or a folder.
-    private func choose() {
-        let panel: NSOpenPanel = NSOpenPanel()
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        panel.directoryURL = URL(fileURLWithPath: NSHomeDirectory())
-        if panel.runModal() == .OK, let url: URL = panel.url {
-            onAdd(url)
-        }
+    /// Add the path that is written.
+    private func add() {
+        let path: String = newPath.trimmingCharacters(in: .whitespaces)
+        guard !path.isEmpty else { return }
+        onAdd(path)
+        newPath = ""
     }
 }

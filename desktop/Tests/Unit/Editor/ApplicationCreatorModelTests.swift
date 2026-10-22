@@ -41,8 +41,20 @@ final class ApplicationCreatorModelTests: XCTestCase {
             files: [],
             xdgFiles: [],
             exclude: [],
-            xdgExclude: []
+            xdgExclude: [],
+            error: nil
         )
+    }
+
+    func testTheIdentifierIsCleaned() {
+        let model: ApplicationCreatorModel = ApplicationCreatorModel(directory: directory)
+
+        model.name = "My App-2_x"
+
+        XCTAssertEqual(model.name, "myapp-2_x")
+
+        model.name = "Привет"
+        XCTAssertEqual(model.name, "")
     }
 
     func testTheApplicationIsCreated() throws {

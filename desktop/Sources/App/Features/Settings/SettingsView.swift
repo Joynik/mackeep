@@ -12,6 +12,16 @@ struct SettingsView: View {
     /// The rule of the global exclusions that is written.
     @State private var newExclude: String = ""
 
+    /// The field that has the focus, the settings are written when it
+    /// leaves it.
+    @FocusState private var focusedField: Field?
+
+    /// The fields that hold a value that is written.
+    private enum Field: Hashable {
+        case storagePath
+        case directory
+    }
+
     var body: some View {
         Form {
             appearance
@@ -22,6 +32,8 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(L10n.string("section.settings.title"))
+        // The controls of the window have the same height, so they line up.
+        .appControlSize()
         .disabled(model.isLoading)
         .overlay(alignment: .topTrailing) {
             if model.isLoading {
@@ -34,6 +46,11 @@ struct SettingsView: View {
             // The settings are read when the section is shown for the
             // first time, the window does not wait for them.
             model.load()
+        }
+        .onChange(of: focusedField) { _, _ in
+            // The value of a field is written when it loses the focus, the
+            // user does not have to press Enter.
+            model.save()
         }
     }
 
@@ -66,7 +83,11 @@ struct SettingsView: View {
                 LabeledContent(L10n.string("settings.storage.path")) {
                     HStack {
                         TextField("", text: $model.storagePath)
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(AppFieldStyle())
+                            .focused($focusedField, equals: .storagePath)
+                            .onSubmit {
+                                model.save()
+                            }
                         Button {
                             chooseFolder()
                         } label: {
@@ -79,7 +100,8 @@ struct SettingsView: View {
 
             LabeledContent(L10n.string("settings.storage.directory")) {
                 TextField("", text: $model.directory)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(AppFieldStyle())
+                    .focused($focusedField, equals: .directory)
                     .onSubmit {
                         model.save()
                     }
@@ -98,12 +120,21 @@ struct SettingsView: View {
     /// The global exclusion rules.
     private var exclusions: some View {
         Section(L10n.string("settings.exclusions.title")) {
+            ForEach(model.configErrors, id: \.self) { error in
+                Label {
+                    Text(error)
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                }
+                .foregroundStyle(.orange)
+            }
+
             HStack {
                 TextField(
                     L10n.string("settings.exclusions.placeholder"),
                     text: $newExclude
                 )
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(AppFieldStyle())
                 .font(.callout.monospaced())
 
                 Button {
@@ -226,6 +257,7 @@ struct SettingsView: View {
                 Text(L10n.string("settings.language.system")).tag(AppLanguage.system)
                 Text(L10n.string("settings.language.russian")).tag(AppLanguage.russian)
                 Text(L10n.string("settings.language.english")).tag(AppLanguage.english)
+                Text(L10n.string("settings.language.ukrainian")).tag(AppLanguage.ukrainian)
                 Text(L10n.string("settings.language.spanish")).tag(AppLanguage.spanish)
                 Text(L10n.string("settings.language.german")).tag(AppLanguage.german)
                 Text(L10n.string("settings.language.french")).tag(AppLanguage.french)

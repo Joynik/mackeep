@@ -7,7 +7,7 @@ import Foundation
 /// version of Mackeep can be read.
 enum MackeepSchema {
     /// The version of the schema of the answers.
-    static let version: Int = 2
+    static let version: Int = 3
 }
 
 /// The storage of Mackeep.
@@ -68,6 +68,11 @@ struct MackeepConfig: Codable, Equatable, Sendable {
     /// The global exclusion rules of the XDG directory.
     let globalXdgExclude: [String]?
 
+    /// The problems of the config file of Mackeep.
+    ///
+    /// The broken rules are skipped, they do not stop Mackeep from working.
+    let errors: [String]?
+
     enum CodingKeys: String, CodingKey {
         case schemaVersion = "schema_version"
         case version
@@ -79,6 +84,7 @@ struct MackeepConfig: Codable, Equatable, Sendable {
         case appsToIgnore = "apps_to_ignore"
         case globalExclude = "global_exclude"
         case globalXdgExclude = "global_xdg_exclude"
+        case errors
     }
 }
 
@@ -140,6 +146,11 @@ struct MackeepApplication: Codable, Equatable, Identifiable, Sendable {
     /// The XDG exclusion rules of the application.
     let xdgExclude: [String]?
 
+    /// The reason why the config file of the application is not fully used.
+    ///
+    /// The broken rules are skipped, the application is still used.
+    let error: String?
+
     var id: String { name }
 
     /// Whether the application comes from the user.
@@ -155,6 +166,7 @@ struct MackeepApplication: Codable, Equatable, Identifiable, Sendable {
         case xdgFiles = "xdg_files"
         case exclude
         case xdgExclude = "xdg_exclude"
+        case error
     }
 }
 

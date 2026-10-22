@@ -56,10 +56,10 @@ final class ApplicationEditorModelTests: XCTestCase {
         XCTAssertEqual(editor.displayName, "Test App")
         XCTAssertEqual(editor.paths.map(\.path), [".testrc", ".testdir"])
         XCTAssertEqual(editor.excludes, [".testdir/cache"])
-        XCTAssertTrue(editor.sections.contains(.application))
-        XCTAssertTrue(editor.sections.contains(.configurationFiles))
-        XCTAssertTrue(editor.sections.contains(.exclude))
-        XCTAssertFalse(editor.sections.contains(.xdgConfigurationFiles))
+        XCTAssertTrue(editor.text.contains("[application]"))
+        XCTAssertTrue(editor.text.contains("[configuration_files]"))
+        XCTAssertTrue(editor.text.contains("[exclude]"))
+        XCTAssertFalse(editor.text.contains("[xdg_configuration_files]"))
     }
 
     func testTheNameIsChanged() throws {
@@ -76,9 +76,17 @@ final class ApplicationEditorModelTests: XCTestCase {
         let url: URL = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent(".newfile")
 
-        editor.addPath(url, isXDG: false)
+        editor.addPath(url.path, isXDG: false)
 
         XCTAssertEqual(editor.paths.map(\.path).last, ".newfile")
+    }
+
+    func testThePathIsWrittenAsItIs() throws {
+        let (editor, _) = try makeEditor()
+
+        editor.addPath(".config/git/config", isXDG: false)
+
+        XCTAssertEqual(editor.paths.map(\.path).last, ".config/git/config")
     }
 
     func testTheDuplicatePathIsRefused() throws {
@@ -86,10 +94,46 @@ final class ApplicationEditorModelTests: XCTestCase {
         let url: URL = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent(".testrc")
 
-        editor.addPath(url, isXDG: false)
+        editor.addPath(url.path, isXDG: false)
 
         XCTAssertEqual(editor.paths.count, 2)
         XCTAssertTrue(editor.issues.contains { $0.severity == .warning })
+    }
+
+    func testTheAbsolutePathInTheHomeFolderIsCut() throws {
+        let (editor, _) = try makeEditor()
+        let url: URL = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent(".Test")
+
+        editor.addPath(url.path, isXDG: false)
+
+        XCTAssertEqual(editor.paths.map(\.path).last, ".Test")
+    }
+
+    func testTheAbsolutePathOutsideOfTheHomeFolderIsCut() throws {
+        let (editor, _) = try makeEditor()
+
+        editor.addPath("/.Test", isXDG: false)
+
+        XCTAssertEqual(editor.paths.map(\.path).last, ".Test")
+    }
+
+    func testTheAbsolutePathInTheConfigFolderIsCut() throws {
+        let (editor, _) = try makeEditor()
+        let url: URL = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent(".config/git/config")
+
+        editor.addPath(url.path, isXDG: true)
+
+        XCTAssertEqual(editor.xdgPaths.map(\.path).last, "git/config")
+    }
+
+    func testTheAbsolutePathOutsideOfTheConfigFolderIsCut() throws {
+        let (editor, _) = try makeEditor()
+
+        editor.addPath("/.config/git/config", isXDG: true)
+
+        XCTAssertEqual(editor.xdgPaths.map(\.path).last, "git/config")
     }
 
     func testTheNameIsRequired() throws {
@@ -160,20 +204,10 @@ final class ApplicationEditorModelTests: XCTestCase {
         XCTAssertTrue(editor.text.contains("name = From the form"))
     }
 
-    func testTheSectionIsAdded() throws {
-        let (editor, _) = try makeEditor()
-
-        editor.addSection(.xdgConfigurationFiles)
-
-        XCTAssertTrue(editor.sections.contains(.xdgConfigurationFiles))
-        XCTAssertTrue(editor.text.contains("[xdg_configuration_files]"))
-    }
-
     func testTheApplicationIsCreated() throws {
         let model: ApplicationCreatorModel = ApplicationCreatorModel(directory: directory)
         model.name = "my-app"
         model.displayName = "My App"
-        model.template = .folder
 
         let identifier: String = try model.create()
 
@@ -186,7 +220,6 @@ final class ApplicationEditorModelTests: XCTestCase {
             "My App"
         )
         XCTAssertTrue(document.hasSection("configuration_files"))
-        XCTAssertTrue(document.hasSection("exclude"))
     }
 
     func testTheIdentifierOfAnExistingApplicationIsRefused() throws {

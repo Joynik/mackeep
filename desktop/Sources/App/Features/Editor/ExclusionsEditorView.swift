@@ -42,8 +42,9 @@ struct ExclusionsEditorView: View {
                     L10n.string("editor.exclusions.mask.placeholder"),
                     text: $mask
                 )
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(AppFieldStyle())
                 .font(.callout.monospaced())
+                .lineLimit(1)
 
                 Button(L10n.string("editor.exclusions.mask.add")) {
                     addMask()
@@ -54,7 +55,9 @@ struct ExclusionsEditorView: View {
             if !mask.isEmpty {
                 let matcher: GlobMatcher = GlobMatcher(patterns: [mask])
                 let files: [String] = paths.flatMap { path in
-                    matcher.matchingFiles(in: path.url)
+                    // The masks are relative to the root of the section, the
+                    // way the tool matches them.
+                    matcher.matchingFiles(in: path.url, relativeTo: root)
                 }
                 if files.isEmpty {
                     Text(L10n.string("editor.exclusions.mask.none"))
@@ -102,6 +105,14 @@ struct ExclusionsEditorView: View {
         }
     }
 
+    /// The root of the files of the section.
+    ///
+    /// The rules of the exclusions are relative to it, the way the tool
+    /// matches them.
+    private var root: URL {
+        isXDG ? EditorPath.xdgDirectory : EditorPath.homeDirectory
+    }
+
     /// The tree of a folder of the application.
     @ViewBuilder
     private func folder(_ path: EditorPath) -> some View {
@@ -133,13 +144,18 @@ struct ExclusionsEditorView: View {
                         )
                     )
                     .labelsHidden()
+                    .appSwitchSize()
 
                     Image(systemName: child.hasDirectoryPath ? "folder" : "doc")
                         .foregroundStyle(.secondary)
 
                     Text(child.lastPathComponent)
                         .font(.callout)
+
+                    Spacer(minLength: 0)
                 }
+                // The files of the list are on the left of the block.
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         } label: {
             Text(path.path)
@@ -160,35 +176,37 @@ struct ExclusionsEditorView: View {
 
     /// Whether an item of a folder is excluded.
     private func isExcluded(_ child: URL, in path: EditorPath) -> Bool {
-        let relative: String = child.path.replacingOccurrences(
-            of: path.url.path + "/",
-            with: ""
-        )
-        return patterns.contains(relative)
+        patterns.contains(pattern(of: child, in: path))
     }
 
     /// Exclude an item of a folder.
     private func addPattern(of child: URL, in path: EditorPath) {
-        let relative: String = child.path.replacingOccurrences(
-            of: path.url.path + "/",
-            with: ""
-        )
-        guard !patterns.contains(relative) else { return }
-        patterns.append(relative)
+        let pattern: String = pattern(of: child, in: path)
+        guard !patterns.contains(pattern) else { return }
+        patterns.append(pattern)
     }
 
     /// Include an item of a folder again.
     private func removePattern(of child: URL, in path: EditorPath) {
+        let pattern: String = pattern(of: child, in: path)
+        patterns.removeAll { $0 == pattern }
+    }
+
+    /// The rule that excludes an item of a folder.
+    ///
+    /// The rules are relative to the root of the section, the way the tool
+    /// matches them, so the full path of the file is written.
+    private func pattern(of child: URL, in path: EditorPath) -> String {
         let relative: String = child.path.replacingOccurrences(
-            of: path.url.path + "/",
+            of: root.path + "/",
             with: ""
         )
-        patterns.removeAll { $0 == relative }
+        return relative.isEmpty ? child.lastPathComponent : relative
     }
 
     /// Add the mask that is written by hand.
     private func addMask() {
-        let pattern: String = mask.trimmingCharacters(in: .whitespaces)
+        let pattern: String = EditorPath.corrected(mask, isXDG: isXDG)
         guard !pattern.isEmpty, !patterns.contains(pattern) else { return }
         patterns.append(pattern)
         mask = ""

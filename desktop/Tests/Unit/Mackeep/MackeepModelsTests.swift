@@ -29,6 +29,7 @@ final class MackeepModelsTests: XCTestCase {
         XCTAssertEqual(config.appsToSync, ["vim"])
         XCTAssertEqual(config.appsToIgnore, [])
         XCTAssertEqual(config.globalExclude, ["**/.DS_Store"])
+        XCTAssertEqual(config.errors, [])
     }
 
     func testTheListIsDecoded() throws {
@@ -46,8 +47,10 @@ final class MackeepModelsTests: XCTestCase {
         XCTAssertEqual(applications[0].files.first?.path, "appdir")
         XCTAssertEqual(applications[0].files.first?.isDir, true)
         XCTAssertEqual(applications[0].exclude, ["appdir/cache"])
+        XCTAssertNotNil(applications[0].error)
         XCTAssertEqual(applications[1].source, .builtin)
         XCTAssertFalse(applications[1].isCustom)
+        XCTAssertNil(applications[1].error)
     }
 
     func testThePlanIsDecoded() throws {
@@ -94,6 +97,33 @@ final class MackeepModelsTests: XCTestCase {
 
         XCTAssertEqual(config.version, "0.13.0")
         XCTAssertNil(config.customAppsDir)
+    }
+
+    func testAnOldApplicationIsStillDecoded() throws {
+        // The answer of a version of Mackeep that does not report the
+        // problems of the config files
+        let json: String = """
+        [
+          {
+            "schema_version": 2,
+            "name": "demo",
+            "display_name": "Demo",
+            "source": "custom",
+            "cfg_path": "/Users/user/.mackeep/demo.cfg",
+            "files": [],
+            "xdg_files": [],
+            "exclude": [],
+            "xdg_exclude": []
+          }
+        ]
+        """
+        let applications: [MackeepApplication] = try JSONDecoder().decode(
+            [MackeepApplication].self,
+            from: Data(json.utf8)
+        )
+
+        XCTAssertEqual(applications.count, 1)
+        XCTAssertNil(applications[0].error)
     }
 
     func testTheEventsAreDecoded() throws {

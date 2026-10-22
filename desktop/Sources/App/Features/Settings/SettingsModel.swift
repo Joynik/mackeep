@@ -16,6 +16,11 @@ final class SettingsModel {
     /// The global exclusion rules.
     var globalExclude: [String] = []
 
+    /// The problems of the config file of Mackeep.
+    ///
+    /// The broken rules are skipped, they do not stop Mackeep from working.
+    private(set) var configErrors: [String] = []
+
     /// The path of the config file of Mackeep.
     private(set) var configFilePath: String = ""
 
@@ -176,6 +181,7 @@ final class SettingsModel {
         configFilePath = config.configFile
         customAppsDir = config.customAppsDir ?? config.customAppsDirs.first ?? ""
         globalExclude = config.globalExclude
+        configErrors = config.errors ?? []
         resolvedBackupDirectory = config.storage.resolvedBackupDir
 
         let raw: String = config.storage.engine

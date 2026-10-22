@@ -1,5 +1,21 @@
 import SwiftUI
 
+/// The sheet that is shown above the list of the applications.
+enum ApplicationsSheet: Identifiable {
+    /// The sheet that creates an application, or that copies one.
+    case creator(ApplicationCreatorModel)
+
+    /// The sheet of the library.
+    case library
+
+    var id: String {
+        switch self {
+        case .creator(let model): "creator-\(model.id)"
+        case .library: "library"
+        }
+    }
+}
+
 /// The list of the applications of Mackeep.
 struct ApplicationsView: View {
     /// The model of the list.
@@ -8,14 +24,8 @@ struct ApplicationsView: View {
     /// Opens the window of the editor.
     @Environment(\.openWindow) private var openWindow
 
-    /// Whether the sheet of the creation is shown.
-    @State private var showsCreator = false
-
-    /// Whether the sheet of the library is shown.
-    @State private var showsLibrary = false
-
-    /// The model of the creation.
-    @State private var creator: ApplicationCreatorModel?
+    /// The sheet that is shown.
+    @State private var sheet: ApplicationsSheet?
 
     /// The application that is deleted, when the confirmation is shown.
     @State private var applicationToDelete: MackeepApplication?
@@ -27,13 +37,14 @@ struct ApplicationsView: View {
             list
         }
         .navigationTitle(L10n.string("section.applications.title"))
-        .sheet(isPresented: $showsCreator) {
-            if let creator {
+        .sheet(item: $sheet) { presented in
+            switch presented {
+            case .creator(let creator):
                 ApplicationCreatorView(
                     model: creator,
                     existing: Set(model.applications.map(\.name)),
                     onCreate: { name in
-                        showsCreator = false
+                        sheet = nil
                         model.load()
                         if let editor: ApplicationEditorModel = model.editor(for: name) {
                             openWindow(value: name)
@@ -41,10 +52,9 @@ struct ApplicationsView: View {
                         }
                     }
                 )
+            case .library:
+                LibraryView(model: model)
             }
-        }
-        .sheet(isPresented: $showsLibrary) {
-            LibraryView(model: model)
         }
         .onChange(of: model.copyRequest) { _, application in
             guard let application: MackeepApplication = application else { return }
@@ -72,13 +82,14 @@ struct ApplicationsView: View {
 
     /// The tools of the list.
     private var toolbar: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 13) {
             HStack(spacing: 8) {
                 TextField(
                     L10n.string("applications.search.placeholder"),
                     text: $model.searchText
                 )
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(AppFieldStyle())
+                .frame(maxWidth: .infinity)
                 .accessibilityLabel(L10n.string("applications.search.placeholder"))
 
                 Picker("", selection: $model.filter) {
@@ -88,24 +99,29 @@ struct ApplicationsView: View {
                 }
                 .pickerStyle(.menu)
                 .frame(width: 200)
+                // The menu of macOS has a big padding inside, it is taken
+                // away, so the filter stands right next to the search
+                .padding(.leading, -32)
                 .accessibilityLabel(L10n.string("applications.filter.label"))
             }
-
-            HStack(spacing: 8) {
+            HStack(spacing: 12) {
                 Button {
-                    showsLibrary = true
+                    sheet = .library
                 } label: {
-                    Image(systemName: "books.vertical")
+                    Label(
+                        L10n.string("applications.library.button"),
+                        systemImage: "books.vertical"
+                    )
+                    .accessibilityIdentifier("applications.library.button")
                 }
-                .help(L10n.string("applications.library.add"))
-                .accessibilityLabel(L10n.string("applications.library.add"))
+                .help(L10n.string("applications.library.button"))
+                .accessibilityLabel(L10n.string("applications.library.button"))
                 .accessibilityIdentifier("applications.library.button")
 
                 Button {
-                    creator = ApplicationCreatorModel(
-                        directory: model.customAppsDirectory
+                    sheet = .creator(
+                        ApplicationCreatorModel(directory: model.customAppsDirectory)
                     )
-                    showsCreator = true
                 } label: {
                     Label(
                         L10n.string("applications.create.add"),
@@ -125,9 +141,22 @@ struct ApplicationsView: View {
                 .help(L10n.string("applications.copy"))
                 .disabled(model.selectedApplication == nil)
 
+                Button {
+                    deleteSelected()
+                } label: {
+                    Label(
+                        L10n.string("applications.delete"),
+                        systemImage: "trash"
+                    )
+                }
+                .help(L10n.string("applications.delete"))
+                .disabled(model.selectedApplication == nil)
+
                 Spacer(minLength: 8)
             }
         }
+        // The controls of the panel have the same height, so they line up.
+        .appControlSize()
         .padding(12)
     }
 
@@ -137,6 +166,24 @@ struct ApplicationsView: View {
             return
         }
         openTheCopy(of: application)
+    }
+
+    /// Delete the selected application.
+    ///
+    /// The applications of the user are deleted with their config file, the
+    /// ones of the library are only removed from the list.
+    private func deleteSelected() {
+        guard let application: MackeepApplication = model.selectedApplication else {
+            return
+        }
+
+        if application.isCustom {
+            // The file is deleted, the user is asked first
+            applicationToDelete = application
+            return
+        }
+
+        model.delete(application)
     }
 
     /// Open the sheet that copies an application.
@@ -149,8 +196,7 @@ struct ApplicationsView: View {
         )
         copy.name = "\(application.name)-copy"
         copy.displayName = "\(application.displayName) (copy)"
-        creator = copy
-        showsCreator = true
+        sheet = .creator(copy)
     }
 
     /// The list of the applications.
@@ -186,10 +232,12 @@ struct ApplicationsView: View {
                                 model.selection = application.name
                                 copySelected()
                             }
-                            if application.isCustom {
-                                Button(L10n.string("applications.delete"), role: .destructive) {
-                                    applicationToDelete = application
-                                }
+                            Button(
+                                L10n.string("applications.delete"),
+                                role: .destructive
+                            ) {
+                                model.selection = application.name
+                                deleteSelected()
                             }
                         }
                 }
@@ -242,13 +290,14 @@ private struct LibraryView: View {
                     L10n.string("applications.search.placeholder"),
                     text: $searchText
                 )
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(AppFieldStyle())
 
                 Toggle(
                     L10n.string("filter.applications.installed"),
                     isOn: $showsInstalled
                 )
                 .toggleStyle(.switch)
+                .appSwitchSize()
                 .fixedSize()
             }
 
@@ -268,10 +317,15 @@ private struct LibraryView: View {
                         Text(L10n.string("applications.library.added"))
                             .foregroundStyle(.secondary)
                     } else {
-                        Button(L10n.string("applications.library.addOne")) {
+                        Button {
                             model.addToTheList(application)
+                        } label: {
+                            Image(systemName: "plus.circle")
                         }
-                        .buttonStyle(.link)
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.tint)
+                        .help(L10n.string("applications.library.addOne"))
+                        .accessibilityLabel(L10n.string("applications.library.addOne"))
                         .accessibilityIdentifier("applications.library.add")
                     }
                 }
@@ -286,7 +340,10 @@ private struct LibraryView: View {
                 .keyboardShortcut(.cancelAction)
                 .accessibilityIdentifier("applications.library.close")
             }
+            .padding(.top, 16)
         }
+        // The controls of the panel have the same height, so they line up.
+        .appControlSize()
         .padding(20)
         .frame(width: 520, height: 480)
     }
@@ -322,6 +379,7 @@ private struct ApplicationRow: View {
                 )
             )
             .labelsHidden()
+            .appSwitchSize()
             .accessibilityLabel(
                 L10n.string("applications.sync.label", application.displayName)
             )
@@ -336,6 +394,13 @@ private struct ApplicationRow: View {
             .accessibilityIdentifier("applications.list.item")
 
             Spacer(minLength: 8)
+
+            if let error: String = application.error {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .help(error)
+                    .accessibilityLabel(L10n.string("applications.error.label"))
+            }
 
             if model.isInstalled(application) {
                 Image(systemName: "checkmark.circle.fill")

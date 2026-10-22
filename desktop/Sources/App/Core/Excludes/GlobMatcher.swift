@@ -58,9 +58,15 @@ struct GlobMatcher {
 
     /// The files of a folder that are matched by the patterns.
     ///
-    /// - Parameter url: The path of the folder.
-    /// - Returns: The paths of the files, relative to the folder.
-    func matchingFiles(in url: URL) -> [String] {
+    /// The paths are relative to the root of the tree, the way the tool
+    /// matches the patterns.
+    ///
+    /// - Parameters:
+    ///   - url: The path of the folder.
+    ///   - root: The root of the tree, the folder itself when it is not
+    ///     given.
+    /// - Returns: The paths of the files, relative to the root.
+    func matchingFiles(in url: URL, relativeTo root: URL? = nil) -> [String] {
         guard !isEmpty else { return [] }
         let manager: FileManager = .default
         guard let enumerator: FileManager.DirectoryEnumerator = manager.enumerator(
@@ -72,8 +78,8 @@ struct GlobMatcher {
         }
 
         // The paths of the files are compared to the resolved path of the
-        // folder, /var is a link to /private/var on macOS.
-        let root: String = url.resolvingSymlinksInPath().path
+        // root, /var is a link to /private/var on macOS.
+        let base: String = (root ?? url).resolvingSymlinksInPath().path
 
         var files: [String] = []
         for case let file as URL in enumerator {
@@ -86,7 +92,7 @@ struct GlobMatcher {
                 continue
             }
             let relative: String = path.replacingOccurrences(
-                of: root + "/",
+                of: base + "/",
                 with: ""
             )
             if matches(relative) { files.append(relative) }

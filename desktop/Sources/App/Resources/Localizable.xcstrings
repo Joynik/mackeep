@@ -59,6 +59,12 @@
             "value": "Скопировать"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопіювати"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -123,6 +129,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Приложений: %d"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Застосунків: %d"
           }
         },
         "zh-Hans": {
@@ -191,6 +203,12 @@
             "value": "Создать"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Створити"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -255,6 +273,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Удалить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Видалити"
           }
         },
         "zh-Hans": {
@@ -323,6 +347,12 @@
             "value": "Удалить приложение «%@»?"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Видалити застосунок «%@»?"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -387,6 +417,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Выберите приложение, чтобы увидеть подробности."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Виберіть застосунок, щоб побачити подробиці."
           }
         },
         "zh-Hans": {
@@ -455,6 +491,12 @@
             "value": "Приложение"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Застосунок"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -521,10 +563,88 @@
             "value": "Изменить"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Змінити"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "修改"
+          }
+        }
+      }
+    },
+    "applications.error.label": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Anwendung hat ein Problem"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This application has a problem"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta aplicación tiene un problema"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette application a un problème"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questa app ha un problema"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このアプリに問題があります"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 앱에 문제가 있습니다"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este aplicativo tem um problema"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У этого приложения есть ошибка"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У цього застосунку є помилка"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此应用程序有问题"
           }
         }
       }
@@ -585,6 +705,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "У этого приложения нет правил исключения."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У цього застосунку немає правил виключення."
           }
         },
         "zh-Hans": {
@@ -653,6 +779,12 @@
             "value": "Исключения"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Виключення"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -717,6 +849,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Фильтр"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фільтр"
           }
         },
         "zh-Hans": {
@@ -785,76 +923,16 @@
             "value": "Установлено на этом Mac"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встановлено на цьому Mac"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "已安装在此 Mac 上"
-          }
-        }
-      }
-    },
-    "applications.library.add": {
-      "comment": "The string of the editor",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aus der Bibliothek hinzufügen"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add from the library"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Añadir desde la biblioteca"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter depuis la bibliothèque"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aggiungi dalla libreria"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ライブラリから追加する"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "라이브러리에서 추가하기"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adicionar da biblioteca"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Добавить из библиотеки"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "从库中添加"
           }
         }
       }
@@ -915,6 +993,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Добавить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати"
           }
         },
         "zh-Hans": {
@@ -983,10 +1067,88 @@
             "value": "В списке"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У списку"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "已在列表中"
+          }
+        }
+      }
+    },
+    "applications.library.button": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bibliothek"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Library"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biblioteca"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bibliothèque"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biblioteca"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ライブラリ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "라이브러리"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biblioteca"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Библиотека"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бібліотека"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "库"
           }
         }
       }
@@ -1047,6 +1209,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Закрыть"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закрити"
           }
         },
         "zh-Hans": {
@@ -1115,6 +1283,12 @@
             "value": "Библиотека"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бібліотека"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -1179,6 +1353,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Список пуст"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Список порожній"
           }
         },
         "zh-Hans": {
@@ -1247,6 +1427,12 @@
             "value": "Добавьте нужные приложения из библиотеки"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додайте потрібні застосунки з бібліотеки"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -1311,6 +1497,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "У этого приложения нет файлов."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У цього застосунку немає файлів."
           }
         },
         "zh-Hans": {
@@ -1379,6 +1571,12 @@
             "value": "Файлы"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -1443,6 +1641,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Поиск"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пошук"
           }
         },
         "zh-Hans": {
@@ -1511,6 +1715,12 @@
             "value": "Размер: %@"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Розмір: %@"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -1575,6 +1785,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Встроенное"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вбудоване"
           }
         },
         "zh-Hans": {
@@ -1643,6 +1859,12 @@
             "value": "Своё"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Своє"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -1707,6 +1929,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Использовать в бэкапе %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Використовувати в бекапі %@"
           }
         },
         "zh-Hans": {
@@ -1775,6 +2003,12 @@
             "value": "Дополнительно"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додатково"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -1839,6 +2073,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Режимы link спрятаны: на macOS 14 и новее симлинки на файлы настроек ломают настройки приложений."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Режими link приховані: на macOS 14 і новіших симлінки на файли налаштувань ламають налаштування застосунків."
           }
         },
         "zh-Hans": {
@@ -1907,6 +2147,12 @@
             "value": "Дополнительно"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додатково"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -1971,6 +2217,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "На macOS 14 и новее используйте режим копирования."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На macOS 14 і новіших використовуйте режим копіювання."
           }
         },
         "zh-Hans": {
@@ -2039,6 +2291,12 @@
             "value": "Отменить"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скасувати"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -2103,6 +2361,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Файлы сохранены в хранилище."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли збережено в сховищі."
           }
         },
         "zh-Hans": {
@@ -2171,6 +2435,12 @@
             "value": "Бэкап готов"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бекап готовий"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -2235,6 +2505,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пробный запуск"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пробний запуск"
           }
         },
         "zh-Hans": {
@@ -2303,6 +2579,12 @@
             "value": "Сделайте пробный запуск, чтобы увидеть, что будет сохранено."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зробіть пробний запуск, щоб побачити, що буде збережено."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -2367,6 +2649,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пока пусто"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поки порожньо"
           }
         },
         "zh-Hans": {
@@ -2435,6 +2723,12 @@
             "value": "Бэкап не удался"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бекап не вдався"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -2499,6 +2793,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Все"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Усі"
           }
         },
         "zh-Hans": {
@@ -2567,6 +2867,12 @@
             "value": "Конфликты"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конфлікти"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -2631,6 +2937,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Копируются"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копіюються"
           }
         },
         "zh-Hans": {
@@ -2699,6 +3011,12 @@
             "value": "Отсутствуют"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відсутні"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -2763,6 +3081,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пропущены"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пропущені"
           }
         },
         "zh-Hans": {
@@ -2831,6 +3155,12 @@
             "value": "Устаревшие"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Застарілі"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -2895,6 +3225,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "История"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Історія"
           }
         },
         "zh-Hans": {
@@ -2963,6 +3299,12 @@
             "value": "Запусков ещё не было."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запусків ще не було."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -3027,6 +3369,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "История запусков"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Історія запусків"
           }
         },
         "zh-Hans": {
@@ -3095,6 +3443,12 @@
             "value": "Готово: %d файлов, %d байт"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Готово: %d файлів, %d байт"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -3161,6 +3515,12 @@
             "value": "Ошибка: %@"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Помилка: %@"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -3222,6 +3582,12 @@
           }
         },
         "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@"
+          }
+        },
+        "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "%@ %@"
@@ -3293,6 +3659,12 @@
             "value": "Начинаем %@"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Починаємо %@"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -3357,6 +3729,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Восстановить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відновити"
           }
         },
         "zh-Hans": {
@@ -3425,6 +3803,12 @@
             "value": "Отмена"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скасувати"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -3489,6 +3873,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Восстановить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відновити"
           }
         },
         "zh-Hans": {
@@ -3557,6 +3947,12 @@
             "value": "Восстановление файлов"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відновлення файлів"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -3621,6 +4017,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Файлы, которые уже есть, будут заменены."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли, які вже існують, буде замінено."
           }
         },
         "zh-Hans": {
@@ -3689,6 +4091,12 @@
             "value": "Сделать бэкап"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зробити бекап"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -3753,6 +4161,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "%d действий, %d файлов, %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d дій, %d файлів, %@"
           }
         },
         "zh-Hans": {
@@ -3821,6 +4235,12 @@
             "value": "Действие"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дія"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -3887,6 +4307,12 @@
             "value": "Приложение"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Застосунок"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -3948,6 +4374,12 @@
           }
         },
         "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл"
+          }
+        },
+        "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "Файл"
@@ -4019,6 +4451,12 @@
             "value": "Размер"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Розмір"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -4083,6 +4521,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отмена"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скасувати"
           }
         },
         "zh-Hans": {
@@ -4151,6 +4595,12 @@
             "value": "Скопировать приложение"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопіювати застосунок"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -4215,6 +4665,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Создать"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Створити"
           }
         },
         "zh-Hans": {
@@ -4283,6 +4739,12 @@
             "value": "Идентификатор"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ідентифікатор"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -4349,76 +4811,16 @@
             "value": "Название"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Назва"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "名称"
-          }
-        }
-      }
-    },
-    "editor.create.template": {
-      "comment": "The string of the editor",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vorlage"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Template"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plantilla"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modèle"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modello"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "テンプレート"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "템플릿"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modelo"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Шаблон"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "模板"
           }
         }
       }
@@ -4479,6 +4881,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Новое приложение"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новий застосунок"
           }
         },
         "zh-Hans": {
@@ -4547,6 +4955,12 @@
             "value": "Правила исключения"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Правила виключення"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -4611,6 +5025,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Добавить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати"
           }
         },
         "zh-Hans": {
@@ -4679,6 +5099,12 @@
             "value": "и ещё %d"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "і ще %d"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -4745,6 +5171,12 @@
             "value": "По этой маске ничего не найдено."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "За цією маскою нічого не знайдено."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -4760,61 +5192,67 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Eine Maske, zum Beispiel *.log oder **/cache/**"
+            "value": "Eine Maske, zum Beispiel *.log"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A mask, e.g. *.log or **/cache/**"
+            "value": "A mask, for example *.log"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Una máscara, por ejemplo *.log o **/cache/**"
+            "value": "Una máscara, por ejemplo *.log"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un masque, par exemple *.log ou **/cache/**"
+            "value": "Un masque, par exemple *.log"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Una maschera, per esempio *.log o **/cache/**"
+            "value": "Una maschera, per esempio *.log"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "マスク (例: *.log や **/cache/**)"
+            "value": "マスクの例: *.log"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "마스크 (예: *.log 또는 **/cache/**)"
+            "value": "마스크 예: *.log"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Uma máscara, por exemplo *.log ou **/cache/**"
+            "value": "Uma máscara, por exemplo *.log"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Маска, например *.log или **/cache/**"
+            "value": "Маска, например *.log"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Маска, наприклад *.log"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "掩码，例如 *.log 或 **/cache/**"
+            "value": "掩码示例：*.log"
           }
         }
       }
@@ -4877,10 +5315,88 @@
             "value": "Добавьте папку, чтобы исключить часть её файлов."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додайте теку, щоб виключити частину її файлів."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "添加一个文件夹，以排除其中的一些文件。"
+          }
+        }
+      }
+    },
+    "editor.issues.count": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d Probleme"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d issues"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d problemas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d problèmes"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d problemi"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d 件の問題"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문제 %d개"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d problemas"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проблем: %d"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проблем: %d"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d 个问题"
           }
         }
       }
@@ -4938,6 +5454,12 @@
           }
         },
         "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Форма"
+          }
+        },
+        "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "Форма"
@@ -5009,6 +5531,12 @@
             "value": "Текст"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Текст"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -5075,6 +5603,12 @@
             "value": "Название приложения"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Назва застосунку"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -5090,61 +5624,67 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Eine Datei oder einen Ordner hinzufügen"
+            "value": "Hinzufügen"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add a file or a folder"
+            "value": "Add"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Añadir un archivo o una carpeta"
+            "value": "Añadir"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajouter un fichier ou un dossier"
+            "value": "Ajouter"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aggiungi un file o una cartella"
+            "value": "Aggiungi"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ファイルかフォルダーを追加"
+            "value": "追加"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "파일 또는 폴더 추가"
+            "value": "추가"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adicionar um arquivo ou uma pasta"
+            "value": "Adicionar"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Добавить файл или папку"
+            "value": "Добавить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加文件或文件夹"
+            "value": "添加"
           }
         }
       }
@@ -5207,10 +5747,88 @@
             "value": "У этого приложения нет файлов."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У цього застосунку немає файлів."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "这个应用没有文件。"
+          }
+        }
+      }
+    },
+    "editor.paths.placeholder": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Pfad einer Datei oder eines Ordners"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The path of a file or of a folder"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La ruta de un archivo o de una carpeta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le chemin d’un fichier ou d’un dossier"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il percorso di un file o di una cartella"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイルやフォルダのパス"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파일 또는 폴더의 경로"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O caminho de um arquivo ou de uma pasta"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Путь файла или папки"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шлях до файлу або теки"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件或文件夹的路径"
           }
         }
       }
@@ -5271,6 +5889,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Убрать"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прибрати"
           }
         },
         "zh-Hans": {
@@ -5339,6 +5963,12 @@
             "value": "Файлы"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -5403,6 +6033,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отмена"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скасувати"
           }
         },
         "zh-Hans": {
@@ -5471,6 +6107,12 @@
             "value": "Файл был изменён извне. Перезагрузить его?"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл було змінено ззовні. Перезавантажити його?"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -5535,6 +6177,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Перезагрузить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перезавантажити"
           }
         },
         "zh-Hans": {
@@ -5603,6 +6251,12 @@
             "value": "Файл был изменён"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл було змінено"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -5669,10 +6323,736 @@
             "value": "Сохранить"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зберегти"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "保存"
+          }
+        }
+      }
+    },
+    "editor.search.add": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zur Anwendung hinzufügen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to the application"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir a la aplicación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter à l’application"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi all'applicazione"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリケーションに追加"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "애플리케이션에 추가"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicionar ao aplicativo"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить в приложение"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати до застосунку"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加到应用程序"
+          }
+        }
+      }
+    },
+    "editor.search.added": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Datei ist schon in der Anwendung"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The file is already in the application"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El archivo ya está en la aplicación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fichier est déjà dans l’application"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il file è già nell'applicazione"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このファイルはすでにあります"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 파일은 이미 있습니다"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O arquivo já está no aplicativo"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл уже есть в приложении"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл вже є в застосунку"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该文件已在应用程序中"
+          }
+        }
+      }
+    },
+    "editor.search.button": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suchen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerca"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "検索"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "검색"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поиск"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пошук"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索"
+          }
+        }
+      }
+    },
+    "editor.search.close": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schließen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fermer"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chiudi"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "閉じる"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "닫기"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fechar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закрыть"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закрити"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        }
+      }
+    },
+    "editor.search.count": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d Dateien gefunden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d files found"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d archivos encontrados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d fichiers trouvés"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File trovati: %d"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d 件のファイルが見つかりました"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파일 %d개를 찾았습니다"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d arquivos encontrados"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Найдено файлов: %d"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Знайдено файлів: %d"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找到 %d 个文件"
+          }
+        }
+      }
+    },
+    "editor.search.empty": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nichts gefunden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing was found."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró nada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien n’a été trouvé."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non è stato trovato nulla."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "何も見つかりませんでした。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "아무것도 찾지 못했습니다."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nada foi encontrado."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ничего не найдено."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нічого не знайдено."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有找到任何内容。"
+          }
+        }
+      }
+    },
+    "editor.search.exclude": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zu den Ausschlüssen hinzufügen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to the exclusions"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir a las exclusiones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter aux exclusions"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi alle esclusioni"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "除外に追加"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "제외에 추가"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicionar às exclusões"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить в исключения"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати до виключень"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加到排除项"
+          }
+        }
+      }
+    },
+    "editor.search.noFolders": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Anwendung hat keinen Ordner. Füge einen im Block Dateien hinzu und suche hier."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The application has no folder. Add one in the Files block, then search here."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La aplicación no tiene ninguna carpeta. Añade una en el bloque Archivos y busca aquí."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’application n’a aucun dossier. Ajoutez-en un dans le bloc Fichiers et cherchez ici."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'applicazione non ha cartelle. Aggiungine una nel blocco File e cerca qui."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリケーションにフォルダーがありません。「ファイル」ブロックで追加してから、ここで検索してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "애플리케이션에 폴더가 없습니다. “파일” 블록에서 추가한 뒤 여기에서 검색하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O aplicativo não tem pastas. Adicione uma no bloco Arquivos e pesquise aqui."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У приложения нет папок. Добавьте папку в блоке «Файлы» и ищите здесь."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "У застосунку немає теок. Додайте теку в блоці «Файли» й шукайте тут."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用程序没有文件夹。请在“文件”块中添加一个，然后在这里搜索。"
+          }
+        }
+      }
+    },
+    "editor.search.placeholder": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Name einer Datei oder eines Ordners"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The name of a file or of a folder"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El nombre de un archivo o de una carpeta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le nom d’un fichier ou d’un dossier"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il nome di un file o di una cartella"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイルやフォルダの名前"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파일 또는 폴더 이름"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O nome de um arquivo ou de uma pasta"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Имя файла или папки"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ім'я файлу або теки"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件或文件夹的名称"
+          }
+        }
+      }
+    },
+    "editor.search.title": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Dateien der Anwendung"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The files of the application"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los archivos de la aplicación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les fichiers de l’application"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I file dell'applicazione"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリケーションのファイル"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "애플리케이션의 파일"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os arquivos do aplicativo"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы приложения"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли застосунку"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用程序的文件"
           }
         }
       }
@@ -5735,10 +7115,88 @@
             "value": "Приложение"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Застосунок"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "应用"
+          }
+        }
+      }
+    },
+    "editor.section.application.description": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Name der Anwendung."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The name of the application."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El nombre de la aplicación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le nom de l’application."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il nome dell'applicazione."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリケーションの名前。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "애플리케이션 이름."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O nome do aplicativo."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Название приложения."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Назва застосунку."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用程序的名称。"
           }
         }
       }
@@ -5801,10 +7259,88 @@
             "value": "Файлы"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "文件"
+          }
+        }
+      }
+    },
+    "editor.section.configurationFiles.description": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Dateien der Anwendung im Benutzerverzeichnis."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The files of the application in your home folder."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los archivos de la aplicación en tu carpeta personal."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les fichiers de l’application dans votre dossier personnel."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I file dell'applicazione nella cartella home."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ホームディレクトリにあるアプリケーションのファイル。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "홈 디렉터리에 있는 애플리케이션의 파일."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os arquivos do aplicativo na sua pasta home."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы приложения в домашней папке."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли застосунку у домашній теці."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主目录中的应用程序文件。"
           }
         }
       }
@@ -5867,10 +7403,88 @@
             "value": "Исключения"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Виключення"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "排除"
+          }
+        }
+      }
+    },
+    "editor.section.exclude.description": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Dateien oder Ordner, die nicht kopiert werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The files or the folders that are not copied."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los archivos o las carpetas que no se copian."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les fichiers ou les dossiers qui ne sont pas copiés."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I file o le cartelle che non vengono copiati."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コピーされないファイルやフォルダ。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복사하지 않는 파일과 폴더."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os arquivos ou as pastas que não são copiados."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы или папки, которые не копируются."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли або теки, які не копіюються."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不复制的文件或文件夹。"
           }
         }
       }
@@ -5882,61 +7496,139 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "XDG-Dateien"
+            "value": "Die Dateien in .config"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "XDG files"
+            "value": "The files in .config"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Archivos XDG"
+            "value": "Los archivos en .config"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fichiers XDG"
+            "value": "Les fichiers dans .config"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "File XDG"
+            "value": "I file in .config"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "XDG ファイル"
+            "value": ".config のファイル"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "XDG 파일"
+            "value": ".config의 파일"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Arquivos XDG"
+            "value": "Os arquivos em .config"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "XDG-файлы"
+            "value": "Файлы в .config"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли в .config"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "XDG 文件"
+            "value": ".config 中的文件"
+          }
+        }
+      }
+    },
+    "editor.section.xdgConfigurationFiles.description": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Dateien der Anwendung im Ordner .config."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The files of the application in the .config folder."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los archivos de la aplicación en la carpeta .config."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les fichiers de l’application dans le dossier .config."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I file dell'applicazione nella cartella .config."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ".config フォルダにあるアプリケーションのファイル。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ".config 폴더에 있는 애플리케이션의 파일."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os arquivos do aplicativo na pasta .config."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы приложения в папке .config."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли застосунку в теці .config."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ".config 目录中的应用程序文件。"
           }
         }
       }
@@ -5948,61 +7640,139 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "XDG-Ausschlüsse"
+            "value": "Die Ausschlüsse in .config"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "XDG exclusions"
+            "value": "The exclusions in .config"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exclusiones XDG"
+            "value": "Las exclusiones en .config"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exclusions XDG"
+            "value": "Les exclusions dans .config"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Esclusioni XDG"
+            "value": "Le esclusioni in .config"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "XDG の除外"
+            "value": ".config の除外"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "XDG 제외"
+            "value": ".config의 제외"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exclusões XDG"
+            "value": "As exclusões em .config"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "XDG-исключения"
+            "value": "Исключения в .config"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Виключення в .config"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "XDG 排除"
+            "value": ".config 中的排除"
+          }
+        }
+      }
+    },
+    "editor.section.xdgExclude.description": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Dateien oder Ordner in .config, die nicht kopiert werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The files or the folders in .config that are not copied."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los archivos o las carpetas en .config que no se copian."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les fichiers ou les dossiers dans .config qui ne sont pas copiés."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I file o le cartelle in .config che non vengono copiati."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ".config にある、コピーされないファイルやフォルダ。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ".config에 있는 복사하지 않는 파일과 폴더."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os arquivos ou as pastas em .config que não são copiados."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы или папки в .config, которые не копируются."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли або теки в .config, які не копіюються."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ".config 中不复制的文件或文件夹。"
           }
         }
       }
@@ -6063,6 +7833,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Файл конфигурации"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл конфігурації"
           }
         },
         "zh-Hans": {
@@ -6131,6 +7907,12 @@
             "value": "Отменить"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скасувати"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -6195,6 +7977,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Есть несохранённые изменения"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Єсть незбережені зміни"
           }
         },
         "zh-Hans": {
@@ -6263,6 +8051,12 @@
             "value": "Путь %@ должен быть относительным домашней папки."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шлях %@ має бути відносним домашньої теці."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -6327,6 +8121,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Путь %@ уже есть."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шлях %@ вже існує."
           }
         },
         "zh-Hans": {
@@ -6395,6 +8195,12 @@
             "value": "Приложение %@ уже существует."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Застосунок %@ вже існує."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -6459,6 +8265,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Идентификатор приложения недопустим."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ідентифікатор застосунку недопустимий."
           }
         },
         "zh-Hans": {
@@ -6527,6 +8339,12 @@
             "value": "Путь %@ не существует."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шлях %@ не існує."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -6591,6 +8409,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Название приложения обязательно."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Назва застосунку обов'язкова."
           }
         },
         "zh-Hans": {
@@ -6659,6 +8483,12 @@
             "value": "Ошибка Mackeep"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Помилка Mackeep"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -6723,6 +8553,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не удалось прочитать Mackeep"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося прочитати Mackeep"
           }
         },
         "zh-Hans": {
@@ -6791,6 +8627,12 @@
             "value": "Не удалось записать файл"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося записати файл"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -6855,6 +8697,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Все"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Усі"
           }
         },
         "zh-Hans": {
@@ -6923,6 +8771,12 @@
             "value": "Свои"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свої"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -6987,6 +8841,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отключённые"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вимкнені"
           }
         },
         "zh-Hans": {
@@ -7055,6 +8915,12 @@
             "value": "Включённые"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Увімкнені"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -7119,6 +8985,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Установленные"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встановлені"
           }
         },
         "zh-Hans": {
@@ -7187,6 +9059,12 @@
             "value": "Библиотека"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бібліотека"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -7253,6 +9131,12 @@
             "value": "Отмечены приложения, установленные на этом Mac."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Позначено застосунки, встановлені на цьому Mac."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -7314,6 +9198,12 @@
           }
         },
         "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Назад"
+          }
+        },
+        "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "Назад"
@@ -7385,6 +9275,12 @@
             "value": "Готово"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Готово"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -7449,6 +9345,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Далее"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Далі"
           }
         },
         "zh-Hans": {
@@ -7517,6 +9419,12 @@
             "value": "Отметьте приложения"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Позначте застосунки"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -7581,6 +9489,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Выберите хранилище"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Виберіть сховище"
           }
         },
         "zh-Hans": {
@@ -7649,6 +9563,12 @@
             "value": "Найдите Mackeep"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Знайдіть Mackeep"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -7713,6 +9633,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Добро пожаловать в Mackeep"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ласкаво просимо до Mackeep"
           }
         },
         "zh-Hans": {
@@ -7781,6 +9707,12 @@
             "value": "Установите терминальную версию Mackeep через Homebrew и запустите приложение снова."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встановіть термінальну версію Mackeep через Homebrew і запустіть застосунок знову."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -7847,76 +9779,16 @@
             "value": "Mackeep не найден."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mackeep не знайдено."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "没有找到 Mackeep。"
-          }
-        }
-      }
-    },
-    "section.applications.placeholder": {
-      "comment": "Shown in the applications section, while it is empty",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Liste der Anwendungen erscheint hier."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The list of the applications will show up here."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La lista de las aplicaciones aparecerá aquí."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La liste des applications apparaîtra ici."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L'elenco delle applicazioni comparirà qui."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アプリの一覧がここに表示されます。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "앱 목록이 여기에 표시됩니다."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A lista de aplicativos vai aparecer aqui."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Здесь появится список приложений."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "应用列表会显示在这里。"
           }
         }
       }
@@ -7979,76 +9851,16 @@
             "value": "Приложения"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Застосунки"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "应用"
-          }
-        }
-      }
-    },
-    "section.backup.placeholder": {
-      "comment": "Shown in the backup section, while it is empty",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Sicherung erscheint hier."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The backup will show up here."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La copia de seguridad aparecerá aquí."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La sauvegarde apparaîtra ici."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Il salvataggio comparirà qui."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "バックアップがここに表示されます。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "백업이 여기에 표시됩니다."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O backup vai aparecer aqui."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Здесь появится бэкап."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "备份会显示在这里。"
           }
         }
       }
@@ -8060,127 +9872,67 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sicherung"
+            "value": "Sicherung und Wiederherstellung"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Backup"
+            "value": "Backup and Restore"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copia de seguridad"
+            "value": "Copia de seguridad y restauración"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sauvegarde"
+            "value": "Sauvegarde et restauration"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Salvataggio"
+            "value": "Backup e ripristino"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "バックアップ"
+            "value": "バックアップと復元"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "백업"
+            "value": "백업 및 복원"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Backup"
+            "value": "Backup e restauração"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Бэкап"
+            "value": "Бэкап и Восстановление"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бекап і Відновлення"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "备份"
-          }
-        }
-      }
-    },
-    "section.settings.placeholder": {
-      "comment": "Shown in the settings section, while it is empty",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Einstellungen erscheinen hier."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The settings will show up here."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Los ajustes aparecerán aquí."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les réglages apparaîtront ici."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le impostazioni compariranno qui."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "設定がここに表示されます。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "설정이 여기에 표시됩니다."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "As configurações vão aparecer aqui."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Здесь появятся настройки."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "设置会显示在这里。"
+            "value": "备份与恢复"
           }
         }
       }
@@ -8241,6 +9993,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Настройки"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Налаштування"
           }
         },
         "zh-Hans": {
@@ -8309,6 +10067,12 @@
             "value": "Язык"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мова"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -8370,6 +10134,12 @@
           }
         },
         "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тема"
+          }
+        },
+        "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "Тема"
@@ -8441,6 +10211,12 @@
             "value": "Внешний вид"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вигляд"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -8505,6 +10281,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Добавить правило"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати правило"
           }
         },
         "zh-Hans": {
@@ -8573,6 +10355,12 @@
             "value": "Глобальных правил исключения нет."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Глобальних правил виключення немає."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -8637,6 +10425,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Правило, например **/.DS_Store"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Правило, наприклад **/.DS_Store"
           }
         },
         "zh-Hans": {
@@ -8705,6 +10499,12 @@
             "value": "Глобальные исключения"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Глобальні виключення"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -8769,6 +10569,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Китайский"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Китайська"
           }
         },
         "zh-Hans": {
@@ -8837,6 +10643,12 @@
             "value": "English"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Англійська"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -8901,6 +10713,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Французский"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Французька"
           }
         },
         "zh-Hans": {
@@ -8969,6 +10787,12 @@
             "value": "Немецкий"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Німецька"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -9033,6 +10857,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Итальянский"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Італійська"
           }
         },
         "zh-Hans": {
@@ -9101,6 +10931,12 @@
             "value": "Японский"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Японська"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -9165,6 +11001,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Корейский"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Корейська"
           }
         },
         "zh-Hans": {
@@ -9233,6 +11075,12 @@
             "value": "Португальский"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Португальська"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -9297,6 +11145,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Русский"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Російська"
           }
         },
         "zh-Hans": {
@@ -9365,6 +11219,12 @@
             "value": "Испанский"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Іспанська"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -9431,10 +11291,88 @@
             "value": "Язык системы"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мова системи"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "系统语言"
+          }
+        }
+      }
+    },
+    "settings.language.ukrainian": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ukrainisch"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ukrainian"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ucraniano"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ukrainien"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ucraino"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウクライナ語"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "우크라이나어"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ucraniano"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Украинский"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Українська"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "乌克兰语"
           }
         }
       }
@@ -9495,6 +11433,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Приложения пользователя"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Застосунки користувача"
           }
         },
         "zh-Hans": {
@@ -9563,6 +11507,12 @@
             "value": "Файл конфигурации"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл конфігурації"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -9627,6 +11577,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Показать в Finder"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показати в Finder"
           }
         },
         "zh-Hans": {
@@ -9695,6 +11651,12 @@
             "value": "Файлы Mackeep"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файли Mackeep"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -9759,6 +11721,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Хранилище доступно"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сховище доступне"
           }
         },
         "zh-Hans": {
@@ -9827,6 +11795,12 @@
             "value": "Выбрать папку"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вибрати теку"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -9893,6 +11867,12 @@
             "value": "Имя папки"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Назва теки"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -9954,6 +11934,12 @@
           }
         },
         "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dropbox"
+          }
+        },
+        "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "Dropbox"
@@ -10025,6 +12011,12 @@
             "value": "Папка домашней папки"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тека домашньої теці"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -10086,6 +12078,12 @@
           }
         },
         "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Google Drive"
+          }
+        },
+        "uk": {
           "stringUnit": {
             "state": "translated",
             "value": "Google Drive"
@@ -10157,6 +12155,12 @@
             "value": "iCloud"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -10221,6 +12225,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нет"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ні"
           }
         },
         "zh-Hans": {
@@ -10289,6 +12299,12 @@
             "value": "Путь хранилища"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шлях сховища"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -10353,6 +12369,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Бэкап пишется в"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бекап пишеться в"
           }
         },
         "zh-Hans": {
@@ -10421,6 +12443,12 @@
             "value": "Хранилище"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сховище"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -10485,6 +12513,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Да"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Так"
           }
         },
         "zh-Hans": {
@@ -10553,6 +12587,12 @@
             "value": "Тёмная"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Темна"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -10617,6 +12657,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Светлая"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Світла"
           }
         },
         "zh-Hans": {
@@ -10685,6 +12731,12 @@
             "value": "Тема системы"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тема системи"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -10749,6 +12801,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Версия Mackeep слишком старая."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Версія Mackeep застара."
           }
         },
         "zh-Hans": {
@@ -10817,6 +12875,12 @@
             "value": "Для бэкапа нужна версия Mackeep 0.13.0 и новее — с правилами исключения и JSON-интерфейсом."
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Для бекапу потрібна версія Mackeep 0.13.0 або новіша — з правилами виключення та JSON-інтерфейсом."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -10881,6 +12945,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Как установить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Як встановити"
           }
         },
         "zh-Hans": {
@@ -10949,6 +13019,12 @@
             "value": "Путь к Mackeep"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шлях до Mackeep"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -11013,6 +13089,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Терминальная версия"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Термінальна версія"
           }
         },
         "zh-Hans": {
@@ -11081,340 +13163,16 @@
             "value": "Версия"
           }
         },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Версія"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "版本"
-          }
-        }
-      }
-    },
-    "template.empty": {
-      "comment": "The string of the editor",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Leer"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Empty"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vacío"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vide"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vuoto"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "空"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "비어 있음"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vazio"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Пустое"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "空"
-          }
-        }
-      }
-    },
-    "template.folder": {
-      "comment": "The string of the editor",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ein Ordner und seine Ausschlüsse"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A folder and its exclusions"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Una carpeta y sus exclusiones"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un dossier et ses exclusions"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Una cartella e le sue esclusioni"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "フォルダーとその除外"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "폴더와 그 제외 규칙"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Uma pasta e suas exclusões"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Папка и её исключения"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一个文件夹及其排除规则"
-          }
-        }
-      }
-    },
-    "template.preferences": {
-      "comment": "The string of the editor",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eine Einstellungsdatei"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A preferences file"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un archivo de preferencias"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un fichier de préférences"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un file di preferenze"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "設定ファイル"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "설정 파일"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Um arquivo de preferências"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Файл настроек"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一个偏好设置文件"
-          }
-        }
-      }
-    },
-    "template.singleFile": {
-      "comment": "The string of the editor",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eine einzelne Konfigurationsdatei"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A single config file"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un solo archivo de configuración"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un seul fichier de configuration"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un singolo file di configurazione"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "単一の設定ファイル"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "설정 파일 하나"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Um único arquivo de configuração"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Один файл конфигурации"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一个配置文件"
-          }
-        }
-      }
-    },
-    "template.xdg": {
-      "comment": "The string of the editor",
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eine Anwendung aus ~/.config"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "An application of ~/.config"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Una aplicación de ~/.config"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Une application de ~/.config"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un'applicazione di ~/.config"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "~/.config のアプリ"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "~/.config의 앱"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Um aplicativo de ~/.config"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Приложение из ~/.config"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "~/.config 中的应用"
           }
         }
       }

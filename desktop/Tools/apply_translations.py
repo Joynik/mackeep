@@ -1,4 +1,8 @@
-"""Add the translations of the interface to the String Catalog of the application."""
+"""Write the translations of the interface into the string catalog.
+
+Every language has its own file, in the folder "languages", so a language can
+be added or changed without touching the other ones.
+"""
 
 import json
 import sys
@@ -6,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from Translations import ENGLISH, RUSSIAN, TRANSLATIONS  # noqa: E402
+from Translations import TRANSLATIONS  # noqa: E402
 
 CATALOG = (
     Path(__file__).resolve().parents[1]
@@ -18,9 +22,7 @@ def main() -> None:
     """Add every translation to the catalog."""
     data: dict = json.loads(CATALOG.read_text())
 
-    for language, items in [("en", ENGLISH), ("ru", RUSSIAN)] + list(
-        TRANSLATIONS.items()
-    ):
+    for language, items in TRANSLATIONS.items():
         for key, value in items.items():
             entry: dict = data["strings"].setdefault(
                 key,

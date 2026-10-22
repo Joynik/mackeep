@@ -91,6 +91,7 @@ final class LocalizationTests: XCTestCase {
     static let languages: [(code: String, key: String)] = [
         ("en", "settings.language.english"),
         ("ru", "settings.language.russian"),
+        ("uk", "settings.language.ukrainian"),
         ("es", "settings.language.spanish"),
         ("de", "settings.language.german"),
         ("fr", "settings.language.french"),
@@ -138,7 +139,32 @@ final class LocalizationTests: XCTestCase {
         defer { L10n.language = .system }
 
         XCTAssertEqual(L10n.string("section.applications.title"), "Приложения")
-        XCTAssertEqual(L10n.string("section.backup.title"), "Бэкап")
+        XCTAssertEqual(L10n.string("section.backup.title"), "Бэкап и Восстановление")
         XCTAssertEqual(L10n.string("section.settings.title"), "Настройки")
+    }
+
+    func testTheLanguageIsChangedAtOnce() {
+        L10n.language = .ukrainian
+        defer { L10n.language = .system }
+
+        // The strings of the interface
+        XCTAssertEqual(L10n.string("section.applications.title"), "Застосунки")
+        XCTAssertEqual(L10n.string("section.backup.title"), "Бекап і Відновлення")
+        XCTAssertEqual(L10n.string("section.settings.title"), "Налаштування")
+
+        // The names of the tabs
+        XCTAssertEqual(SidebarSection.applications.title, "Застосунки")
+        XCTAssertEqual(SidebarSection.backup.title, "Бекап і Відновлення")
+        XCTAssertEqual(SidebarSection.settings.title, "Налаштування")
+    }
+
+    func testTheNameOfTheUkrainianIsInEveryLanguage() throws {
+        let catalog: StringCatalog = try XCTUnwrap(Self.catalog)
+        let entry: StringCatalog.Entry = try XCTUnwrap(
+            catalog.strings["settings.language.ukrainian"]
+        )
+        let name: String = entry.localizations["uk"]?.stringUnit.value ?? ""
+
+        XCTAssertEqual(name, "Українська")
     }
 }
