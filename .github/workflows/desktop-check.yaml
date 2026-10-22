@@ -27,7 +27,7 @@ jobs:
       - name: Build the application
         working-directory: desktop
         env:
-          DEVELOPMENT_DIR: ${{ matrix.xcode == 'default' && '' || matrix.xcode }}
+          DEVELOPER_DIR: ${{ matrix.xcode == 'default' && '' || matrix.xcode }}
           XCODEBUILD_FLAGS: "CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="
         run: make release
 
@@ -42,6 +42,7 @@ jobs:
 
       - name: The version of Xcode
         run: |
+          ls /Applications | grep -i xcode
           xcodebuild -version
           plutil -p desktop/build/Build/Products/Release/Mackeep.app/Contents/Info.plist \
             | grep -E "DTXcode|DTSDKName"
