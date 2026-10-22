@@ -1,7 +1,8 @@
 # Mackeep desktop
 
-Native SwiftUI front-end for macOS 15+ on Apple Silicon. Install the release
-image and CLI using the [installation guide](../INSTALL.md).
+Native SwiftUI front-end for macOS 15+ on Apple Silicon. Install with
+`brew install joynik/tap/mackeep`; the CLI is installed separately. See the
+[installation guide](../INSTALL.md) for CLI setup and manual disk images.
 
 ## What it controls
 

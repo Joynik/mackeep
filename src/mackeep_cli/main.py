@@ -46,9 +46,8 @@ application by default. Name a single application (e.g. `mackeep-cli backup vim`
 limit a command to that app, overriding the applications_to_sync and
 applications_to_ignore settings in your config.
 
-By default, Mackeep syncs all application data via
-Dropbox, but may be configured to exclude applications or use a different
-backend with a .mackeep.cfg file.
+Choose a storage engine and path in .mackeep.cfg or in the desktop settings
+before the first backup. A new configuration does not select storage automatically.
 
 The --json option writes a machine-readable answer, meant to be used by
 graphical front-ends. In this mode, only JSON is written to stdout, the
@@ -56,6 +55,16 @@ human-readable output is written to stderr and no question is asked.
 
 The --detail option tells how detailed the dry-run is: "entries" (the
 default) describes the top level entries, "files" describes every file.
+
+Desktop application (macOS 15 or newer, Apple Silicon):
+ Mackeep provides a native interface for choosing applications, editing file and
+ folder rules, managing exclusions, previewing backup/restore, and viewing history.
+ It uses this CLI and the same .mackeep.cfg and .mackeep/ definitions.
+ Install the desktop application with: brew install joynik/tap/mackeep
+ Install the required CLI separately: brew install joynik/tap/mackeep-cli
+ Disk images (.dmg) are also available at:
+ https://github.com/Joynik/mackeep/releases/latest
+ Desktop guide: https://github.com/Joynik/mackeep/tree/master/desktop#readme
 
 See https://github.com/Joynik/mackeep/tree/master/doc for more information.
 

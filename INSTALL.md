@@ -21,9 +21,15 @@ Installation alone does not configure storage or restore files.
 
 ## Desktop
 
-Download `Mackeep-<version>-macos-arm64.dmg` from the releases page and drag
-`Mackeep.app` into Applications. It requires macOS 15+ on Apple Silicon and a
-separately installed CLI in one of the desktop discovery locations.
+Install the desktop application with Homebrew:
+
+```bash
+brew install joynik/tap/mackeep
+```
+
+It requires macOS 15+ on Apple Silicon and the CLI installed separately as shown
+above. If installing manually, download `Mackeep-<version>-macos-arm64.dmg` from
+the releases page and drag `Mackeep.app` into Applications.
 See the desktop guide below if the CLI is not detected.
 
 Release builds are signed ad-hoc and are not notarized. macOS may require
@@ -40,7 +46,8 @@ brew upgrade mackeep-cli
 brew uninstall mackeep-cli
 ```
 
-Update the desktop application using the disk image of the same release.
+Update the desktop application with `brew upgrade mackeep`, or use the disk
+image of the same release.
 Removing executables does not restore linked files or delete your configuration
 and backups. If using legacy link mode, run `mackeep-cli link uninstall` before
 removing the CLI.
