@@ -3,6 +3,7 @@
 [![Tests](https://github.com/Joynik/mackeep/actions/workflows/test.yaml/badge.svg)](https://github.com/Joynik/mackeep/actions/workflows/test.yaml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![mypy](https://img.shields.io/badge/mypy-checked-blue)](https://mypy-lang.org/)
+[![ty](https://github.com/Joynik/mackeep/actions/workflows/ty.yaml/badge.svg)](https://github.com/Joynik/mackeep/actions/workflows/ty.yaml)
 [![License](https://img.shields.io/github/license/Joynik/mackeep.svg)](LICENSE)
 
 Back up and restore application settings on macOS and Linux. Mackeep copies

@@ -8,12 +8,22 @@ on:
       - master
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   linelint:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     name: linelint
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Linelint
         uses: fernandrone/linelint@7907a5dca0c28ea7dd05c6d8d8cacded713aca11 # 0.0.6

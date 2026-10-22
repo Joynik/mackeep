@@ -5,6 +5,13 @@ on:
       - master
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   install-on-linux:
@@ -19,20 +26,33 @@ jobs:
           - ubuntu-26.04-arm
         python-version:
           - "3.14"
+    timeout-minutes: 15
     runs-on: ${{ matrix.os }}
-    container: python:${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v7
-      - run: pip install .
-      - run: mackeep-cli --help
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv venv
+      - run: uv pip install .
+      - run: .venv/bin/mackeep-cli --help
 
   install-on-macos:
     strategy:
       matrix:
         os:
           - macos-15
+    timeout-minutes: 15
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v7
-      - run: pip install .
-      - run: mackeep-cli --help
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: "3.14"
+      - run: uv venv
+      - run: uv pip install .
+      - run: .venv/bin/mackeep-cli --help

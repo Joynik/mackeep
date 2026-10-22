@@ -40,6 +40,9 @@ The [release workflow](../.github/workflows/release.yaml) checks tag/version
 agreement, builds and tests archives, builds the desktop disk image, and creates
 the GitHub release with generated notes after both build jobs succeed.
 A plain branch push runs validation workflows but does not create a release.
+For a manual workflow run, select the existing version tag; branch runs skip
+the release jobs. Runs for the same tag are serialized without cancelling a
+release already in progress.
 
 ## Artifacts
 
