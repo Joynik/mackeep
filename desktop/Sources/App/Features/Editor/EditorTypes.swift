@@ -187,4 +187,3 @@ enum EditorSection: String, CaseIterable, Identifiable {
         self == .exclude || self == .xdgExclude
     }
 }
-
