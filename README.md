@@ -22,6 +22,15 @@ brew install Joynik/tap/mackeep-cli
 mackeep-cli config
 ```
 
+For the native desktop interface on macOS 15+ with Apple Silicon, also install:
+
+```bash
+brew install joynik/tap/mackeep
+```
+
+The desktop app uses the CLI installed above. See the
+[installation guide](INSTALL.md#desktop) for details and manual disk images.
+
 The first ordinary run creates `~/.mackeep.cfg` and `~/.mackeep/`. Choose storage
 in desktop settings or edit the config. The storage path must already exist:
 
