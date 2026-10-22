@@ -1,0 +1,52 @@
+name: desktop check
+
+# A temporary workflow to compare the design of the application built with
+# the different versions of Xcode. It is not a part of the release.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  build:
+    strategy:
+      matrix:
+        xcode:
+          - "default"
+          - "/Applications/Xcode_27.1.app"
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build the application
+        working-directory: desktop
+        env:
+          DEVELOPMENT_DIR: ${{ matrix.xcode == 'default' && '' || matrix.xcode }}
+          XCODEBUILD_FLAGS: "CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="
+        run: make release
+
+      - name: Package the application
+        run: |
+          set -euo pipefail
+          NAME="$(echo "${{ matrix.xcode }}" | tr '/' '_')"
+          mkdir -p dist
+          ditto -c -k --sequesterRsrc --keepParent \
+            desktop/build/Build/Products/Release/Mackeep.app \
+            "dist/Mackeep-$NAME.zip"
+
+      - name: The version of Xcode
+        run: |
+          xcodebuild -version
+          plutil -p desktop/build/Build/Products/Release/Mackeep.app/Contents/Info.plist \
+            | grep -E "DTXcode|DTSDKName"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mackeep-${{ matrix.xcode == 'default' && 'default' || 'xcode271' }}
+          path: dist/*.zip
