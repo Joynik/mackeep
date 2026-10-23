@@ -3,50 +3,74 @@ name = "mackeep-cli"
 version = "0.24.0"
 description = "Backup and keep your application settings in sync."
 readme = "README.md"
-dependencies = ["docopt-ng>=0.9.0"]
 requires-python = ">= 3.14"
-authors = [{ name = "Laurent Raufaste", email = "analogue@glop.org" }]
-maintainers = [{ name = "Joynik" }]
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
+authors = [{ name = "Laurent Raufaste", email = "analogue@glop.org" }]
+maintainers = [{ name = "Joynik" }]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Environment :: Console",
-    "Intended Audience :: Developers",
-    "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-    "Operating System :: MacOS :: MacOS X",
-    "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 3.14",
-    "Programming Language :: Python :: 3 :: Only",
-    "Topic :: System :: Archiving :: Backup",
-    "Topic :: Utilities",
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: System :: Archiving :: Backup",
+  "Topic :: Utilities",
 ]
-
-[project.scripts]
-mackeep-cli = "mackeep_cli.main:main"
-# The alias, kept until the desktop version takes the name
-mackeep = "mackeep_cli.main:main"
+dependencies = ["docopt-ng>=0.9.0"]
 
 [project.urls]
-Repository = "https://github.com/Joynik/mackeep.git"
-Issues = "https://github.com/Joynik/mackeep/issues"
 Changelog = "https://github.com/Joynik/mackeep/releases"
+Issues = "https://github.com/Joynik/mackeep/issues"
+Repository = "https://github.com/Joynik/mackeep.git"
+
+[project.scripts]
+# The alias, kept until the desktop version takes the name
+mackeep = "mackeep_cli.main:main"
+mackeep-cli = "mackeep_cli.main:main"
 
 [dependency-groups]
 dev = [
-    "pytest>=9.1.1",
-    "pytest-cov>=7.1.0",
-    "coverage[toml]>=7.17.0",
-    "mypy>=2.4.0",
-    "ruff>=0.17.2",
-    "ty>=0.0.91",
-    "rumdl>=0.3.0",
+  "coverage[toml]>=7.17.0",
+  "mypy>=2.4.0",
+  "pytest>=9.1.1",
+  "pytest-cov>=7.1.0",
+  "ruff>=0.17.2",
+  "rumdl>=0.3.0",
+  "ty>=0.0.91",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.coverage.run]
+source = ["src/mackeep", "src/mackeep_cli"]
+branch = true
+omit = ["*/tests/*", "*/__pycache__/*", "*/.venv/*"]
+
+[tool.coverage.report]
+fail_under = 90
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+  "class .*\\bProtocol\\):",
+  "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mackeep", "src/mackeep_cli"]
@@ -68,37 +92,13 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 
-[tool.coverage.run]
-source = ["src/mackeep", "src/mackeep_cli"]
-branch = true
-omit = ["*/tests/*", "*/__pycache__/*", "*/.venv/*"]
-
-[tool.coverage.report]
-fail_under = 90
-precision = 2
-show_missing = true
-skip_covered = false
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
-    "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
-]
-
-[tool.coverage.html]
-directory = "htmlcov"
-
 [tool.pytest]
-strict = true
-minversion = "9.0"
-testpaths = ["tests"]
-pythonpath = ["src"]
 addopts = ["-ra"]
 filterwarnings = ["error"]
+minversion = "9.0"
+pythonpath = ["src"]
+strict = true
+testpaths = ["tests"]
 
 # https://docs.astral.sh/ruff/rules/
 [tool.ruff]
@@ -108,54 +108,54 @@ exclude = ["desktop"]
 
 [tool.ruff.lint]
 select = [
-    "A",     # flake8-builtins
-    "ASYNC", # flake8-async
-    "B",     # flake8-bugbear
-    "C4",    # flake8-comprehensions
-    "C90",   # mccabe
-    "COM",   # flake8-commas
-    "DTZ",   # flake8-datetimez
-    "E",     # pycodestyle error
-    "EXE",   # flake8-executable
-    "F",     # pyflakes
-    "FA",    # flake8-future-annotations
-    "FLY",   # flynt, for f-strings
-    "FURB",  # refurb
-    "G",     # flake8-logging-format
-    "I",     # isort
-    "ICN",   # flake8-import-conventions
-    "INP",   # flake8-no-pep420
-    "INT",   # flake8-gettext
-    "N",     # pep8-naming
-    "PERF",  # perflint
-    "PIE",   # flake8-pie
-    "PLC",   # pylint convention
-    "PLE",   # pylint error
-    "PLR",   # pylint refactor
-    "PLW",   # pylint warning
-    "PT",    # flake8-pytest-style
-    "PYI",   # flake8-pyi
-    "Q",     # flake8-quotes
-    "RSE",   # flake8-raise
-    "RUF",   # ruff
-    "SIM",   # flake8-simplify
-    "SLF",   # flake8-self
-    "SLOT",  # flake8-slots
-    "TC",    # flake8-type-checking
-    "TID",   # flake8-tidy-imports
-    "UP",    # pyupgrade
-    "W",     # pycodestyle warning
+  "A",  # flake8-builtins
+  "ASYNC",  # flake8-async
+  "B",  # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "C90",  # mccabe
+  "COM",  # flake8-commas
+  "DTZ",  # flake8-datetimez
+  "E",  # pycodestyle error
+  "EXE",  # flake8-executable
+  "F",  # pyflakes
+  "FA",  # flake8-future-annotations
+  "FLY",  # flynt, for f-strings
+  "FURB",  # refurb
+  "G",  # flake8-logging-format
+  "I",  # isort
+  "ICN",  # flake8-import-conventions
+  "INP",  # flake8-no-pep420
+  "INT",  # flake8-gettext
+  "N",  # pep8-naming
+  "PERF",  # perflint
+  "PIE",  # flake8-pie
+  "PLC",  # pylint convention
+  "PLE",  # pylint error
+  "PLR",  # pylint refactor
+  "PLW",  # pylint warning
+  "PT",  # flake8-pytest-style
+  "PYI",  # flake8-pyi
+  "Q",  # flake8-quotes
+  "RSE",  # flake8-raise
+  "RUF",  # ruff
+  "SIM",  # flake8-simplify
+  "SLF",  # flake8-self
+  "SLOT",  # flake8-slots
+  "TC",  # flake8-type-checking
+  "TID",  # flake8-tidy-imports
+  "UP",  # pyupgrade
+  "W",  # pycodestyle warning
 ]
 ignore = [
-    "C901",    # mccabe complexity - too complex functions
-    "PLR0912", # too many branches
-    "PTH",     # use pathlib - os.path is fine for this codebase
+  "C901",  # mccabe complexity - too complex functions
+  "PLR0912",  # too many branches
+  "PTH",  # use pathlib - os.path is fine for this codebase
 ]
 
 # https://github.com/rvben/rumdl
 [tool.rumdl]
 exclude = ["tests"]
 disable = [
-    "MD013", # line length - docs contain long, unwrappable URLs
-    "MD041", # first line must be a top-level heading (PR template starts with a level-3 heading)
+  "MD013",  # line length - docs contain long, unwrappable URLs
+  "MD041",  # first line must be a top-level heading (PR template starts with a level-3 heading)
 ]
