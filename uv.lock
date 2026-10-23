@@ -268,7 +268,7 @@ requires-dist = [{ name = "docopt-ng", specifier = ">=0.9.0" }]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "coverage", extras = ["toml"], specifier = ">=7.16.2" },
+    { name = "coverage", extras = ["toml"], specifier = ">=7.17.0" },
     { name = "mypy", specifier = ">=2.4.0" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
