@@ -232,3 +232,25 @@ jobs:
             dist/mackeep-cli-*.tar.gz
             dist/Mackeep-*.dmg
             dist/SHA256SUMS
+
+  notify-tap:
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    strategy:
+      fail-fast: false
+      matrix:
+        workflow: [update-mackeep-cli.yml, update-mackeep-desktop.yml]
+    steps:
+      - name: Start Homebrew update
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          TAP_WORKFLOW: ${{ matrix.workflow }}
+        run: |
+          set -euo pipefail
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::HOMEBREW_TAP_TOKEN is required with Actions write access to Joynik/homebrew-tap"
+            exit 1
+          fi
+          gh workflow run "$TAP_WORKFLOW" --repo Joynik/homebrew-tap --ref main

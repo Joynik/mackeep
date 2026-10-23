@@ -66,8 +66,18 @@ Checksums detect changed downloads; they are not a signature or notarization.
 
 The Homebrew formula in the separate
 [homebrew tap](https://github.com/Joynik/homebrew-tap) is updated by its own
-release-monitoring automation. The formula is not maintained in this repository.
-Verify the published version and installation after that update completes.
+release-monitoring automation. After publication, the `notify-tap` job dispatches
+`update-mackeep-cli.yml` and `update-mackeep-desktop.yml` on the tap's `main`
+branch. Scheduled checks remain a fallback. Dispatch starts the updates; their
+completion must be checked in the tap's Actions runs.
+
+Configure the `HOMEBREW_TAP_TOKEN` Actions secret in this repository with a
+fine-grained token limited to `Joynik/homebrew-tap` and **Actions: read and
+write**. The default `GITHUB_TOKEN` cannot dispatch workflows in another
+repository. Deploy the tap workflows before enabling notifications here.
+A dispatch failure fails the notification job without removing the published
+release. Retry that failed job after resolving the token or workflow error.
+Verify the published tap versions after the update workflows complete.
 
 ## Build without publishing
 
