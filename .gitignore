@@ -35,4 +35,5 @@ coverage.xml
 
 # Agents settings
 .codex
+.claude
 **/AGENTS.md
