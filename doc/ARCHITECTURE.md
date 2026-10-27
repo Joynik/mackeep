@@ -25,6 +25,8 @@ flowchart TD
 | `src/mackeep/config.py` | Main-config discovery, initialization, storage, selection, security policy |
 | `src/mackeep/mackeep.py` | Configuration state, storage environment checks, and application selection |
 | `src/mackeep/appsdb.py` | Built-in/custom definitions and loading diagnostics |
+| `src/mackeep/library.py` | Manifest checks and validated updates to the managed definition catalog |
+| `src/mackeep_cli/summary.py` | Compact text backup report from committed operation events |
 | `src/mackeep/application.py` | Per-application backup, restore, link operations, planning, and exclusion preservation |
 | `src/mackeep/excludes.py` | Parsed rules and immutable-by-interface matchers |
 | `src/mackeep/paths.py` | HOME/external mapping, containment, and overlap checks |
@@ -36,6 +38,8 @@ flowchart TD
 | `src/mackeep/utils.py` | Copying, permissions, prompts, provider detection, sensitive-path warnings |
 | `src/mackeep/constants.py` | Names, storage engines, version lookup, sensitive patterns |
 | `src/mackeep/applications/` | Built-in `.cfg` definitions |
+| `tools/generate_library_manifest.py` | Deterministic manifest generation for the upstream catalog |
+| `.github/workflows/library.yaml` | Validates and publishes the catalog manifest on `master` |
 | `desktop/Sources/App/` | SwiftUI application, models, configuration editing, CLI adapter |
 
 The runtime dependency is `docopt-ng`; the rest of the Python core uses the
@@ -110,12 +114,27 @@ excluded local entries. Nested symlinks are leaves, never recursive targets.
 
 The contract is schema **4**, shared with `MackeepSchema` in desktop models.
 `config`, `list`, `show`, migration, and dry-run return one JSON document;
-execution of backup/restore returns NDJSON. Human diagnostics go to stderr.
+library operations also return one JSON document, and backup/restore execution
+returns NDJSON. Human diagnostics go to stderr.
 
 The dry-run reporter retains at most `max_actions` actions and accumulates
 complete summaries during traversal. Other traversal structures can still grow.
 Execution counters reset per application. A `done` event is not a success flag;
 clients must inspect errors and process exit status.
+
+`backup --summary` is a text-only CLI presentation. It counts successful and
+failed applications separately from committed files and skipped paths; errors
+remain visible. JSON backup output remains the regular NDJSON event stream.
+
+Library check and update commands return a single schema 4 object. A manifest
+pins definition checksums to a Git revision; the update path validates and
+stages changed files before replacing managed definitions under
+`~/.local/share/mackeep/library/`. Catalog precedence is custom HOME/XDG,
+managed downloads, then definitions bundled with the CLI. New and retired
+entries are reported separately. Retired definitions remain available until an
+explicit removal records a local hide marker; removal never edits user settings
+or backup data. The manifest generator is run by `.github/workflows/library.yaml`
+after pushes to `master` that touch catalog inputs.
 
 Breaking changes require a schema bump, updated [JSON documentation](README.md#json-interface),
 and matching desktop handling. Existing field names remain part of the public

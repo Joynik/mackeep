@@ -16,6 +16,25 @@ TRANSLATION: dict[str, str] = {
     "applications.installed.label": "Installed on this Mac",
     "applications.library.addOne": "Add",
     "applications.library.added": "In the list",
+    "applications.library.checkUpdates": "Check for updates",
+    "applications.library.update": "Update",
+    "applications.library.updateAvailable": "Update available",
+    "applications.library.checking": "Checking for updates…",
+    "applications.library.updating": "Updating definitions…",
+    "applications.library.checked": "Last checked:",
+    "applications.library.reloadFailed": (
+        "Definitions updated, but the application list could not be "
+        "reloaded."
+    ),
+    "applications.library.new": "New",
+    "applications.library.download": "Download",
+    "applications.library.removed": "Removed from library",
+    "applications.library.removeDefinition": "Remove definition",
+    "applications.library.removeConfirm": "Remove the definition for %@?",
+    "applications.library.removeExplanation": (
+        "Only the MacKeep definition and its selection are removed. The "
+        "application, its settings and backups are kept."
+    ),
     "applications.library.button": "Library",
     "applications.library.close": "Close",
     "applications.library.title": "Library",

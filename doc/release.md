@@ -46,6 +46,12 @@ For a manual workflow run, select the existing version tag; branch runs skip
 the release jobs. Runs for the same tag are serialized without cancelling a
 release already in progress.
 
+Application definitions also have an independent catalog index. The
+[library workflow](../.github/workflows/library.yaml) validates catalog changes
+on pull requests and, after a `master` push, regenerates `library-manifest.json`
+from the current definitions; do not edit the manifest by hand. This makes
+definition updates available without publishing a new CLI or desktop release.
+
 ## Artifacts
 
 | Artifact | Platform |

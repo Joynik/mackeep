@@ -17,6 +17,8 @@ from .constants import (
 )
 from .inifile import IniFile
 from .inifile import read as read_ini
+from .library import directory as library_directory
+from .library import hidden_definitions
 from .utils import legacy_warning
 
 
@@ -387,10 +389,24 @@ class ApplicationsDatabase:
                 f" more ({count} files), copy them to {new_dir} to use them",
             )
 
+        managed_dir = library_directory()
+        removed_files = hidden_definitions()
+        if managed_dir.is_dir():
+            for managed_path in sorted(managed_dir.glob("*.cfg")):
+                if (
+                    managed_path.is_file()
+                    and managed_path.name not in custom_files | removed_files
+                ):
+                    config_files.add(str(managed_path))
+                    custom_files.add(managed_path.name)
+
         # Add the default provided app config files, but only if those are not
         # customized, as we don't want to overwrite custom app config.
         for filename in os.listdir(apps_dir):
-            if filename.endswith(".cfg") and filename not in custom_files:
+            if (
+                filename.endswith(".cfg")
+                and filename not in custom_files | removed_files
+            ):
                 config_files.add(os.path.join(apps_dir, filename))
 
         return config_files
@@ -533,7 +549,7 @@ class ApplicationsDatabase:
         apps_dir: str = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), APPS_DIR,
         )
-        return os.path.dirname(config_file) != apps_dir
+        return os.path.dirname(config_file) not in {apps_dir, str(library_directory())}
 
     def get_app_names(self) -> set[str]:
         """

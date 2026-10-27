@@ -1,5 +1,39 @@
 import Foundation
 
+/// The compatible JSON response of a library check or update.
+struct LibraryStatus: Decodable, Sendable {
+    struct Update: Decodable, Sendable {
+        let name: String
+        let sha256: String
+    }
+
+    struct NewDefinition: Decodable, Sendable, Identifiable {
+        let name: String
+        let displayName: String
+        var id: String { name }
+
+        enum CodingKeys: String, CodingKey {
+            case name
+            case displayName = "display_name"
+        }
+    }
+
+    let revision: String
+    let updates: [Update]
+    let new: [NewDefinition]
+    let removed: [String]
+
+    enum CodingKeys: String, CodingKey { case revision, updates, new, removed }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        revision = try container.decode(String.self, forKey: .revision)
+        updates = try container.decode([Update].self, forKey: .updates)
+        new = try container.decodeIfPresent([NewDefinition].self, forKey: .new) ?? []
+        removed = try container.decodeIfPresent([String].self, forKey: .removed) ?? []
+    }
+}
+
 /// The filter of the list of the applications.
 enum ApplicationFilter: String, CaseIterable, Identifiable {
     /// Every application of the list.
@@ -37,6 +71,82 @@ enum ApplicationFilter: String, CaseIterable, Identifiable {
 final class ApplicationsModel {
     /// The applications of Mackeep.
     private(set) var applications: [MackeepApplication] = []
+
+    /// The names of library definitions with a newer published version.
+    private(set) var libraryUpdates: Set<String> = []
+    private(set) var newLibraryDefinitions: [LibraryStatus.NewDefinition] = []
+    private(set) var removedLibraryDefinitions: Set<String> = []
+    private(set) var isCheckingLibrary = false
+    private(set) var isUpdatingLibrary = false
+    private(set) var libraryCheckedAt: Date?
+    private(set) var libraryError: String?
+
+    /// Fetch only the catalog manifest; existing definitions remain usable offline.
+    func checkLibraryUpdates(force: Bool = false) async {
+        guard let command, !isCheckingLibrary, !isUpdatingLibrary else { return }
+        if !force, let libraryCheckedAt,
+           Date().timeIntervalSince(libraryCheckedAt) < 86_400 { return }
+        isCheckingLibrary = true
+        defer { isCheckingLibrary = false }
+        do {
+            let status = try await Task.detached {
+                try command.runJSON(["--json", "library", "check"], as: LibraryStatus.self)
+            }.value
+            applyLibraryStatus(status)
+        } catch {
+            libraryError = error.localizedDescription
+        }
+    }
+
+    /// Replace changed library definitions through the shared CLI implementation.
+    func updateLibrary(application: String? = nil) async {
+        guard let command, !isCheckingLibrary, !isUpdatingLibrary else { return }
+        isUpdatingLibrary = true
+        defer { isUpdatingLibrary = false }
+        do {
+            let arguments = ["--json", "library", "update"] + (application.map { [$0] } ?? [])
+            let status = try await Task.detached {
+                try command.runJSON(arguments, as: LibraryStatus.self)
+            }.value
+            applyLibraryStatus(status)
+            if !(await reload()) {
+                libraryError = L10n.string("applications.library.reloadFailed")
+            }
+        } catch {
+            libraryError = error.localizedDescription
+        }
+    }
+
+    /// Remove only an upstream-removed definition, after saving its deselection.
+    func removeLibraryDefinition(_ application: MackeepApplication) async {
+        guard let command, !isCheckingLibrary, !isUpdatingLibrary,
+              !application.isCustom,
+              removedLibraryDefinitions.contains(application.name) else { return }
+        isUpdatingLibrary = true
+        defer { isUpdatingLibrary = false }
+        do {
+            removeFromTheList(application)
+            try await flushSelection()
+            let name = application.name
+            let status = try await Task.detached {
+                try command.runJSON(["--json", "library", "remove", name], as: LibraryStatus.self)
+            }.value
+            applyLibraryStatus(status)
+            if !(await reload()) {
+                libraryError = L10n.string("applications.library.reloadFailed")
+            }
+        } catch {
+            libraryError = error.localizedDescription
+        }
+    }
+
+    private func applyLibraryStatus(_ status: LibraryStatus) {
+        libraryUpdates = Set(status.updates.map(\.name))
+        newLibraryDefinitions = status.new
+        removedLibraryDefinitions = Set(status.removed)
+        libraryCheckedAt = Date()
+        libraryError = nil
+    }
 
     /// The identifier of the selected application.
     var selection: String?

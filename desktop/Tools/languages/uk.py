@@ -16,6 +16,25 @@ TRANSLATION: dict[str, str] = {
     "applications.installed.label": "Встановлено на цьому Mac",
     "applications.library.addOne": "Додати",
     "applications.library.added": "У списку",
+    "applications.library.checkUpdates": "Перевірити оновлення",
+    "applications.library.update": "Оновити",
+    "applications.library.updateAvailable": "Є оновлення",
+    "applications.library.checking": "Перевірка оновлень…",
+    "applications.library.updating": "Оновлення визначень…",
+    "applications.library.checked": "Остання перевірка:",
+    "applications.library.reloadFailed": (
+        "Визначення оновлено, але список програм не вдалося завантажити."
+    ),
+    "applications.library.new": "Нове",
+    "applications.library.download": "Завантажити",
+    "applications.library.removed": "Видалено з бібліотеки",
+    "applications.library.removeDefinition": "Видалити визначення",
+    "applications.library.removeConfirm": "Видалити визначення для %@?",
+    "applications.library.removeExplanation": (
+        "Буде видалено лише визначення MacKeep і його вибір для "
+        "копіювання. Програма, її налаштування та резервні копії "
+        "залишаться."
+    ),
     "applications.library.button": "Бібліотека",
     "applications.library.close": "Закрити",
     "applications.library.title": "Бібліотека",

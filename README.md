@@ -52,6 +52,28 @@ mackeep-cli --dry-run backup
 mackeep-cli backup
 ```
 
+For a compact result without per-file progress, add `--summary`:
+
+```bash
+mackeep backup --summary
+```
+
+It prints a table with applications processed, succeeded, and failed,
+files copied, and paths skipped. Application counts and file/path counts are
+reported separately. Error details remain visible. The usual file-by-file
+output is unchanged without the flag; `--force` keeps its existing behavior.
+
+```text
+Backup summary
++------------------------+----------+
+| Applications processed |        3 |
+| Applications succeeded |        2 |
+| Applications failed    |        1 |
+| Files copied           |       12 |
+| Paths skipped          |        2 |
++------------------------+----------+
+```
+
 On another machine, install Mackeep, configure the same storage, wait for it to
 sync, and run `mackeep-cli restore`. Existing destinations require confirmation;
 restore replaces files and does not merge their contents.
@@ -64,6 +86,9 @@ restore replaces files and does not merge their contents.
 | `mackeep-cli show git` | Show an application's configured paths and exclusions |
 | `mackeep-cli config` | Show active configuration and storage |
 | `mackeep-cli backup [application]` | Copy local settings into storage |
+| `mackeep-cli backup [application] --summary` | Show a compact backup result |
+| `mackeep-cli --json library check` | Check the application-definition catalog |
+| `mackeep-cli --json library update [application]` | Update all or one definition |
 | `mackeep-cli restore [application]` | Copy stored settings back locally |
 | `mackeep-cli migrate --dry-run` | Preview migration from Mackup |
 | `mackeep-cli --help` | Show all commands and options |
@@ -77,6 +102,10 @@ supported applications; an explicitly empty section means none.
 Use `--dry-run` to preview backup/restore without writing, `--force` to accept
 replacements, and `--force-no` to decline them. The `mackeep` alias also invokes
 the CLI.
+
+`--summary` applies only to an actual backup. It cannot be combined with
+`--dry-run`; `--json` continues to return the normal machine-readable backup
+events.
 
 Legacy `link install`, `link`, and `link uninstall` commands remain available.
 Use copy mode on current macOS: symlinked preferences can fail on macOS 14+.

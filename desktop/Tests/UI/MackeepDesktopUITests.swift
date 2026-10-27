@@ -77,20 +77,18 @@ final class MackeepDesktopUITests: XCTestCase {
         button.click()
 
         // The applications of Mackeep are in the library
-        let title: XCUIElementQuery = window.descendants(
-            matching: .any
-        ).matching(identifier: "applications.library.title")
-        XCTAssertTrue(title.element(boundBy: 0).waitForExistence(timeout: 20))
+        let library = application.windows.containing(
+            .any, identifier: "applications.library.window"
+        ).firstMatch
+        XCTAssertTrue(library.waitForExistence(timeout: 20))
 
-        // The library is closed with the button
-        let close: XCUIElement = window.buttons
-            .matching(identifier: "applications.library.close")
-            .firstMatch
+        // The independent library window has standard macOS window controls.
+        let close = library.buttons[XCUIIdentifierCloseWindow]
         XCTAssertTrue(close.waitForExistence(timeout: 20))
         waitForTheApplication()
         close.click()
 
-        XCTAssertTrue(title.element(boundBy: 0).waitForNonExistence(timeout: 20))
+        XCTAssertTrue(library.waitForNonExistence(timeout: 20))
 
         // The settings are in the sidebar
         let item: XCUIElement = window.staticTexts

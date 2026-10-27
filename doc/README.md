@@ -201,6 +201,22 @@ data and ownership, counts as skipped in JSON copy results, and makes the comman
 exit nonzero. Both options together are invalid. Closed stdin counts as a refusal.
 CLI rejects superuser execution unless `--root` is explicitly provided.
 
+### Compact backup output
+
+Add `--summary` to show table instead of per-file backup progress:
+
+```bash
+mackeep-cli backup --summary
+mackeep backup --force --summary
+```
+
+The table reports applications processed, succeeded, and failed, plus files
+copied and paths skipped. Application totals are distinct from file and path
+totals. Errors and warnings remain visible on stderr. Without `--summary`, the
+existing progress output is unchanged, and `--force` retains its usual behavior.
+The option is limited to an actual backup, not a dry run. With `--json`, backup
+continues to emit the usual NDJSON events.
+
 `config`, `list`, and `show` remain usable when an automatic cloud-storage lookup
 fails. `config` reports the lookup error and an unresolved storage path; filesystem
 operations require working storage.
@@ -296,10 +312,35 @@ Review the selected paths and storage permissions. See the
 
 ## JSON interface
 
-`--json` is supported for `config`, `list`, `show`, `backup`, `restore`, and
-`migrate`. Stdout contains JSON only; diagnostics go to stderr. No prompts are
-asked. `--force-no` is implied unless `--force` is supplied. Check both JSON
-errors and process exit status.
+`--json` is supported for `config`, `list`, `show`, `backup`, `restore`,
+`migrate`, and library commands. Stdout contains JSON only; diagnostics go to
+stderr. No prompts are asked. `--force-no` is implied unless `--force` is
+supplied. Check both JSON errors and process exit status.
+
+### Library commands
+
+The catalog can be checked and updated independently of a Mackeep release:
+
+```bash
+mackeep-cli --json library check
+mackeep-cli --json library update
+mackeep-cli --json library update vscode
+mackeep-cli --json library remove retired-application
+```
+
+`update` downloads only changed definitions, or only the named definition when
+given. Downloaded files live in `~/.local/share/mackeep/library/` and take
+precedence over bundled definitions; custom definitions in `~/.mackeep/` and
+the XDG applications directory take precedence over both. The manifest is
+generated from the definitions by the GitHub Actions workflow when it runs on
+`master`.
+
+The response is one schema 4 JSON object containing `revision`, `updates`
+(`name` and `sha256`), `new` (`name` and `display_name`), `removed` (retired
+application names), and `checked_at`. `library remove` only accepts a
+definition that has left the upstream catalog. It requires the application to
+be deselected first and removes or hides only the Mackeep definition; it does
+not delete application settings or backup data. Removal is explicit.
 
 ### Schema and configuration
 

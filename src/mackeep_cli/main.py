@@ -10,6 +10,9 @@ Usage:
   mackeep-cli [options] show <application>
   mackeep-cli [options] config
   mackeep-cli [options] migrate
+  mackeep-cli [options] library check
+  mackeep-cli [options] library update [<application>]
+  mackeep-cli [options] library remove <application>
   mackeep-cli [options] backup [<application>]
   mackeep-cli [options] restore [<application>]
   mackeep-cli [options] link install [<application>]
@@ -24,6 +27,7 @@ Options:
   -r --root                 Allow mackeep to be run as superuser.
   -n --dry-run              Show steps without executing.
   --verbose                 Show additional details.
+  --summary                 Show a compact backup result instead of progress.
   -c --config-file=<path>   Specify custom config file path.
   --json                    Output machine-readable JSON.
   --detail=<level>          Detail level of the dry-run: entries or files.
@@ -78,12 +82,13 @@ import re
 import signal
 import sys
 import traceback
+from contextlib import redirect_stdout
 from dataclasses import dataclass
 from typing import Any, TextIO
 
 from docopt import docopt
 
-from mackeep import jsonapi, utils
+from mackeep import jsonapi, library, utils
 from mackeep.application import ApplicationProfile, Reporter
 from mackeep.appsdb import ApplicationsDatabase
 from mackeep.backupstate import BackupState
@@ -97,6 +102,7 @@ from mackeep.locking import storage_lock
 from mackeep.mackeep import Mackeep
 from mackeep.migrate import plan as migration_plan
 from mackeep.migrate import run as run_migration
+from mackeep_cli.summary import BackupSummary, SummaryOutput
 
 # The ANSI escape codes used to color the error messages
 ANSI_CODES = re.compile(r"\033\[[0-9;]*m")
@@ -375,7 +381,17 @@ def _cmd_backup(args: dict[str, Any], ctx: _Context) -> None:
         ctx.mckp.check_for_usable_backup_env()
 
     # Create a backup of the files of each application
-    _run_action(ctx, app_names, "copy_files_to_mackeep_folder")
+    if args.get("--summary"):
+        summary = BackupSummary()
+        ctx.reporter = summary
+        ctx.verbose = False
+        try:
+            with SummaryOutput() as output, redirect_stdout(output):
+                _run_action(ctx, app_names, "copy_files_to_mackeep_folder")
+        finally:
+            summary.display()
+    else:
+        _run_action(ctx, app_names, "copy_files_to_mackeep_folder")
 
 
 def _cmd_restore(args: dict[str, Any], ctx: _Context) -> None:
@@ -970,6 +986,23 @@ def _run(args: dict[str, Any], json_mode: bool, stdout: TextIO) -> None:
     """
     if args["--force"] and args["--force-no"]:
         sys.exit("Options --force and --force-no are mutually exclusive.")
+    if args.get("--summary") and (not args["backup"] or args["--dry-run"]):
+        sys.exit("The --summary option requires backup without --dry-run.")
+
+    if args.get("library"):
+        if args["--dry-run"]:
+            sys.exit("Library commands do not support --dry-run; use library check.")
+        if args["remove"]:
+            result = library.remove(args["<application>"], args.get("--config-file"))
+        elif args["update"]:
+            result = library.update(args["<application>"])
+        else:
+            result = library.check()
+        if json_mode:
+            jsonapi.emit(result, stdout)
+        else:
+            print(f"Library updates available: {len(result['updates'])}")
+        return
 
     if args["migrate"]:
         # The migrate command does not need a usable storage, it is the way

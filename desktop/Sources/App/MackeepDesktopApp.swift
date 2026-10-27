@@ -32,6 +32,15 @@ struct MackeepDesktopApp: App {
             CommandGroup(replacing: .newItem) {}
         }
 
+        Window(L10n.string("applications.library.title"), id: "library") {
+            LibraryView(model: environment.applications)
+                .environment(environment)
+                .environment(\.locale, environment.language.resolvedLocale)
+                .preferredColorScheme(environment.appearance.colorScheme)
+        }
+        .defaultSize(width: 820, height: 600)
+        .windowResizability(.contentMinSize)
+
         // The window of the editor of an application
         WindowGroup(for: String.self) { $appName in
             if let appName: String,

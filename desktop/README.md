@@ -7,7 +7,12 @@ Native SwiftUI front-end for macOS 15+ on Apple Silicon. Install with
 ## What it controls
 
 - **Applications:** add definitions from the built-in library and choose which
-  applications to back up. Built-in definitions must be copied before editing.
+  applications to back up. The separate, resizable Library window checks for
+  definition updates and marks them in the list; its button shows an update
+  badge. Update changed definitions together or download a new definition on its
+  own. Retired definitions stay listed until explicitly removed. Removal only
+  hides or deletes the Mackeep definition; application settings and backups
+  stay untouched. Built-in definitions must be copied before editing.
 - **Editor:** change a custom application's paths and exclusions, and search
   for its files in known locations or with Spotlight.
 - **Backup/Restore:** preview operations and execute them through the CLI.
