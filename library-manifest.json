@@ -22,7 +22,7 @@
     "ancient-domains-of-mystery.cfg": "40e3da0f809f91bea86c6abd0ffb30d55331af744501d57bda0ec5faa866fe21",
     "androidstudio-13.cfg": "8445d601105db05924a202e2395e2967cfbf8b1c494a00be6fd0ec9e5fa76ce0",
     "ansible.cfg": "4918d94ac8471383736611c837990767525fb603c1b334c36d78cd2d8bba0fa4",
-    "anydesk.cfg": "1d7c7b51a89339d2b451348712d6b294155a665b662496d2f218308f803f3aaa",
+    "anydesk.cfg": "a8d82c219d633ce07e1f606d232404bd6c707cf36e661518a928f8a65b6566c9",
     "appcleaner.cfg": "ddd901674b16178f4b03371101c6ba0a6b0cda920a5c0f2d8395969c88a829f6",
     "appcode-2.cfg": "516fa7af296c96b0b4edc7cd22f300f9701a026fe5855261b0050b503000a293",
     "appcode-3.cfg": "86f2382e386d38d2709bb303913dda50038c91b056be5630ca67b4cdbbfac93e",
@@ -1223,7 +1223,7 @@
     "zoxide.cfg": "zoxide",
     "zsh.cfg": "Zsh"
   },
-  "revision": "4a1825859f8550340802da99d86d5a81c8f8a154",
+  "revision": "6c3b50f063e092cedf803939274c3b0a6a71415b",
   "schema_version": 4,
   "version": 1
 }
