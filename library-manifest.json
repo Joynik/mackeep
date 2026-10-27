@@ -182,7 +182,7 @@
     "ghostwriter.cfg": "ed01387250ed448d627760a8011777140efe9e478bca22f3c5face9ec5a5720b",
     "gimp.cfg": "a7d23f000491f8f62736470f12a596ea7f5581668797952e8ecd0333e69117f4",
     "git-hooks.cfg": "42334b30cd253bd43258e514808c9be7bffbbd1c1acc78f4bd70f3805be822d5",
-    "git.cfg": "f32681a951e54ad4c09e322ca40e9fd4d9e80b4b1007a5406abfa5c34bfd8a73",
+    "git.cfg": "4d9cc338959883b0c04dc2ac0d2e9fe3accebfdd20971630e4fb44a17c07c7fa",
     "gitbox.cfg": "d2aaa212d8566d9fb5bb659bd986419ee7a3062edc55ca90109f0a048c3294fb",
     "gitfox.cfg": "15a46e7801a9eeae77beb32dd23053b1989538610de72d4bc4e4836d5c979b31",
     "github-cli.cfg": "9a3d0f3e19bac7d531fd129a893e242d78e130053764b9c3f07af5dedd91deeb",
@@ -1223,7 +1223,7 @@
     "zoxide.cfg": "zoxide",
     "zsh.cfg": "Zsh"
   },
-  "revision": "6c3b50f063e092cedf803939274c3b0a6a71415b",
+  "revision": "07fa07e7fd58c04bbf37823328fe2f1fa6f3bd2e",
   "schema_version": 4,
   "version": 1
 }
