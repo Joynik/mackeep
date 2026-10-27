@@ -49,3 +49,11 @@ def test_manifest_rejects_invalid_definition(tmp_path):
     (definitions / "bad.cfg").write_text("[configuration_files]\n.file\n")
     with pytest.raises(ConfigError, match="Invalid library definition"):
         generate(tmp_path, REVISION)
+
+
+def test_manifest_rejects_missing_final_newline(tmp_path):
+    definitions = tmp_path / "src/mackeep/applications"
+    definitions.mkdir(parents=True)
+    (definitions / "bad.cfg").write_text("[application]\nname = Example")
+    with pytest.raises(ValueError, match="final newline"):
+        generate(tmp_path, REVISION)

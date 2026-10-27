@@ -17,6 +17,7 @@ DEFINITIONS = sorted(CATALOG.glob("*.cfg"))
 @pytest.mark.parametrize("definition", DEFINITIONS, ids=lambda path: path.stem)
 def test_bundled_definition_is_valid(definition):
     """A malformed or unsafe shipped definition must fail by application name."""
+    assert definition.read_bytes().endswith(b"\n"), "Missing final newline"
     document = read(str(definition))
     assert document.read
     assert not document.problems, document.problems

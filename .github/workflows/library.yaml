@@ -8,6 +8,8 @@ on:
       - src/mackeep/library.py
       - src/mackeep/jsonapi.py
       - tools/generate_library_manifest.py
+      - tests/test_catalog.py
+      - tests/test_library_manifest.py
       - .github/workflows/library.yaml
   pull_request:
     paths:
@@ -15,6 +17,8 @@ on:
       - src/mackeep/library.py
       - src/mackeep/jsonapi.py
       - tools/generate_library_manifest.py
+      - tests/test_catalog.py
+      - tests/test_library_manifest.py
       - .github/workflows/library.yaml
   workflow_dispatch:
 
@@ -37,6 +41,8 @@ jobs:
         with:
           python-version: "3.14"
       - run: uv sync --locked --dev
+      - name: Validate application definitions and publisher
+        run: uv run --no-sync python -m pytest tests/test_catalog.py tests/test_library_manifest.py
       - run: uv run --no-sync python tools/generate_library_manifest.py --revision "$GITHUB_SHA"
 
   publish:
@@ -61,6 +67,7 @@ jobs:
           for attempt in 1 2 3; do
             git fetch origin master
             git checkout --detach origin/master
+            uv run --no-sync python -m pytest tests/test_catalog.py tests/test_library_manifest.py
             uv run --no-sync python tools/generate_library_manifest.py --revision "$(git rev-parse HEAD)"
             git add library-manifest.json
             if git diff --cached --quiet; then

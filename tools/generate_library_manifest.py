@@ -20,6 +20,8 @@ def generate(root: Path, revision: str) -> dict[str, object]:
         if not NAME.fullmatch(path.name):
             raise ValueError(f"Unsupported library filename: {path.name}")
         data = path.read_bytes()
+        if not data.endswith(b"\n"):
+            raise ValueError(f"Missing final newline: {path.name}")
         validate_definition(data)
         files[path.name] = hashlib.sha256(data).hexdigest()
         parser = configparser.RawConfigParser(allow_no_value=True, strict=False)

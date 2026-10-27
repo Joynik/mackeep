@@ -6,7 +6,13 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - "src/mackeep/applications/*.cfg"
+      - "library-manifest.json"
   pull_request:
+    paths-ignore:
+      - "src/mackeep/applications/*.cfg"
+      - "library-manifest.json"
 
 permissions:
   contents: read

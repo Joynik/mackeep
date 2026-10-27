@@ -31,6 +31,11 @@ GitHub Actions runs Ruff, mypy, ty, and Markdown in separate workflows on pushes
 to `master` and pull requests. Tests cover Python 3.14 on Ubuntu 24.04/26.04 and
 macOS 15. CI checks that `uv.lock` is current with `uv sync --locked --dev`.
 
+Changes limited to `src/mackeep/applications/*.cfg` use the library workflow:
+catalog validation (including final newlines), publisher tests, and manifest
+publication. Code changes and releases keep the full CI suite. Generated
+`library-manifest.json` updates do not trigger the general workflows.
+
 The HTML coverage report is `htmlcov/index.html`. Tests must use temporary HOME
 and XDG directories, avoid network access, and never operate on real backups.
 See [test conventions](../tests/README.md).
