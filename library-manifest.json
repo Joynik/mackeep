@@ -497,7 +497,7 @@
     "spotify-notifications.cfg": "264d0f910a0f75db925e3cd4e72360fafaf929049fb95e3c7a2129b55f76d9ea",
     "spotify.cfg": "99a7a1c1a92ee231d84a5fd9affd487bfb9420fdff804fc86b426c0d7491a97d",
     "sqitch.cfg": "9a3d3572070a3201ed6a49d21200bf8d6e84f39e2f93ba571090210da26adac7",
-    "ssh.cfg": "7a42624d637c83eaaff09f183d45b92db03dae33fb0018cf0212cda6a290a116",
+    "ssh.cfg": "394896ad39a58228c607eb85df944cbe36049beadb2ba084be72794d10d2918c",
     "starship.cfg": "82bebe403abe9224d6585961b4505ecbcfc94a67a5ef578c01ce2bdbbac0a7b0",
     "startupizer2.cfg": "b4ec91f6f93b7fd06e2f18b45828a56d873f77920fe5c0f49eb6dd82343b99c8",
     "stata.cfg": "0598beb3d09a6cb5120b5306ca1fb3ce2a765ea6e46832963b7c2082b93bbe92",
@@ -1223,7 +1223,7 @@
     "zoxide.cfg": "zoxide",
     "zsh.cfg": "Zsh"
   },
-  "revision": "07fa07e7fd58c04bbf37823328fe2f1fa6f3bd2e",
+  "revision": "4905ac546c21a48f52cc876832d1490269c0abce",
   "schema_version": 4,
   "version": 1
 }
