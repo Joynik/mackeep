@@ -109,9 +109,7 @@ struct ApplicationEditorView: View {
     private func setThePathsOfTheSearch() {
         search.setPaths(
             model.paths,
-            xdgPaths: model.xdgPaths,
-            name: model.displayName,
-            identifier: model.appName
+            xdgPaths: model.xdgPaths
         )
     }
 

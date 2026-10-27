@@ -42,8 +42,8 @@ struct ApplicationSearchView: View {
                 }
             }
 
-            if !model.hasFolders {
-                Text(L10n.string("editor.search.noFolders"))
+            if model.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Text(L10n.string("editor.search.placeholder"))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)

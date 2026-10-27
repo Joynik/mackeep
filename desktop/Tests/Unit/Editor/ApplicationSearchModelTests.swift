@@ -181,4 +181,106 @@ final class ApplicationSearchModelTests: XCTestCase {
         XCTAssertEqual(found.map(\.url), [expected])
         XCTAssertEqual(found.first?.size, 7)
     }
+
+    @MainActor
+    func testSearchUsesTypedTextInsteadOfConfigurationName() async throws {
+        let folder = ApplicationSearchModel.home.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let expected = try write("AnyDesk settings", in: folder)
+        let model = ApplicationSearchModel(query: { query, _ in
+            query == "kMDItemFSName == '*anydesk*'c" ? [expected.path] : []
+        })
+        model.setPaths([], xdgPaths: [])
+        model.searchText = "anydesk"
+        model.start()
+        defer { model.cancel() }
+        try await waitForSearch(model)
+        XCTAssertTrue(model.results.contains { $0.url == expected })
+    }
+
+    @MainActor
+    func testChangingQueryDoesNotReusePreviousBundleIdentifiers() async throws {
+        let folder = ApplicationSearchModel.home.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let anydesk = try write("AnyDesk settings", in: folder)
+        let firefox = try write("Firefox settings", in: folder)
+        let model = ApplicationSearchModel(query: { query, _ in
+            switch query {
+            case "kMDItemFSName == '*anydesk*'c": return [anydesk.path]
+            case "kMDItemFSName == '*firefox*'c": return [firefox.path]
+            default: return []
+            }
+        })
+        model.searchText = "anydesk"
+        model.start()
+        defer { model.cancel() }
+        try await waitForSearch(model)
+        XCTAssertTrue(model.results.contains { $0.url == anydesk })
+
+        model.searchText = "firefox"
+        try await waitForSearch(model, containing: firefox)
+        XCTAssertTrue(model.results.contains { $0.url == firefox })
+        XCTAssertFalse(model.results.contains { $0.url == anydesk })
+
+        model.searchText = " \n "
+        XCTAssertTrue(model.results.isEmpty)
+        XCTAssertFalse(model.isSearching)
+    }
+
+    @MainActor
+    func testTypedQueryFindsHiddenFolderContentsAndSkipsAddedFiles() async throws {
+        let query = "anydesk-\(UUID().uuidString)"
+        let folder = ApplicationSearchModel.home.appendingPathComponent(".\(query)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let known = try write("user.conf", in: folder)
+        let expected = try write("service.conf", in: folder)
+        let model = ApplicationSearchModel(query: { _, _ in [] })
+        model.setPaths(
+            [EditorPath(path: ".\(query)/user.conf")], xdgPaths: [])
+        model.searchText = query
+        model.start()
+        defer { model.cancel() }
+        try await waitForSearch(model)
+        XCTAssertTrue(
+            model.results.contains {
+                $0.url.resolvingSymlinksInPath() == expected.resolvingSymlinksInPath()
+            },
+            "Expected \(expected.path), found \(model.results.map { $0.url.path })")
+        XCTAssertFalse(model.results.contains {
+            $0.url.resolvingSymlinksInPath() == known.resolvingSymlinksInPath()
+        })
+    }
+
+    @MainActor
+    func testEmptyQueryDoesNotStartSpotlight() {
+        let model = ApplicationSearchModel(query: { _, _ in
+            XCTFail("An empty field must not start a Spotlight query")
+            return []
+        })
+        model.start()
+        defer { model.cancel() }
+        XCTAssertFalse(model.isSearching)
+        XCTAssertTrue(model.results.isEmpty)
+    }
+
+    func testQueryCannotEscapeStandardSearchDirectories() {
+        for query in ["..", ".", "../../outside", "/Applications"] {
+            XCTAssertTrue(ApplicationSearchModel.standardPlaces(named: query).isEmpty)
+        }
+    }
+
+    @MainActor
+    private func waitForSearch(
+        _ model: ApplicationSearchModel, containing expected: URL? = nil
+    ) async throws {
+        for _ in 0..<200 {
+            if !model.isSearching,
+               expected == nil || model.results.contains(where: { $0.url == expected }) { break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTAssertFalse(model.isSearching)
+    }
 }

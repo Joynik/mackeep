@@ -32,10 +32,8 @@ struct FoundFile: Identifiable, Equatable, Sendable {
 
 /// The model of the search of the files of an application.
 ///
-/// The files of the application are the ones of the folders of its config,
-/// the ones of the standard places of macOS, and the ones that Spotlight
-/// knows about. The ones that are found can be added to the application, to
-/// be backed up with it.
+/// The typed query selects matching files in configured folders, standard
+/// macOS locations, and Spotlight. Results can be added to any configuration.
 @Observable
 @MainActor
 final class ApplicationSearchModel {
@@ -65,14 +63,21 @@ final class ApplicationSearchModel {
     /// The paths that are already in the application.
     private var knownPaths: Set<String> = []
 
-    /// The names of the application, they are used by the search.
-    private var appNames: [String] = []
-
     /// The task of the search that is running.
     private var task: Task<Void, Never>?
     private var cancellation: CommandCancellation?
     private var cachedIdentifiers: [String]?
+    private var cachedSearchText: String?
     private var active = false
+    private let query: @Sendable (String, CommandCancellation?) -> [String]
+
+    init(
+        query: @escaping @Sendable (String, CommandCancellation?) -> [String] = {
+            mdfind($0, cancellation: $1)
+        }
+    ) {
+        self.query = query
+    }
 
     func start() { active = true; search() }
 
@@ -83,24 +88,14 @@ final class ApplicationSearchModel {
         isSearching = false
     }
 
-    /// Whether the application has files that can be searched.
-    var hasFolders: Bool { !roots.isEmpty || !rootFiles.isEmpty }
-
     /// Set the paths of the application, the folders of them are searched.
-    ///
-    /// The standard places of the application are searched too, they are
-    /// found by the name of the application.
     ///
     /// - Parameters:
     ///   - paths: The paths of the application.
     ///   - xdgPaths: The XDG paths of the application.
-    ///   - name: The name of the application, as it is shown.
-    ///   - identifier: The identifier of the application.
     func setPaths(
         _ paths: [EditorPath],
-        xdgPaths: [EditorPath],
-        name: String,
-        identifier: String
+        xdgPaths: [EditorPath]
     ) {
         var folders: [URL] = []
         var files: [URL] = []
@@ -126,35 +121,9 @@ final class ApplicationSearchModel {
             }
         }
 
-        // The standard places of the application, they are named after it
-        for title: String in [name, identifier] {
-            let trimmed: String = title.trimmingCharacters(in: .whitespaces)
-            guard !trimmed.isEmpty else { continue }
-
-            for candidate: URL in Self.standardPlaces(named: trimmed) {
-                var isDirectory: ObjCBool = false
-                guard
-                    FileManager.default.fileExists(
-                        atPath: candidate.path,
-                        isDirectory: &isDirectory
-                    ),
-                    isDirectory.boolValue
-                else {
-                    continue
-                }
-                if !folders.contains(candidate) { folders.append(candidate) }
-            }
-
-            let preferences: URL = Self.home
-                .appendingPathComponent("Library/Preferences/\(trimmed).plist")
-            if !files.contains(preferences) { files.append(preferences) }
-        }
-
         roots = folders
         rootFiles = files
         knownPaths = known
-        if appNames != [name, identifier] { cachedIdentifiers = nil }
-        appNames = [name, identifier]
         if active { search() }
     }
 
@@ -165,6 +134,7 @@ final class ApplicationSearchModel {
     /// - Parameter name: The name of the application.
     /// - Returns: The folders where the application keeps its data.
     nonisolated static func standardPlaces(named name: String) -> [URL] {
+        guard !name.contains("/"), name != ".", name != ".." else { return [] }
         let home: URL = Self.home
         return [
             xdgConfigHome.appendingPathComponent(name),
@@ -285,7 +255,8 @@ final class ApplicationSearchModel {
     /// - Parameter names: The names of the application.
     /// - Returns: The identifiers of the bundles that were found.
     nonisolated static func bundleIdentifiers(
-        named names: [String], cancellation: CommandCancellation? = nil
+        named names: [String], cancellation: CommandCancellation? = nil,
+        query: (String, CommandCancellation?) -> [String] = { mdfind($0, cancellation: $1) }
     ) -> [String] {
         var identifiers: [String] = []
 
@@ -294,8 +265,8 @@ final class ApplicationSearchModel {
             let trimmed: String = name.trimmingCharacters(in: .whitespaces)
             guard !trimmed.isEmpty else { continue }
 
-            for path: String in mdfind(
-                "kMDItemFSName == '*\(Self.escapedQuery(trimmed)).app'c", cancellation: cancellation
+            for path: String in query(
+                "kMDItemFSName == '*\(Self.escapedQuery(trimmed)).app'c", cancellation
             ) {
                 guard path.hasSuffix(".app") else { continue }
                 guard
@@ -346,6 +317,10 @@ final class ApplicationSearchModel {
     /// The search of the disk is not cheap, it waits for the user.
     private func scheduleSearch() {
         guard active else { return }
+        if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            search()
+            return
+        }
         task?.cancel()
         cancellation?.cancel()
         task = Task { [weak self] in
@@ -362,12 +337,18 @@ final class ApplicationSearchModel {
         cancellation?.cancel()
         let token = CommandCancellation()
         cancellation = token
-        let cached = cachedIdentifiers
+        let text = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else {
+            results = []
+            isSearching = false
+            return
+        }
+        let cached = cachedSearchText == text ? cachedIdentifiers : nil
         let roots: [URL] = self.roots
         let files: [URL] = self.rootFiles
         let known: Set<String> = self.knownPaths
-        let names: [String] = self.appNames
-        let text: String = searchText.trimmingCharacters(in: .whitespaces)
+        let names = [text]
+        let query = self.query
 
         isSearching = true
         task = Task { [weak self] in
@@ -375,7 +356,8 @@ final class ApplicationSearchModel {
                 // The identifier of the bundle of the application, the files
                 // of an application are often named after it
                 let identifiers =
-                    cached ?? (names + Self.bundleIdentifiers(named: names, cancellation: token))
+                    cached ?? (names + Self.bundleIdentifiers(
+                        named: names, cancellation: token, query: query))
 
                 // The standard places of the application, they are named
                 // after the application and after its bundle
@@ -425,7 +407,8 @@ final class ApplicationSearchModel {
                     names: identifiers,
                     matching: text,
                     known: known,
-                    cancellation: token
+                    cancellation: token,
+                    query: query
                 )
 
                 var seen: Set<String> = []
@@ -445,6 +428,7 @@ final class ApplicationSearchModel {
 
             guard !Task.isCancelled else { return }
             self?.cachedIdentifiers = identifiers
+            self?.cachedSearchText = text
             self?.results = found
             self?.isSearching = false
         }

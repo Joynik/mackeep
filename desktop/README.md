@@ -15,6 +15,8 @@ Native SwiftUI front-end for macOS 15+ on Apple Silicon. Install with
   stay untouched. Built-in definitions must be copied before editing.
 - **Editor:** change a custom application's paths and exclusions, and search
   for its files in known locations or with Spotlight.
+  Search uses the text you enter;
+  an empty query does not start a search.
 - **Backup/Restore:** preview operations and execute them through the CLI.
 - **Settings:** storage, shared exclusions, external-path permission, language,
   and appearance.
