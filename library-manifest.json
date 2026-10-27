@@ -583,6 +583,7 @@
     "windsurf.cfg": "f6e884018ee1aa5e09b02c68f22233ed0be849fd73d7d02bef532a966eb49263",
     "wireshark.cfg": "40f50b6769404e4c8ca2f993b24e7c08ddfbcd6808e816e8799db21dae269a6f",
     "witch.cfg": "adc1a825d49360e36f4b1112de0cbbaba02f3865a455578c26a6535bac2fc294",
+    "wokwi.cfg": "0e85614f111f2000e95079d450533bcb82bf47c570d99d268c8e6e548d309b78",
     "wordgrinder.cfg": "97cd047976539189749a07397bdd05f938c13dd11d44513196c215b77c1a24aa",
     "workrave.cfg": "b225b7d4da700930322efdde39b911780bf299c49a2e5c2f7b2a24463d03203c",
     "wp-cli.cfg": "018f7d27e57387b481fb8db7fa4ce5ea07c0ecc7e24df30656acbfc1c64bc373",
@@ -1193,6 +1194,7 @@
     "windsurf.cfg": "Windsurf",
     "wireshark.cfg": "Wireshark 2",
     "witch.cfg": "Witch",
+    "wokwi.cfg": "Wokwi",
     "wordgrinder.cfg": "wordgrinder",
     "workrave.cfg": "Workrave",
     "wp-cli.cfg": "WP-CLI",
@@ -1219,7 +1221,7 @@
     "zoxide.cfg": "zoxide",
     "zsh.cfg": "Zsh"
   },
-  "revision": "329792dcf96d85e5f4329e3e2c4a51043b5a8c8d",
+  "revision": "1f3f12a09ed41a119e34bc79672f59be793f2933",
   "schema_version": 4,
   "version": 1
 }
