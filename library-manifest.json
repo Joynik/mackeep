@@ -22,7 +22,7 @@
     "ancient-domains-of-mystery.cfg": "40e3da0f809f91bea86c6abd0ffb30d55331af744501d57bda0ec5faa866fe21",
     "androidstudio-13.cfg": "8445d601105db05924a202e2395e2967cfbf8b1c494a00be6fd0ec9e5fa76ce0",
     "ansible.cfg": "4918d94ac8471383736611c837990767525fb603c1b334c36d78cd2d8bba0fa4",
-    "anydesk.cfg": "a8d82c219d633ce07e1f606d232404bd6c707cf36e661518a928f8a65b6566c9",
+    "anydesk.cfg": "1d7c7b51a89339d2b451348712d6b294155a665b662496d2f218308f803f3aaa",
     "appcleaner.cfg": "ddd901674b16178f4b03371101c6ba0a6b0cda920a5c0f2d8395969c88a829f6",
     "appcode-2.cfg": "516fa7af296c96b0b4edc7cd22f300f9701a026fe5855261b0050b503000a293",
     "appcode-3.cfg": "86f2382e386d38d2709bb303913dda50038c91b056be5630ca67b4cdbbfac93e",
@@ -575,7 +575,7 @@
     "vscode.cfg": "c361d4879101b095328ea103aa8cd156a9e22b1f91e9bae5b3f8e32c31375f6e",
     "vscodium.cfg": "4a376b0f953926c676a456e07a5620b8b58dc645290d5fde79f471508014df8e",
     "wakatime.cfg": "b4b7d599856d1da8182e43d756b26c67ac8b3152173daae5bd5f5c1bf5409c76",
-    "warp.cfg": "869c38dfa90dd3688f38273ae558891fbeac7ccb2f071bbee46d9dda397d22f5",
+    "warp.cfg": "19e3c0dacf3f1c37429478e699b770273196186e07b46fc491465a02b4e13a2b",
     "waybar.cfg": "9ddcd46d1af435193e1ee10817faf06a7a038796b9d6bb51cc94709b4f603e13",
     "webstorm.cfg": "6a13d39a42f61ae889f7eb9c2770a2db0d1456eb7ab2f8e58d2684aa05f7b979",
     "wezterm.cfg": "b58e2b054a74eddd7a6c448f0427a9bd8dd4998985c51f5fea6ddc23dae34d55",
@@ -1223,7 +1223,7 @@
     "zoxide.cfg": "zoxide",
     "zsh.cfg": "Zsh"
   },
-  "revision": "ccece57d9a4deafc370f0658a7c85b3959dc35e5",
+  "revision": "43c64208dc84799961e3eff07467a697a656bea8",
   "schema_version": 4,
   "version": 1
 }
