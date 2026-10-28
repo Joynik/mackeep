@@ -233,4 +233,11 @@ TRANSLATION: dict[str, str] = {
     "history.recovered": "손상된 기록을 %@에 보존하고 새 기록 파일을 만들었습니다.",
     "backup.restore.changed": "설정 또는 복원 계획이 변경되었습니다. 업데이트된 미리보기를 검토하고 다시 확인하세요.",
     "backup.restore.overwrites": "바꿀 기존 파일 및 폴더: %lld",
+    "settings.tool.versionMismatch": "앱과 CLI 버전이 같아야 합니다",
+    "settings.tool.updateDesktop": "앱: %@. CLI: %@. 앱을 CLI와 같은 버전으로 업데이트하세요.",
+    "settings.tool.updateCLI": "앱: %@. CLI: %@. CLI를 앱과 같은 버전으로 업데이트하세요.",
+    "settings.tool.versionUnknown": "앱 또는 CLI 버전을 확인할 수 없습니다. 두 구성 요소의 설치를 확인하세요.",
+    "settings.tool.checking": "CLI 호환성 확인 중…",
+    "settings.tool.recheck": "다시 확인",
+    "settings.tool.incompatible": "CLI가 이 앱과 호환되지 않습니다. 앱과 같은 버전의 CLI를 다시 설치하세요.",
 }

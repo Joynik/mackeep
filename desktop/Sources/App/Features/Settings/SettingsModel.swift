@@ -46,7 +46,14 @@ final class SettingsModel {
     ///
     /// It is known when the capabilities of the tool are read, they arrive
     /// after the start of the application.
-    var mackeepVersion: String { capabilities?.version ?? "" }
+    var mackeepVersion: String {
+        (capabilities?.version ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// The release version of the running desktop bundle.
+    let desktopVersion: String
+
+    private(set) var isCheckingTool = false
 
     /// What the binary of Mackeep can do.
     var capabilities: MackeepCapabilities?
@@ -67,19 +74,68 @@ final class SettingsModel {
     /// The command line tool of Mackeep.
     private let command: MackeepCommand?
 
-    init(command: MackeepCommand?, capabilities: MackeepCapabilities?) {
+    init(
+        command: MackeepCommand?, capabilities: MackeepCapabilities?,
+        desktopVersion: String = Bundle.main.object(
+            forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+    ) {
         self.command = command
         self.capabilities = capabilities
         self.mackeepPath = command?.path ?? ""
+        self.desktopVersion = desktopVersion.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// Whether the binary of Mackeep is recent enough.
-    var isToolSupported: Bool { capabilities?.isSupported ?? false }
+    /// Require matching releases as well as a compatible JSON interface.
+    var isToolSupported: Bool {
+        !isCheckingTool && capabilities?.isSupported == true
+            && !desktopVersion.isEmpty && mackeepVersion == desktopVersion
+    }
+
+    var toolCompatibilityMessage: String {
+        guard isToolKnown else {
+            return L10n.string(
+                mackeepPath.isEmpty ? "onboarding.tool.help" : "settings.tool.checking")
+        }
+        guard !desktopVersion.isEmpty, !mackeepVersion.isEmpty else {
+            return L10n.string("settings.tool.versionUnknown")
+        }
+        if desktopVersion != mackeepVersion {
+            let key = desktopVersion.compare(mackeepVersion, options: .numeric) == .orderedAscending
+                ? "settings.tool.updateDesktop" : "settings.tool.updateCLI"
+            return L10n.string(key, desktopVersion, mackeepVersion)
+        }
+        return L10n.string("settings.tool.incompatible")
+    }
+
+    /// Re-read the executable after either component has been updated.
+    func refreshToolCompatibility() {
+        guard let command, !isCheckingTool else { return }
+        let desktopVersion = self.desktopVersion
+        isCheckingTool = true
+        Task {
+            capabilities = await Task.detached {
+                let version = command.version() ?? ""
+                guard version == desktopVersion else {
+                    return MackeepCapabilities(
+                        version: version, supportsJSON: false, supportsExclusions: false)
+                }
+                return command.capabilities()
+            }.value
+            isCheckingTool = false
+        }
+    }
+
+    func requireSupportedTool() throws {
+        guard isToolSupported else {
+            throw NSError(
+                domain: "MackeepCompatibility", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: toolCompatibilityMessage])
+        }
+    }
 
     /// Whether the capabilities of the binary of Mackeep are known.
     ///
-    /// The warning about an old version is only shown when the version of
-    /// the binary is known.
+    /// Compatibility messages are shown after the executable has been inspected.
     var isToolKnown: Bool { capabilities != nil }
 
     /// The folder where the backup is written.

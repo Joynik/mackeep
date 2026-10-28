@@ -237,4 +237,11 @@ TRANSLATION: dict[str, str] = {
     "history.recovered": "Damaged history was preserved at %@. A new history file was created.",
     "backup.restore.changed": "The configuration or restore plan changed. Review the updated preview and confirm again.",
     "backup.restore.overwrites": "Existing files and folders to replace: %lld",
+    "settings.tool.versionMismatch": "Desktop and CLI versions must match",
+    "settings.tool.updateDesktop": "Desktop: %@. CLI: %@. Update the desktop application to match the CLI version.",
+    "settings.tool.updateCLI": "Desktop: %@. CLI: %@. Update the CLI to match the desktop version.",
+    "settings.tool.versionUnknown": "Could not determine the desktop or CLI version. Check that both components are installed correctly.",
+    "settings.tool.checking": "Checking CLI compatibility…",
+    "settings.tool.recheck": "Check again",
+    "settings.tool.incompatible": "The CLI is incompatible with this application. Reinstall the CLI with the same version as the desktop.",
 }

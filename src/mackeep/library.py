@@ -17,7 +17,7 @@ from .jsonapi import SCHEMA_VERSION
 from .locking import storage_lock
 
 SOURCE = "https://raw.githubusercontent.com/Joynik/mackeep"
-MANIFEST_URL = f"{SOURCE}/master/library-manifest.json"
+MANIFEST_URL = f"{SOURCE}/library-index/library-manifest.json"
 MANIFEST_VERSION = 1
 MAX_MANIFEST_BYTES = 2 * 1024 * 1024
 MAX_DEFINITION_BYTES = 256 * 1024

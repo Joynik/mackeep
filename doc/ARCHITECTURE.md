@@ -39,7 +39,7 @@ flowchart TD
 | `src/mackeep/constants.py` | Names, storage engines, version lookup, sensitive patterns |
 | `src/mackeep/applications/` | Built-in `.cfg` definitions |
 | `tools/generate_library_manifest.py` | Deterministic manifest generation for the upstream catalog |
-| `.github/workflows/library.yaml` | Validates and publishes the catalog manifest on `master` |
+| `.github/workflows/library.yaml` | Validates `master` definitions and publishes the index on `library-index` |
 | `desktop/Sources/App/` | SwiftUI application, models, configuration editing, CLI adapter |
 
 The runtime dependency is `docopt-ng`; the rest of the Python core uses the
@@ -134,7 +134,8 @@ managed downloads, then definitions bundled with the CLI. New and retired
 entries are reported separately. Retired definitions remain available until an
 explicit removal records a local hide marker; removal never edits user settings
 or backup data. The manifest generator is run by `.github/workflows/library.yaml`
-after pushes to `master` that touch catalog inputs.
+after pushes to `master` that touch catalog inputs. Generated metadata is
+committed only to `library-index`; the working branch does not contain it.
 
 Breaking changes require a schema bump, updated [JSON documentation](README.md#json-interface),
 and matching desktop handling. Existing field names remain part of the public

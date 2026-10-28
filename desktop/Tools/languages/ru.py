@@ -236,4 +236,11 @@ TRANSLATION: dict[str, str] = {
     "history.recovered": "Повреждённая история сохранена в %@. Создан новый файл истории.",
     "backup.restore.changed": "Настройки или план восстановления изменились. Проверьте обновлённый предпросмотр и подтвердите ещё раз.",
     "backup.restore.overwrites": "Существующих файлов и папок для замены: %lld",
+    "settings.tool.versionMismatch": "Версии приложения и CLI должны совпадать",
+    "settings.tool.updateDesktop": "Приложение: %@. CLI: %@. Обновите приложение до версии CLI.",
+    "settings.tool.updateCLI": "Приложение: %@. CLI: %@. Обновите CLI до версии приложения.",
+    "settings.tool.versionUnknown": "Не удалось определить версию приложения или CLI. Проверьте установку обоих компонентов.",
+    "settings.tool.checking": "Проверка совместимости CLI…",
+    "settings.tool.recheck": "Проверить снова",
+    "settings.tool.incompatible": "CLI несовместим с приложением. Переустановите CLI той же версии, что и приложение.",
 }

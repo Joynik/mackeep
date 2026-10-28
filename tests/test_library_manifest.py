@@ -1,14 +1,17 @@
 """The publisher indexes actual contents and rejects invalid source files."""
 
 import hashlib
+import json
 
 import pytest
 
 from mackeep.config import ConfigError
 from mackeep.jsonapi import SCHEMA_VERSION
+from tools import generate_library_manifest
 from tools.generate_library_manifest import generate
 
 REVISION = "a" * 40
+ARGUMENT_ERROR = 2
 
 
 def test_manifest_pins_source_and_includes_names(tmp_path):
@@ -57,3 +60,24 @@ def test_manifest_rejects_missing_final_newline(tmp_path):
     (definitions / "bad.cfg").write_text("[application]\nname = Example")
     with pytest.raises(ValueError, match="final newline"):
         generate(tmp_path, REVISION)
+
+
+def test_command_writes_only_the_requested_output(tmp_path, monkeypatch):
+    destination = tmp_path / "publish/library-manifest.json"
+    expected = {"revision": REVISION, "files": {}}
+    monkeypatch.setattr(generate_library_manifest, "generate", lambda *_args: expected)
+    monkeypatch.setattr(
+        "sys.argv", ["generate_library_manifest", "--revision", REVISION,
+                     "--output", str(destination)],
+    )
+    generate_library_manifest.main()
+    assert json.loads(destination.read_text()) == expected
+
+
+def test_command_requires_an_output_path(monkeypatch):
+    monkeypatch.setattr(
+        "sys.argv", ["generate_library_manifest", "--revision", REVISION],
+    )
+    with pytest.raises(SystemExit) as error:
+        generate_library_manifest.main()
+    assert error.value.code == ARGUMENT_ERROR

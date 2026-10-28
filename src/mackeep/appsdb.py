@@ -19,7 +19,6 @@ from .inifile import IniFile
 from .inifile import read as read_ini
 from .library import directory as library_directory
 from .library import hidden_definitions
-from .utils import legacy_warning
 
 
 class ApplicationsDatabase:
@@ -335,8 +334,7 @@ class ApplicationsDatabase:
         having a priority over stock config. The Mackeep custom apps
         directory takes priority over the XDG location.
 
-        The legacy Mackup directories are not read any more. The user is
-        warned about the configs they hold, so he can migrate them.
+        Legacy directories are ignored; migration is an explicit command.
 
         Returns:
             set of strings.
@@ -369,25 +367,6 @@ class ApplicationsDatabase:
                 path: str = os.path.join(directory, filename)
                 config_files.add(path)
                 custom_files.add(filename)
-
-        # The legacy directories are not read any more, the user is told
-        # about the configs they have to migrate.
-        for legacy_dir, new_dir in (
-            ApplicationsDatabase.get_legacy_custom_apps_dirs_pairs()
-        ):
-            if not os.path.isdir(legacy_dir):
-                continue
-            count: int = _count_configs_to_migrate(
-                legacy_dir, custom_dirs, apps_dir,
-            )
-            if count == 0:
-                # There is nothing to migrate, every config is either
-                # shadowed by a new one or the same as the default one.
-                continue
-            legacy_warning(
-                f"the custom applications in {legacy_dir} are not read any"
-                f" more ({count} files), copy them to {new_dir} to use them",
-            )
 
         managed_dir = library_directory()
         removed_files = hidden_definitions()
@@ -572,84 +551,3 @@ class ApplicationsDatabase:
             set of str.
         """
         return {self.get_name(app_name) for app_name in self.apps}
-
-
-def _is_same_file(path: str, other: str) -> bool:
-    """
-    Whether two files have the same content.
-
-    Args:
-        path (str): The path of the first file.
-        other (str): The path of the second file.
-
-    Returns:
-        bool
-    """
-    try:
-        with open(path, "rb") as first, open(other, "rb") as second:
-            return first.read() == second.read()
-    except OSError:
-        return False
-
-
-def _count_configs_to_migrate(
-    legacy_dir: str, custom_dirs: list[str], apps_dir: str,
-) -> int:
-    """
-    Count the legacy application configs that have to be copied.
-
-    A config file that is shadowed by a new one with the same name is not
-    used any more, and a config file that is the same as the default config
-    of the application does not have to be copied.
-
-    Args:
-        legacy_dir (str): The legacy directory of the config files.
-        custom_dirs (list of str): The directories of the new config files.
-        apps_dir (str): The directory of the default config files.
-
-    Returns:
-        int
-    """
-    names: set[str] = set()
-    for directory in custom_dirs:
-        if not os.path.isdir(directory):
-            continue
-        names.update(
-            filename
-            for filename in os.listdir(directory)
-            if filename.endswith(".cfg")
-        )
-
-    count: int = 0
-    for filename in sorted(os.listdir(legacy_dir)):
-        if not filename.endswith(".cfg"):
-            continue
-        if filename in names:
-            # The file is shadowed by a new one, it is not used.
-            continue
-        if _is_redundant(
-            os.path.join(legacy_dir, filename), filename, apps_dir,
-        ):
-            # The file is the same as the default one, nothing to copy.
-            continue
-        count += 1
-    return count
-
-
-def _is_redundant(path: str, filename: str, apps_dir: str) -> bool:
-    """
-    Whether a custom application config is the same as the one that replaces it.
-
-    A config file that is the same as the default config of the application
-    does not have to be copied to the new directory.
-
-    Args:
-        path (str): The path of the custom config file.
-        filename (str): The name of the config file.
-        apps_dir (str): The directory of the default config files.
-
-    Returns:
-        bool
-    """
-    default: str = os.path.join(apps_dir, filename)
-    return os.path.isfile(default) and _is_same_file(path, default)

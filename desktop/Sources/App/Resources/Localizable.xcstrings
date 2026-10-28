@@ -16125,6 +16125,150 @@
         }
       }
     },
+    "settings.tool.checking": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLI-Kompatibilität wird geprüft…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking CLI compatibility…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobando compatibilidad de la CLI…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification de la compatibilité de la CLI…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verifica della compatibilità CLI…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLIの互換性を確認中…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLI 호환성 확인 중…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verificando compatibilidade da CLI…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверка совместимости CLI…"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перевірка сумісності CLI…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在检查CLI兼容性…"
+          }
+        }
+      }
+    },
+    "settings.tool.incompatible": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die CLI ist mit dieser App nicht kompatibel. Installieren Sie die CLI in derselben Version wie die Desktop-App neu."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The CLI is incompatible with this application. Reinstall the CLI with the same version as the desktop."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La CLI no es compatible con esta aplicación. Reinstala la CLI con la misma versión que la aplicación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La CLI est incompatible avec cette application. Réinstallez la CLI avec la même version que l’application."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La CLI non è compatibile con questa app. Reinstalla la CLI con la stessa versione dell’app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このCLIはアプリと互換性がありません。アプリと同じバージョンのCLIを再インストールしてください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLI가 이 앱과 호환되지 않습니다. 앱과 같은 버전의 CLI를 다시 설치하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A CLI é incompatível com este aplicativo. Reinstale a CLI com a mesma versão do aplicativo."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLI несовместим с приложением. Переустановите CLI той же версии, что и приложение."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLI несумісний із програмою. Перевстановіть CLI тієї самої версії, що й програма."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLI与此应用不兼容。请重新安装与桌面应用版本一致的CLI。"
+          }
+        }
+      }
+    },
     "settings.tool.oldVersion": {
       "comment": "The string of the settings",
       "extractionState": "manual",
@@ -16413,6 +16557,78 @@
         }
       }
     },
+    "settings.tool.recheck": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erneut prüfen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check again"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobar de nuevo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier à nouveau"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verifica di nuovo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再確認"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다시 확인"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verificar novamente"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверить снова"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перевірити знову"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新检查"
+          }
+        }
+      }
+    },
     "settings.tool.title": {
       "comment": "The string of the settings",
       "extractionState": "manual",
@@ -16485,6 +16701,150 @@
         }
       }
     },
+    "settings.tool.updateCLI": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desktop: %@. CLI: %@. Aktualisieren Sie die CLI auf die Desktop-Version."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desktop: %@. CLI: %@. Update the CLI to match the desktop version."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escritorio: %@. CLI: %@. Actualiza la CLI a la versión de la aplicación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Application : %@. CLI : %@. Mettez la CLI à jour vers la version de l’application."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App: %@. CLI: %@. Aggiorna la CLI alla versione dell’app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリ：%@。CLI：%@。CLIをアプリと同じバージョンに更新してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앱: %@. CLI: %@. CLI를 앱과 같은 버전으로 업데이트하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aplicativo: %@. CLI: %@. Atualize a CLI para a versão do aplicativo."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Приложение: %@. CLI: %@. Обновите CLI до версии приложения."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Програма: %@. CLI: %@. Оновіть CLI до версії програми."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌面应用：%@。CLI：%@。请将CLI更新至桌面应用的版本。"
+          }
+        }
+      }
+    },
+    "settings.tool.updateDesktop": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desktop: %@. CLI: %@. Aktualisieren Sie die Desktop-App auf die CLI-Version."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desktop: %@. CLI: %@. Update the desktop application to match the CLI version."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escritorio: %@. CLI: %@. Actualiza la aplicación a la versión de la CLI."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Application : %@. CLI : %@. Mettez l’application à jour vers la version de la CLI."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App: %@. CLI: %@. Aggiorna l’app alla versione della CLI."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリ：%@。CLI：%@。アプリをCLIと同じバージョンに更新してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앱: %@. CLI: %@. 앱을 CLI와 같은 버전으로 업데이트하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aplicativo: %@. CLI: %@. Atualize o aplicativo para a versão da CLI."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Приложение: %@. CLI: %@. Обновите приложение до версии CLI."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Програма: %@. CLI: %@. Оновіть програму до версії CLI."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌面应用：%@。CLI：%@。请将桌面应用更新至CLI的版本。"
+          }
+        }
+      }
+    },
     "settings.tool.version": {
       "comment": "The string of the settings",
       "extractionState": "manual",
@@ -16553,6 +16913,150 @@
           "stringUnit": {
             "state": "translated",
             "value": "版本"
+          }
+        }
+      }
+    },
+    "settings.tool.versionMismatch": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desktop und CLI müssen dieselbe Version haben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desktop and CLI versions must match"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El escritorio y la CLI deben tener la misma versión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’application et la CLI doivent avoir la même version"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’app e la CLI devono avere la stessa versione"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリとCLIのバージョンを一致させてください"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앱과 CLI 버전이 같아야 합니다"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O aplicativo e a CLI devem ter a mesma versão"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Версии приложения и CLI должны совпадать"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Версії програми та CLI мають збігатися"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌面应用与CLI的版本必须一致"
+          }
+        }
+      }
+    },
+    "settings.tool.versionUnknown": {
+      "comment": "The string of the interface",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Desktop- oder CLI-Version konnte nicht ermittelt werden. Prüfen Sie beide Installationen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not determine the desktop or CLI version. Check that both components are installed correctly."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo determinar la versión de la aplicación o de la CLI. Comprueba ambas instalaciones."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de déterminer la version de l’application ou de la CLI. Vérifiez les deux installations."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile determinare la versione dell’app o della CLI. Verifica entrambe le installazioni."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリまたはCLIのバージョンを確認できません。両方のインストールを確認してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앱 또는 CLI 버전을 확인할 수 없습니다. 두 구성 요소의 설치를 확인하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível determinar a versão do aplicativo ou da CLI. Verifique as duas instalações."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось определить версию приложения или CLI. Проверьте установку обоих компонентов."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося визначити версію програми або CLI. Перевірте встановлення обох компонентів."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法确定桌面应用或CLI的版本。请检查两个组件是否正确安装。"
           }
         }
       }

@@ -237,4 +237,11 @@ TRANSLATION: dict[str, str] = {
     "history.recovered": "Der beschädigte Verlauf wurde hier gesichert: %@. Ein neuer Verlauf wurde angelegt.",
     "backup.restore.changed": "Konfiguration oder Wiederherstellungsplan haben sich geändert. Prüfe die aktualisierte Vorschau und bestätige erneut.",
     "backup.restore.overwrites": "Vorhandene Dateien und Ordner zum Ersetzen: %lld",
+    "settings.tool.versionMismatch": "Desktop und CLI müssen dieselbe Version haben",
+    "settings.tool.updateDesktop": "Desktop: %@. CLI: %@. Aktualisieren Sie die Desktop-App auf die CLI-Version.",
+    "settings.tool.updateCLI": "Desktop: %@. CLI: %@. Aktualisieren Sie die CLI auf die Desktop-Version.",
+    "settings.tool.versionUnknown": "Die Desktop- oder CLI-Version konnte nicht ermittelt werden. Prüfen Sie beide Installationen.",
+    "settings.tool.checking": "CLI-Kompatibilität wird geprüft…",
+    "settings.tool.recheck": "Erneut prüfen",
+    "settings.tool.incompatible": "Die CLI ist mit dieser App nicht kompatibel. Installieren Sie die CLI in derselben Version wie die Desktop-App neu.",
 }

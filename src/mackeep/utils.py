@@ -26,10 +26,6 @@ FORCE_NO: bool = False
 # Flag that control if mackeep can be run as root
 CAN_RUN_AS_ROOT: bool = False
 
-# The legacy paths that were used during this run
-LEGACY_WARNINGS: list[str] = []
-
-
 # The files that hold a public key, they are not secrets
 SAFE_SUFFIXES: tuple[str, ...] = (".pub",)
 
@@ -74,39 +70,6 @@ def sensitive_path_reason(path: str) -> str | None:
     return sensitive_reason(absolute)
 
 
-
-
-def legacy_warning(message: str) -> None:
-    """
-    Remember a legacy path that was used, to warn about it once.
-
-    The same message is only remembered once, the warning is printed once
-    per run.
-
-    Args:
-        message (str): What was found and what to do with it.
-    """
-    if message in LEGACY_WARNINGS:
-        return
-
-    LEGACY_WARNINGS.append(message)
-
-
-def print_legacy_warnings() -> None:
-    """Warn once about the legacy paths that were used."""
-    if not LEGACY_WARNINGS:
-        return
-
-    warnings: list[str] = LEGACY_WARNINGS.copy()
-    LEGACY_WARNINGS.clear()
-
-    print("Warning: legacy Mackup paths are found:", file=sys.stderr)
-    for warning in warnings:
-        print(f"  - {warning}", file=sys.stderr)
-    print(
-        "Run 'mackeep migrate' to copy them to the new locations.",
-        file=sys.stderr,
-    )
 
 
 def confirm(question: str) -> bool:

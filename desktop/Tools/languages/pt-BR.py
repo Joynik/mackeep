@@ -237,4 +237,11 @@ TRANSLATION: dict[str, str] = {
     "history.recovered": "O histórico danificado foi preservado em %@. Um novo histórico foi criado.",
     "backup.restore.changed": "A configuração ou o plano de restauração mudou. Revise a prévia atualizada e confirme novamente.",
     "backup.restore.overwrites": "Arquivos e pastas existentes a substituir: %lld",
+    "settings.tool.versionMismatch": "O aplicativo e a CLI devem ter a mesma versão",
+    "settings.tool.updateDesktop": "Aplicativo: %@. CLI: %@. Atualize o aplicativo para a versão da CLI.",
+    "settings.tool.updateCLI": "Aplicativo: %@. CLI: %@. Atualize a CLI para a versão do aplicativo.",
+    "settings.tool.versionUnknown": "Não foi possível determinar a versão do aplicativo ou da CLI. Verifique as duas instalações.",
+    "settings.tool.checking": "Verificando compatibilidade da CLI…",
+    "settings.tool.recheck": "Verificar novamente",
+    "settings.tool.incompatible": "A CLI é incompatível com este aplicativo. Reinstale a CLI com a mesma versão do aplicativo.",
 }

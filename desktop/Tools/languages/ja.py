@@ -233,4 +233,11 @@ TRANSLATION: dict[str, str] = {
     "history.recovered": "破損した履歴は %@ に保存されました。新しい履歴ファイルを作成しました。",
     "backup.restore.changed": "設定または復元プランが変更されました。更新されたプレビューを確認し、もう一度確定してください。",
     "backup.restore.overwrites": "置き換える既存のファイルとフォルダ：%lld",
+    "settings.tool.versionMismatch": "アプリとCLIのバージョンを一致させてください",
+    "settings.tool.updateDesktop": "アプリ：%@。CLI：%@。アプリをCLIと同じバージョンに更新してください。",
+    "settings.tool.updateCLI": "アプリ：%@。CLI：%@。CLIをアプリと同じバージョンに更新してください。",
+    "settings.tool.versionUnknown": "アプリまたはCLIのバージョンを確認できません。両方のインストールを確認してください。",
+    "settings.tool.checking": "CLIの互換性を確認中…",
+    "settings.tool.recheck": "再確認",
+    "settings.tool.incompatible": "このCLIはアプリと互換性がありません。アプリと同じバージョンのCLIを再インストールしてください。",
 }

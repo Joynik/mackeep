@@ -33,7 +33,13 @@ struct MackeepDesktopApp: App {
         }
 
         Window(L10n.string("applications.library.title"), id: "library") {
-            LibraryView(model: environment.applications)
+            Group {
+                if environment.settings.isToolSupported {
+                    LibraryView(model: environment.applications)
+                } else {
+                    ToolCompatibilityView(model: environment.settings)
+                }
+            }
                 .environment(environment)
                 .environment(\.locale, environment.language.resolvedLocale)
                 .preferredColorScheme(environment.appearance.colorScheme)
@@ -43,7 +49,10 @@ struct MackeepDesktopApp: App {
 
         // The window of the editor of an application
         WindowGroup(for: String.self) { $appName in
-            if let appName: String,
+            if !environment.settings.isToolSupported {
+                ToolCompatibilityView(model: environment.settings)
+                    .environment(environment)
+            } else if let appName: String,
                let model: ApplicationEditorModel = environment.editor(for: appName)
             {
                 ApplicationEditorView(model: model)

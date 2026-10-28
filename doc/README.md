@@ -282,6 +282,7 @@ acts only on that application's installed links.
 ## Compatibility with Mackup
 
 Mackup's `.mackup.cfg` and `.mackup/` definitions are not read automatically.
+Normal commands do not scan old directories or print migration reminders.
 Preview migration before creating a fresh Mackeep config if you intend to
 preserve the old configuration:
 
@@ -332,8 +333,8 @@ mackeep-cli --json library remove retired-application
 given. Downloaded files live in `~/.local/share/mackeep/library/` and take
 precedence over bundled definitions; custom definitions in `~/.mackeep/` and
 the XDG applications directory take precedence over both. The manifest is
-generated from the definitions by the GitHub Actions workflow when it runs on
-`master`.
+generated from the definitions by GitHub Actions and published on the separate
+`library-index` branch; no generated manifest is committed to `master`.
 
 The response is one schema 4 JSON object containing `revision`, `updates`
 (`name` and `sha256`), `new` (`name` and `display_name`), `removed` (retired

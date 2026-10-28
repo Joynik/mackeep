@@ -32,7 +32,10 @@ The CLI is installed separately. At launch the app searches, in order,
 path. If discovery fails, install the CLI in a supported location and reopen
 the app.
 
-The desktop and CLI share release versions and currently use JSON schema 4.
+The desktop and CLI must have the same release version and currently use JSON
+schema 4. If versions differ, operations are blocked with a message identifying
+which component needs updating. Use **Check again** after updating the CLI;
+restart the desktop application after updating it.
 Security controls depending on new CLI fields are disabled with older tools
 that do not advertise them. See the [CLI reference](../doc/README.md) for
 replacement, cleanup, exclusions, and external-path behavior.

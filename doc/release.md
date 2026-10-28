@@ -48,9 +48,11 @@ release already in progress.
 
 Application definitions also have an independent catalog index. The
 [library workflow](../.github/workflows/library.yaml) validates catalog changes
-on pull requests and, after a `master` push, regenerates `library-manifest.json`
-from the current definitions; do not edit the manifest by hand. This makes
-definition updates available without publishing a new CLI or desktop release.
+on pull requests and, after a `master` push, publishes `library-manifest.json`
+to the separate `library-index` branch. It creates that branch automatically
+and never commits generated files to `master`. Do not edit the manifest by hand.
+Before releasing the new CLI, publish the index with this workflow. CLI 0.25.0
+uses the former `master` URL and must be upgraded for the new location.
 
 ## Artifacts
 

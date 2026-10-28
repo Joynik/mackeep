@@ -295,11 +295,11 @@ struct SettingsView: View {
 
             if model.isToolKnown, !model.isToolSupported {
                 Label(
-                    L10n.string("settings.tool.oldVersion"),
+                    L10n.string("settings.tool.versionMismatch"),
                     systemImage: "exclamationmark.triangle"
                 )
                 .foregroundStyle(.orange)
-                Text(L10n.string("settings.tool.oldVersion.help"))
+                Text(model.toolCompatibilityMessage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Link(
@@ -364,6 +364,32 @@ struct SettingsView: View {
     private func reveal(_ path: String) {
         guard !path.isEmpty else { return }
         NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+    }
+}
+
+/// Keep CLI-backed operations unavailable until both installed releases agree.
+struct ToolCompatibilityView: View {
+    @Bindable var model: SettingsModel
+
+    var body: some View {
+        if model.isCheckingTool || (!model.isToolKnown && !model.mackeepPath.isEmpty) {
+            ProgressView(L10n.string("settings.tool.checking"))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ContentUnavailableView {
+                Label(
+                    L10n.string("settings.tool.versionMismatch"),
+                    systemImage: "exclamationmark.triangle"
+                )
+            } description: {
+                Text(model.toolCompatibilityMessage)
+            } actions: {
+                Button(L10n.string("settings.tool.recheck")) {
+                    model.refreshToolCompatibility()
+                }
+                .disabled(model.mackeepPath.isEmpty)
+            }
+        }
     }
 }
 

@@ -43,7 +43,7 @@ jobs:
       - run: uv sync --locked --dev
       - name: Validate application definitions and publisher
         run: uv run --no-sync python -m pytest tests/test_catalog.py tests/test_library_manifest.py
-      - run: uv run --no-sync python tools/generate_library_manifest.py --revision "$GITHUB_SHA"
+      - run: uv run --no-sync python tools/generate_library_manifest.py --revision "$GITHUB_SHA" --output "$RUNNER_TEMP/library-manifest.json"
 
   publish:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
@@ -64,17 +64,25 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          uv run --no-sync python -m pytest tests/test_catalog.py tests/test_library_manifest.py
+          uv run --no-sync python tools/generate_library_manifest.py \
+            --revision "$(git rev-parse HEAD)" --output "$RUNNER_TEMP/library-manifest.json"
           for attempt in 1 2 3; do
-            git fetch origin master
-            git checkout --detach origin/master
-            uv run --no-sync python -m pytest tests/test_catalog.py tests/test_library_manifest.py
-            uv run --no-sync python tools/generate_library_manifest.py --revision "$(git rev-parse HEAD)"
+            index_ref="$(git ls-remote --heads origin refs/heads/library-index)"
+            if [ -n "$index_ref" ]; then
+              git fetch origin refs/heads/library-index
+              git checkout --detach FETCH_HEAD
+            else
+              git checkout --orphan "library-index-${GITHUB_RUN_ID}-${attempt}"
+              git rm -rf --ignore-unmatch .
+            fi
+            cp "$RUNNER_TEMP/library-manifest.json" library-manifest.json
             git add library-manifest.json
             if git diff --cached --quiet; then
               exit 0
             fi
             git commit -m "Update library index"
-            if git push origin HEAD:master; then
+            if git push origin HEAD:refs/heads/library-index; then
               exit 0
             fi
           done

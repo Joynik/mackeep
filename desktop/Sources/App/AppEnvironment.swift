@@ -67,9 +67,14 @@ final class AppEnvironment {
         let command = injected ?? path.map { MackeepCommand(path: $0) }
         let applications = ApplicationsModel(command: command)
         self.applications = applications
+        let settings = SettingsModel(command: command, capabilities: nil)
+        self.settings = settings
         self.backup = BackupModel(
-            command: command, prepare: { try await applications.flushSelection() })
-        self.settings = SettingsModel(command: command, capabilities: nil)
+            command: command,
+            prepare: {
+                try settings.requireSupportedTool()
+                try await applications.flushSelection()
+            })
 
         // The choices of the user are kept between the runs
         language = Self.savedLanguage(in: preferences)
@@ -78,16 +83,7 @@ final class AppEnvironment {
         // The strings are read in the language of the user
         L10n.language = language
 
-        guard let path else { return }
-
-        // The capabilities of the tool are checked out of the main thread,
-        // the window must show up right away.
-        Task { [weak self] in
-            let capabilities: MackeepCapabilities = await Task.detached {
-                (injected ?? MackeepCommand(path: path)).capabilities()
-            }.value
-            self?.settings.capabilities = capabilities
-        }
+        settings.refreshToolCompatibility()
     }
 
     /// The language that was chosen the last time.

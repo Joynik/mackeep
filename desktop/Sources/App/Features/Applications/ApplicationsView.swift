@@ -293,6 +293,7 @@ struct LibraryView: View {
             HStack(spacing: 12) {
                 TextField(L10n.string("applications.search.placeholder"), text: $searchText)
                     .textFieldStyle(AppFieldStyle())
+                    .frame(minWidth: 100, idealWidth: 180, maxWidth: 220)
                     .accessibilityLabel(L10n.string("applications.search.placeholder"))
                 Toggle(
                     L10n.string("filter.applications.installed"),
@@ -304,18 +305,34 @@ struct LibraryView: View {
                 Button {
                     Task { await model.updateLibrary() }
                 } label: {
-                    Label(
-                        L10n.string("applications.library.update"),
-                        systemImage: "arrow.down.circle"
-                    )
+                    HStack(spacing: 6) {
+                        Label(
+                            L10n.string("applications.library.update"),
+                            systemImage: "arrow.down.circle"
+                        )
+                        if !model.libraryUpdates.isEmpty {
+                            Text(model.libraryUpdates.count, format: .number)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 20, height: 20)
+                                .background(.blue, in: Circle())
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                    }
                 }
+                .fixedSize()
                 .disabled(isBusy || model.libraryUpdates.isEmpty || environment.backup.isRunning)
                 .accessibilityIdentifier("applications.library.update")
                 Button {
                     Task { await model.checkLibraryUpdates(force: true) }
                 } label: {
-                    Image(systemName: "arrow.clockwise")
+                    Label(
+                        L10n.string("applications.library.checkUpdates"),
+                        systemImage: "arrow.clockwise"
+                    )
                 }
+                .fixedSize()
                 .disabled(isBusy)
                 .help(L10n.string("applications.library.checkUpdates"))
                 .accessibilityLabel(L10n.string("applications.library.checkUpdates"))
@@ -333,7 +350,8 @@ struct LibraryView: View {
                     definitionRow(application)
                 }
             }
-            .listStyle(.inset)
+            .listStyle(.plain)
+            .contentMargins(.horizontal, 0, for: .scrollContent)
             .overlay {
                 if available.isEmpty && availableNew.isEmpty {
                     ContentUnavailableView.search(text: searchText)
@@ -342,7 +360,7 @@ struct LibraryView: View {
             Divider()
             libraryStatus
         }
-        .frame(minWidth: 720, minHeight: 420)
+        .frame(minWidth: 820, minHeight: 420)
         .accessibilityIdentifier("applications.library.window")
         .confirmationDialog(
             L10n.string("applications.library.removeConfirm", definitionToRemove?.displayName ?? ""),
@@ -372,77 +390,97 @@ struct LibraryView: View {
     }
 
     private func newDefinitionRow(_ definition: LibraryStatus.NewDefinition) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "app.dashed")
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
-            Text(definition.displayName)
-            Spacer()
-            Label(L10n.string("applications.library.new"), systemImage: "sparkle")
-                .foregroundStyle(.tint)
-                .accessibilityIdentifier("applications.library.new")
-            Button {
-                Task { await model.updateLibrary(application: definition.name) }
-            } label: {
-                Label(L10n.string("applications.library.download"), systemImage: "arrow.down.circle")
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Image(systemName: "macwindow")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 20)
+                    .accessibilityHidden(true)
+                Text(definition.displayName)
+                Spacer()
+                Label(L10n.string("applications.library.new"), systemImage: "sparkle")
+                    .foregroundStyle(.tint)
+                    .accessibilityIdentifier("applications.library.new")
+                Button {
+                    Task { await model.updateLibrary(application: definition.name) }
+                } label: {
+                    Label(L10n.string("applications.library.download"), systemImage: "arrow.down.circle")
+                }
+                .disabled(isBusy || environment.backup.isRunning)
+                .accessibilityIdentifier("applications.library.download")
             }
-            .disabled(isBusy || environment.backup.isRunning)
-            .accessibilityIdentifier("applications.library.download")
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            Divider()
         }
-        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .listRowInsets(EdgeInsets())
+        .listRowSeparator(.hidden)
     }
 
     private func definitionRow(_ application: MackeepApplication) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "app.dashed")
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
-            Text(application.displayName)
-            Spacer()
-            if model.removedLibraryDefinitions.contains(application.name) {
-                Label(
-                    L10n.string("applications.library.removed"),
-                    systemImage: "minus.circle"
-                )
-                .font(.callout)
-                .foregroundStyle(.orange)
-                .accessibilityIdentifier("applications.library.removed")
-            } else if model.libraryUpdates.contains(application.name) {
-                Label(
-                    L10n.string("applications.library.updateAvailable"),
-                    systemImage: "arrow.down.circle.fill"
-                )
-                .font(.callout)
-                .foregroundStyle(.tint)
-                .accessibilityIdentifier("applications.library.updateAvailable")
-            }
-            if model.isInstalled(application) {
-                Image(systemName: "checkmark.circle.fill")
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Image(systemName: "macwindow")
                     .foregroundStyle(.secondary)
-                    .help(L10n.string("applications.installed.label"))
-                    .accessibilityLabel(L10n.string("applications.installed.label"))
-            }
-            if model.isListed(application) {
-                Text(L10n.string("applications.library.added"))
-                    .foregroundStyle(.secondary)
-                    .frame(minWidth: 80, alignment: .trailing)
-            } else if !model.removedLibraryDefinitions.contains(application.name) {
-                Button {
-                    model.addToTheList(application)
-                } label: {
-                    Label(L10n.string("applications.library.addOne"), systemImage: "plus")
+                    .frame(width: 20)
+                    .accessibilityHidden(true)
+                Text(application.displayName)
+                Spacer()
+                if model.removedLibraryDefinitions.contains(application.name) {
+                    Label(
+                        L10n.string("applications.library.removed"),
+                        systemImage: "minus.circle"
+                    )
+                    .font(.callout)
+                    .foregroundStyle(.orange)
+                    .accessibilityIdentifier("applications.library.removed")
+                } else if model.libraryUpdates.contains(application.name) {
+                    Image(systemName: "arrow.down.circle.fill")
+                    .font(.callout)
+                    .foregroundStyle(.blue)
+                    .help(L10n.string("applications.library.updateAvailable"))
+                    .accessibilityLabel(L10n.string("applications.library.updateAvailable"))
+                    .accessibilityIdentifier("applications.library.updateAvailable")
                 }
-                .accessibilityIdentifier("applications.library.add")
-            }
-            if model.removedLibraryDefinitions.contains(application.name) {
-                Button(L10n.string("applications.library.removeDefinition")) {
-                    definitionToRemove = application
+                if model.isInstalled(application) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.blue)
+                        .help(L10n.string("applications.installed.label"))
+                        .accessibilityLabel(L10n.string("applications.installed.label"))
                 }
-                .disabled(isBusy || environment.backup.isRunning)
-                .accessibilityIdentifier("applications.library.removeDefinition")
+                if model.isListed(application) {
+                    Label(L10n.string("applications.library.added"), systemImage: "checkmark")
+                        .foregroundStyle(.blue)
+                        .frame(width: 132, height: AppControl.height)
+                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
+                } else if !model.removedLibraryDefinitions.contains(application.name) {
+                    Button {
+                        model.addToTheList(application)
+                    } label: {
+                        Label(L10n.string("applications.library.addOne"), systemImage: "plus")
+                            .foregroundStyle(.blue)
+                            .frame(width: 132, height: AppControl.height)
+                            .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("applications.library.add")
+                }
+                if model.removedLibraryDefinitions.contains(application.name) {
+                    Button(L10n.string("applications.library.removeDefinition")) {
+                        definitionToRemove = application
+                    }
+                    .disabled(isBusy || environment.backup.isRunning)
+                    .accessibilityIdentifier("applications.library.removeDefinition")
+                }
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            Divider()
         }
-        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .listRowInsets(EdgeInsets())
+        .listRowSeparator(.hidden)
     }
 
     private var libraryStatus: some View {

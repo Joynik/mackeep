@@ -238,4 +238,11 @@ TRANSLATION: dict[str, str] = {
     "history.recovered": "La cronologia danneggiata è stata conservata in %@. È stata creata una nuova cronologia.",
     "backup.restore.changed": "La configurazione o il piano di ripristino è cambiato. Controlla l’anteprima aggiornata e conferma di nuovo.",
     "backup.restore.overwrites": "File e cartelle esistenti da sostituire: %lld",
+    "settings.tool.versionMismatch": "L’app e la CLI devono avere la stessa versione",
+    "settings.tool.updateDesktop": "App: %@. CLI: %@. Aggiorna l’app alla versione della CLI.",
+    "settings.tool.updateCLI": "App: %@. CLI: %@. Aggiorna la CLI alla versione dell’app.",
+    "settings.tool.versionUnknown": "Impossibile determinare la versione dell’app o della CLI. Verifica entrambe le installazioni.",
+    "settings.tool.checking": "Verifica della compatibilità CLI…",
+    "settings.tool.recheck": "Verifica di nuovo",
+    "settings.tool.incompatible": "La CLI non è compatibile con questa app. Reinstalla la CLI con la stessa versione dell’app.",
 }

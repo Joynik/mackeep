@@ -22,18 +22,24 @@ struct RootView: View {
             }
             .navigationSplitViewColumnWidth(min: 200, ideal: 220)
         } detail: {
-            switch selection ?? .applications {
-            case .applications:
-                applications.disabled(environment.backup.isRunning)
-            case .backup:
-                BackupView(model: environment.backup)
-            case .settings:
-                SettingsView(model: environment.settings)
-                    .disabled(environment.backup.isRunning)
+            if environment.settings.isToolSupported {
+                switch selection ?? .applications {
+                case .applications:
+                    applications.disabled(environment.backup.isRunning)
+                case .backup:
+                    BackupView(model: environment.backup)
+                case .settings:
+                    SettingsView(model: environment.settings)
+                        .disabled(environment.backup.isRunning)
+                }
+            } else {
+                ToolCompatibilityView(model: environment.settings)
             }
         }
-        .task {
-            environment.applications.load()
+        .task(id: environment.settings.isToolSupported) {
+            if environment.settings.isToolSupported {
+                environment.applications.load()
+            }
         }
         .sheet(isPresented: $showsOnboarding) {
             OnboardingView(
@@ -41,8 +47,8 @@ struct RootView: View {
                 applications: environment.applications
             )
         }
-        .onAppear {
-            if !environment.hasSeenOnboarding {
+        .onChange(of: environment.settings.isToolSupported, initial: true) { _, supported in
+            if supported, !environment.hasSeenOnboarding {
                 environment.hasSeenOnboarding = true
                 showsOnboarding = true
             }

@@ -10,14 +10,6 @@ import pytest
 from mackeep import utils
 
 
-@pytest.fixture(autouse=True)
-def clear_warnings():
-    """The legacy warnings are kept in a module level list."""
-    utils.LEGACY_WARNINGS.clear()
-    yield
-    utils.LEGACY_WARNINGS.clear()
-
-
 @pytest.fixture
 def home(tmp_path, monkeypatch):
     """Set up a temporary home directory."""

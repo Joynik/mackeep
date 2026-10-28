@@ -231,4 +231,11 @@ TRANSLATION: dict[str, str] = {
     "history.recovered": "损坏的历史记录已保存在 %@，并已创建新的历史记录文件。",
     "backup.restore.changed": "配置或恢复计划已更改。请检查更新后的预览并再次确认。",
     "backup.restore.overwrites": "将替换的现有文件和文件夹：%lld",
+    "settings.tool.versionMismatch": "桌面应用与CLI的版本必须一致",
+    "settings.tool.updateDesktop": "桌面应用：%@。CLI：%@。请将桌面应用更新至CLI的版本。",
+    "settings.tool.updateCLI": "桌面应用：%@。CLI：%@。请将CLI更新至桌面应用的版本。",
+    "settings.tool.versionUnknown": "无法确定桌面应用或CLI的版本。请检查两个组件是否正确安装。",
+    "settings.tool.checking": "正在检查CLI兼容性…",
+    "settings.tool.recheck": "重新检查",
+    "settings.tool.incompatible": "CLI与此应用不兼容。请重新安装与桌面应用版本一致的CLI。",
 }

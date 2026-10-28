@@ -2,7 +2,6 @@
 
 Keep your application settings in sync.
 
-Mackeep is a fork of Mackup, written by Laurent Raufaste.
 Copyright (C) 2013-2025 Laurent Raufaste <http://glop.org/>
 
 Usage:
@@ -38,7 +37,7 @@ Modes of action:
  - mackeep-cli list: display a list of all supported applications.
  - mackeep-cli show: display the details for a supported application.
  - mackeep-cli config: display the configuration of Mackeep.
- - mackeep-cli migrate: copy the legacy Mackup files to their new location.
+ - mackeep-cli migrate: copy legacy configuration files to their new location.
  - mackeep-cli backup: copy local config files in the configured remote folder.
  - mackeep-cli restore: copy config files from the configured remote folder locally.
  - mackeep-cli link install: moves local config files in remote folder, and links.
@@ -76,6 +75,8 @@ Desktop application (macOS 15 or newer, Apple Silicon):
 See https://github.com/Joynik/mackeep/tree/master/doc for more information.
 
 """
+
+# Mackeep is a fork of Mackup, written by Laurent Raufaste.
 
 import os
 import re
@@ -702,7 +703,7 @@ def _config_json(ctx: _Context) -> dict[str, Any]:
 
 def _cmd_migrate(dry_run: bool) -> None:
     """
-    Copy the legacy Mackup files to their new location.
+    Copy legacy configuration files to their new location.
 
     Args:
         dry_run (bool): Whether the files are only copied in the plan.
@@ -899,7 +900,6 @@ def main() -> None:
         sys.exit(1)
     finally:
         signal.signal(signal.SIGUSR1, previous_handler)
-        utils.print_legacy_warnings()
         utils.FORCE_YES, utils.FORCE_NO, utils.CAN_RUN_AS_ROOT = previous_flags
         sys.stdout = stdout
 

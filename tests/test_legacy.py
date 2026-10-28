@@ -38,14 +38,6 @@ MAIN_CONFIG = (
 )
 
 
-@pytest.fixture(autouse=True)
-def clear_warnings():
-    """The legacy warnings are kept in a module level list."""
-    utils.LEGACY_WARNINGS.clear()
-    yield
-    utils.LEGACY_WARNINGS.clear()
-
-
 @pytest.fixture
 def home(tmp_path, monkeypatch):
     """Set up a temporary home directory."""
@@ -222,16 +214,16 @@ def test_an_explicit_storage_folder_is_never_replaced(home):
     assert config.directory == "Other"
 
 
-def test_a_warning_is_printed_once(home, capsys):
-    """The legacy paths are warned about once per run."""
+def test_legacy_paths_do_not_emit_automatic_warnings(home, capsys):
+    """Legacy directories are ignored silently unless migration is requested."""
     write_config(home, home / ".mackeep.cfg")
     write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
 
     run("--json", "config")
     captured = capsys.readouterr()
 
-    assert "legacy" in captured.err.lower()
-    assert captured.err.count("Warning:") == 1
+    assert "legacy" not in captured.err.lower()
+    assert "Warning:" not in captured.err
 
 
 def test_no_warning_without_the_legacy_paths(home, capsys):
@@ -402,27 +394,27 @@ def test_an_identical_legacy_app_is_not_warned_about(home, capsys):
     assert "legacy" not in captured.err.lower()
 
 
-def test_a_legacy_app_is_warned_about(home, capsys):
-    """A legacy application config that is not read any more is warned about."""
+def test_a_legacy_app_is_ignored_silently(home, capsys):
+    """An old definition does not produce migration reminders."""
     write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
 
     write_config(home, home / ".mackeep.cfg")
     run("--json", "config")
     captured = capsys.readouterr()
 
-    assert str(home / ".mackup") in captured.err
-    assert str(home / ".mackeep") in captured.err
+    assert str(home / ".mackup") not in captured.err
+    assert "migrate" not in captured.err
 
 
-def test_the_warnings_go_to_stderr(home, capsys):
-    """The warnings are written to stderr, the stdout stays clean."""
+def test_legacy_paths_keep_json_output_quiet(home, capsys):
+    """Legacy directories add no warning output around the JSON response."""
     write_config(home, home / ".mackeep.cfg")
     write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
 
     run("--json", "config")
     captured = capsys.readouterr()
 
-    assert "Warning:" in captured.err
+    assert "Warning:" not in captured.err
     assert "Warning:" not in captured.out
     assert json.loads(captured.out)["schema_version"] == SCHEMA_VERSION
 
