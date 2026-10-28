@@ -451,7 +451,7 @@ struct LibraryView: View {
                 }
                 if model.isListed(application) {
                     Label(L10n.string("applications.library.added"), systemImage: "checkmark")
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(.green)
                         .frame(width: 132, height: AppControl.height)
                         .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
                 } else if !model.removedLibraryDefinitions.contains(application.name) {
