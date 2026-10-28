@@ -68,6 +68,7 @@
     "boxer.cfg": "d304137e4b8f12087b9137b4b57ab9aa91021c28a804f8e905ed13eec26b899d",
     "brackets.cfg": "eff7431c4c1ee6494a743aaa0aadb004d57641edbaf19f3300a9142cc888ebe6",
     "brave.cfg": "34b3f594a84b69409c188ceb972740592cd5e8f81edb26e11f98d1fd472fedc8",
+    "bruno.cfg": "1de4036536e4295c4957fef4602e5bbaa93ab5367fabbb1c957ba47a117356cd",
     "btop.cfg": "8a1cb9ce452ec9996db5a38231afd57965c9f30d2ea774fb1d4670846649ea68",
     "bump.cfg": "b867be5801fbb6f0c982edb54b6d33621e2fa7840d4877d58dd09c6f24169c48",
     "bundler.cfg": "40fa95b8caff325064052bce14a8c9573eb1dc038f5a9fb831f427736b0b1ea1",
@@ -680,6 +681,7 @@
     "boxer.cfg": "Boxer",
     "brackets.cfg": "Brackets",
     "brave.cfg": "Brave",
+    "bruno.cfg": "Bruno",
     "btop.cfg": "btop",
     "bump.cfg": "Bump",
     "bundler.cfg": "Bundler",
@@ -1223,7 +1225,7 @@
     "zoxide.cfg": "zoxide",
     "zsh.cfg": "Zsh"
   },
-  "revision": "43c64208dc84799961e3eff07467a697a656bea8",
+  "revision": "8d70353d80ec61482cbe86ec307df9b8c28e5171",
   "schema_version": 4,
   "version": 1
 }
