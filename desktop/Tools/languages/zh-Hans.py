@@ -240,4 +240,5 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.incompatible": "CLI与此应用不兼容。请重新安装与桌面应用版本一致的CLI。",
     "backup.action.willOverwrite": "文件将被覆盖",
     "backup.action.overwritten": "文件已被覆盖",
+    "error.fullDiskAccess.hint": "请在系统设置 → 隐私与安全性 → 完全磁盘访问权限中授予 MacKeep 权限，然后重新启动 MacKeep 并重试。",
 }

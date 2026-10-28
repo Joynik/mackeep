@@ -56,6 +56,7 @@ struct MackeepCommand: Sendable {
             "HOME": home,
             "PATH": Self.searchPaths.joined(separator: ":"),
             "LANG": "en_US.UTF-8",
+            "MACKEEP_FULL_DISK_ACCESS_HINT": L10n.string("error.fullDiskAccess.hint"),
             "XDG_CONFIG_HOME": xdgHome
                 ?? (home == EditorPath.homeDirectory.path
                     ? EditorPath.xdgDirectory.path

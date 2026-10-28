@@ -246,4 +246,5 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.incompatible": "CLI несумісний із програмою. Перевстановіть CLI тієї самої версії, що й програма.",
     "backup.action.willOverwrite": "Файл буде перезаписано",
     "backup.action.overwritten": "Файл перезаписано",
+    "error.fullDiskAccess.hint": "Надайте MacKeep повний доступ до диска: Системні параметри → Приватність і безпека → Повний доступ до диска. Потім перезапустіть MacKeep і повторіть операцію.",
 }

@@ -246,4 +246,5 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.incompatible": "The CLI is incompatible with this application. Reinstall the CLI with the same version as the desktop.",
     "backup.action.willOverwrite": "File will be overwritten",
     "backup.action.overwritten": "File was overwritten",
+    "error.fullDiskAccess.hint": "Grant MacKeep Full Disk Access in System Settings > Privacy & Security > Full Disk Access, then restart MacKeep and try again.",
 }

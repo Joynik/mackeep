@@ -11519,6 +11519,78 @@
         }
       }
     },
+    "error.fullDiskAccess.hint": {
+      "comment": "Shown when macOS denies access to protected files",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gewähren Sie MacKeep Festplattenvollzugriff unter Systemeinstellungen → Datenschutz & Sicherheit → Festplattenvollzugriff. Starten Sie MacKeep danach neu und versuchen Sie es erneut."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grant MacKeep Full Disk Access in System Settings > Privacy & Security > Full Disk Access, then restart MacKeep and try again."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concede a MacKeep acceso total al disco en Ajustes del Sistema → Privacidad y seguridad → Acceso total al disco. Después reinicia MacKeep e inténtalo de nuevo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accordez à MacKeep un accès complet au disque dans Réglages Système → Confidentialité et sécurité → Accès complet au disque, puis redémarrez MacKeep et réessayez."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concedi a MacKeep l’accesso completo al disco in Impostazioni di Sistema → Privacy e sicurezza → Accesso completo al disco, quindi riavvia MacKeep e riprova."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "システム設定 → プライバシーとセキュリティ → フルディスクアクセスでMacKeepへのアクセスを許可し、MacKeepを再起動してから再試行してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "시스템 설정 → 개인정보 보호 및 보안 → 전체 디스크 접근 권한에서 MacKeep에 권한을 부여한 다음 MacKeep을 다시 시작하고 재시도하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conceda ao MacKeep acesso total ao disco em Ajustes do Sistema → Privacidade e Segurança → Acesso Total ao Disco. Depois reinicie o MacKeep e tente novamente."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Предоставьте MacKeep полный доступ к диску: Системные настройки → Конфиденциальность и безопасность → Полный доступ к диску. Затем перезапустите MacKeep и повторите операцию."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Надайте MacKeep повний доступ до диска: Системні параметри → Приватність і безпека → Повний доступ до диска. Потім перезапустіть MacKeep і повторіть операцію."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在系统设置 → 隐私与安全性 → 完全磁盘访问权限中授予 MacKeep 权限，然后重新启动 MacKeep 并重试。"
+          }
+        }
+      }
+    },
     "error.history.title": {
       "extractionState": "manual",
       "localizations": {

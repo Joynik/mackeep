@@ -242,4 +242,5 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.incompatible": "このCLIはアプリと互換性がありません。アプリと同じバージョンのCLIを再インストールしてください。",
     "backup.action.willOverwrite": "ファイルは上書きされます",
     "backup.action.overwritten": "ファイルは上書きされました",
+    "error.fullDiskAccess.hint": "システム設定 → プライバシーとセキュリティ → フルディスクアクセスでMacKeepへのアクセスを許可し、MacKeepを再起動してから再試行してください。",
 }

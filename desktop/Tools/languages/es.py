@@ -246,4 +246,5 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.incompatible": "La CLI no es compatible con esta aplicación. Reinstala la CLI con la misma versión que la aplicación.",
     "backup.action.willOverwrite": "El archivo se sobrescribirá",
     "backup.action.overwritten": "El archivo se ha sobrescrito",
+    "error.fullDiskAccess.hint": "Concede a MacKeep acceso total al disco en Ajustes del Sistema → Privacidad y seguridad → Acceso total al disco. Después reinicia MacKeep e inténtalo de nuevo.",
 }

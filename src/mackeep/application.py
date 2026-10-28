@@ -935,7 +935,16 @@ class ApplicationProfile:
                 f"Error: Unable to copy file for application {self.app_name} "
                 f"from {self._active_source} ({qualifier}): {exc}",
             )
-            self._report("error", message=str(exc))
+            hint = ""
+            if sys.platform == "darwin" and isinstance(exc, PermissionError):
+                hint = os.environ.get(
+                    "MACKEEP_FULL_DISK_ACCESS_HINT",
+                    "Grant your terminal Full Disk Access in System Settings > "
+                    "Privacy & Security > Full Disk Access, then restart the "
+                    "terminal and try again.",
+                )
+                print(f"Hint: {hint}", file=sys.stderr)
+            self._report("error", message=f"{exc}\n{hint}" if hint else str(exc))
         finally:
             self._pending_events = None
             self._staged_paths.clear()

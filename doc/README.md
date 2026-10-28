@@ -201,6 +201,9 @@ data and ownership, counts as skipped in JSON copy results, and makes the comman
 exit nonzero. Both options together are invalid. Closed stdin counts as a refusal.
 CLI rejects superuser execution unless `--root` is explicitly provided.
 
+On macOS, copy permission errors include a Full Disk Access hint for the terminal
+or, when called by the desktop app, for MacKeep. The original error is retained.
+
 ### Compact backup output
 
 Add `--summary` to show table instead of per-file backup progress:
