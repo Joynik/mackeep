@@ -102,6 +102,18 @@ final class HistoryStore {
     ///
     /// - Returns: The runs, the most recent first.
     func load() throws -> [RunRecord] {
+        var records = try loadDesktopHistory()
+        for file in try cliHistoryFiles() {
+            let attributes = try fileManager.attributesOfItem(atPath: file.path)
+            guard attributes[.type] as? FileAttributeType == .typeRegular else {
+                throw CocoaError(.fileReadUnsupportedScheme)
+            }
+            records.append(try Self.decoder.decode(RunRecord.self, from: Data(contentsOf: file)))
+        }
+        return Array(records.sorted { $0.date > $1.date }.prefix(Self.maximumRuns))
+    }
+
+    private func loadDesktopHistory() throws -> [RunRecord] {
         do {
             try validateFile()
             let data = try Data(contentsOf: url)
@@ -119,7 +131,7 @@ final class HistoryStore {
         var records: [RunRecord]
         var recovery: URL?
         do {
-            records = try load()
+            records = try loadDesktopHistory()
         } catch is DecodingError {
             var backup = url.appendingPathExtension("bak")
             if fileManager.fileExists(atPath: backup.path) {
@@ -158,8 +170,28 @@ final class HistoryStore {
         }
     }
 
+    /// Each CLI run owns a separate file, so concurrent writers never replace this history.
+    private var cliDirectory: URL { url.deletingLastPathComponent().appendingPathComponent("cli-history") }
+
+    private func cliHistoryFiles() throws -> [URL] {
+        do {
+            let attributes = try fileManager.attributesOfItem(atPath: cliDirectory.path)
+            guard attributes[.type] as? FileAttributeType == .typeDirectory else {
+                throw CocoaError(.fileReadUnsupportedScheme)
+            }
+            return try fileManager.contentsOfDirectory(
+                at: cliDirectory, includingPropertiesForKeys: nil).filter {
+                    $0.pathExtension == "json" && UUID(uuidString: $0.deletingPathExtension().lastPathComponent) != nil
+                }
+        } catch let error as CocoaError where
+            error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile {
+            return []
+        }
+    }
+
     /// Remove the history.
     func clear() throws {
+        for file in try cliHistoryFiles() { try fileManager.removeItem(at: file) }
         if fileManager.fileExists(atPath: url.path) {
             let attributes = try fileManager.attributesOfItem(atPath: url.path)
             guard attributes[.type] as? FileAttributeType != .typeDirectory else {

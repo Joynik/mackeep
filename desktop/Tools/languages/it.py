@@ -245,4 +245,6 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.checking": "Verifica della compatibilità CLI…",
     "settings.tool.recheck": "Verifica di nuovo",
     "settings.tool.incompatible": "La CLI non è compatibile con questa app. Reinstalla la CLI con la stessa versione dell’app.",
+    "backup.action.willOverwrite": "Il file verrà sovrascritto",
+    "backup.action.overwritten": "Il file è stato sovrascritto",
 }

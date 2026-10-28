@@ -244,4 +244,6 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.checking": "Перевірка сумісності CLI…",
     "settings.tool.recheck": "Перевірити знову",
     "settings.tool.incompatible": "CLI несумісний із програмою. Перевстановіть CLI тієї самої версії, що й програма.",
+    "backup.action.willOverwrite": "Файл буде перезаписано",
+    "backup.action.overwritten": "Файл перезаписано",
 }

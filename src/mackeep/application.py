@@ -58,6 +58,7 @@ class ApplicationProfile:
 
         # The reporter of the operations, if any
         self.reporter: Reporter | None = None
+        self.observer: Reporter | None = None
         self.app_name: str = ""
 
         # The detail level of the dry-run: "entries" or "files"
@@ -291,6 +292,10 @@ class ApplicationProfile:
                 )
                 break
         if self._pending_events is not None:
+            if self._restoring and action == "copy":
+                details["would_overwrite"] = os.path.lexists(
+                    str(details.get("dst", "")),
+                )
             self._pending_events.append((action, details))
             return
         local = str(details.get("dst" if self._restoring else "src", ""))
@@ -299,6 +304,8 @@ class ApplicationProfile:
         details["sensitive"] = reason is not None
         details["sensitive_reason"] = reason
 
+        if self.observer is not None:
+            self.observer(action, {"app": self.app_name, "action": action, **details})
         if self.reporter is None:
             if action == "copy" and reason is not None:
                 self._sensitive_paths.add(relative)

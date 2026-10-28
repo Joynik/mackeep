@@ -140,7 +140,7 @@ struct BackupView: View {
 
             HStack {
                 Picker("", selection: $model.filter) {
-                    ForEach(BackupModel.PlanFilter.allCases) { filter in
+                    ForEach(model.availableFilters) { filter in
                         Text(filter.title).tag(filter)
                     }
                 }
@@ -176,7 +176,9 @@ struct BackupView: View {
                     .padding(.horizontal, 12)
                     .padding(.bottom, 8)
             }
-            PlanTableView(actions: model.visibleActions, isPreview: model.isPreview)
+            PlanTableView(
+                actions: model.visibleActions, isPreview: model.isPreview,
+                willOverwrite: model.willOverwrite)
         }
     }
 
@@ -187,6 +189,7 @@ struct PlanTableView: View {
     /// The actions.
     let actions: [MackeepAction]
     var isPreview = true
+    var willOverwrite: (MackeepAction) -> Bool = { _ in false }
 
     var body: some View {
         Table(actions) {
@@ -195,16 +198,26 @@ struct PlanTableView: View {
                     .font(.callout.monospaced())
             }
             TableColumn(L10n.string("backup.table.action")) { action in
-                Label {
-                    Text(action.willRemove == true
-                         ? L10n.string(isPreview
-                                       ? "backup.action.removeStale" : "backup.action.removedStale")
-                         : actionTitle(action.action))
-                } icon: {
-                    Image(systemName: icon(for: action.action))
-                        .foregroundStyle(color(for: action.action))
+                HStack(spacing: 6) {
+                    Label {
+                        Text(action.willRemove == true
+                             ? L10n.string(isPreview
+                                           ? "backup.action.removeStale" : "backup.action.removedStale")
+                             : actionTitle(action.action))
+                    } icon: {
+                        Image(systemName: icon(for: action.action))
+                            .foregroundStyle(color(for: action.action))
+                    }
+                    .font(.callout)
+                    if willOverwrite(action) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                            .help(L10n.string(isPreview
+                                             ? "backup.action.willOverwrite" : "backup.action.overwritten"))
+                            .accessibilityLabel(L10n.string(isPreview
+                                             ? "backup.action.willOverwrite" : "backup.action.overwritten"))
+                    }
                 }
-                .font(.callout)
             }
             TableColumn(L10n.string("backup.table.file")) { action in
                 Text(action.src)
@@ -303,7 +316,7 @@ struct RestoreConfirmationView: View {
             }
             Text(L10n.string("backup.result.preview", L10n.string("backup.command.restore")))
                 .font(.headline)
-            PlanTableView(actions: model.visibleActions)
+            PlanTableView(actions: model.visibleActions, willOverwrite: model.willOverwrite)
                 .frame(minHeight: 260)
 
             HStack {
@@ -421,5 +434,6 @@ struct HistoryView: View {
         .appError($model.presentedError)
         .padding(20)
         .frame(width: 1000, height: 480)
+        .onAppear { model.loadHistory() }
     }
 }

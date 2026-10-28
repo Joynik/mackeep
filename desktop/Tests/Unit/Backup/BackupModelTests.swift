@@ -124,6 +124,37 @@ final class BackupModelTests: XCTestCase {
         XCTAssertEqual(model.summary?.totalBytes, 12)
     }
 
+    func testOverwriteRowsAreHiddenForBackupAndCombinedForRestore() async throws {
+        let plan = """
+        {"schema_version":4,"actions":[
+          {"app":"demo","action":"copy","src":"/a","dst":"/b","size_bytes":12},
+          {"app":"demo","action":"conflict","src":"/a","dst":"/b","size_bytes":12},
+          {"app":"demo","action":"conflict","src":"/c","dst":"/d","size_bytes":3,"would_overwrite":true}
+        ],"summary":{"apps":["demo"],"actions":{"copy":1,"conflict":2},"total_actions":3,"total_bytes":15,"files":2}}
+        """
+        let model = BackupModel(
+            command: try makeTool(plan: plan),
+            historyStore: HistoryStore(url: directory.appendingPathComponent("history.json")))
+        model.dryRun()
+        try await waitForThePlan(model)
+        XCTAssertEqual(model.visibleActions.map(\.action), ["copy"])
+        XCTAssertFalse(model.availableFilters.contains(.conflict))
+        XCTAssertFalse(model.willOverwrite(try XCTUnwrap(model.visibleActions.first)))
+        model.dryRunRestore()
+        try await waitForThePlan(model)
+        XCTAssertEqual(model.visibleActions.map(\.action), ["copy", "copy"])
+        XCTAssertTrue(model.visibleActions.allSatisfy { model.willOverwrite($0) })
+        model.filter = .copy
+        XCTAssertEqual(model.visibleActions.count, 2)
+    }
+
+    func testExecutionOverwriteFlagReachesTheTableRow() throws {
+        let event = try JSONDecoder().decode(MackeepEvent.self, from: Data("""
+        {"schema_version":4,"event":"file","app":"demo","action":"copy","src":"/a","dst":"/b","would_overwrite":true}
+        """.utf8))
+        XCTAssertEqual(event.actionRow?.wouldOverwrite, true)
+    }
+
     func testTheFilterKeepsTheActions() async throws {
         var command: MackeepCommand = try makeTool()
         command.environment["PLAN"] = directory.appendingPathComponent("plan.json").path

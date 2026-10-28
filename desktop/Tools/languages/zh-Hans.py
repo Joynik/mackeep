@@ -238,4 +238,6 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.checking": "正在检查CLI兼容性…",
     "settings.tool.recheck": "重新检查",
     "settings.tool.incompatible": "CLI与此应用不兼容。请重新安装与桌面应用版本一致的CLI。",
+    "backup.action.willOverwrite": "文件将被覆盖",
+    "backup.action.overwritten": "文件已被覆盖",
 }

@@ -106,7 +106,31 @@ final class BackupModel {
 
     /// The actions of the plan, after the filter.
     var visibleActions: [MackeepAction] {
-        (plan?.actions ?? executionActions).filter { filter.matches($0) }
+        let actions = plan?.actions ?? executionActions
+        func key(_ action: MackeepAction) -> String { "\(action.app)|\(action.src)|\(action.dst)" }
+        let copies = Set(actions.filter { $0.action == "copy" }.map(key))
+        let overwrites = Set(actions.filter { $0.action == "conflict" }.map(key))
+        return actions.compactMap { action in
+            if action.action == "conflict" {
+                guard displayedCommand == "restore", isPreview,
+                      !copies.contains(key(action)) else { return nil }
+            } else if displayedCommand != "restore" || action.action != "copy"
+                        || !overwrites.contains(key(action)) {
+                return action
+            }
+            return MackeepAction(
+                app: action.app, action: "copy", src: action.src, dst: action.dst,
+                sizeBytes: action.sizeBytes, reason: action.reason, wouldOverwrite: true,
+                willRemove: action.willRemove)
+        }.filter { filter.matches($0) }
+    }
+
+    /// Overwrites are warnings attached to copy rows, never separate actions.
+    var availableFilters: [PlanFilter] { PlanFilter.allCases.filter { $0 != .conflict } }
+
+    func willOverwrite(_ action: MackeepAction) -> Bool {
+        guard displayedCommand == "restore", action.action == "copy" else { return false }
+        return action.wouldOverwrite == true
     }
 
     /// The summary of the plan.

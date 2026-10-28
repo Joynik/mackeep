@@ -240,4 +240,6 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.checking": "CLIの互換性を確認中…",
     "settings.tool.recheck": "再確認",
     "settings.tool.incompatible": "このCLIはアプリと互換性がありません。アプリと同じバージョンのCLIを再インストールしてください。",
+    "backup.action.willOverwrite": "ファイルは上書きされます",
+    "backup.action.overwritten": "ファイルは上書きされました",
 }

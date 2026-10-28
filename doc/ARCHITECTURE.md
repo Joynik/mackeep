@@ -171,7 +171,11 @@ best-effort plan comparison, not an atomic check of filesystem contents.
 `HistoryStore` is isolated to the main actor. Reads distinguish missing files
 from failures; writes propagate errors, preserve malformed history separately,
 and atomically replace history with a private staged file. A history failure
-does not relabel an otherwise completed backup as a failed copy.
+does not relabel an otherwise completed backup as a failed copy. Human CLI runs
+use a committed-event observer and atomic per-run files in `cli-history/`, so
+they do not race the desktop's history writer or suppress CLI warnings.
+`HistoryStore` merges both sources on read and clears both on request; JSON
+front-ends retain responsibility for recording their own runs.
 
 `MainConfig` serializes writes within the process and merges edited keys/sections
 into the latest file, avoiding stale settings and selection snapshots overwriting

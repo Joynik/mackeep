@@ -92,6 +92,29 @@ final class DesktopSafetyTests: XCTestCase {
         return command
     }
 
+    func testRealCLIHistoryIsMergedWithoutDuplicatingDesktopRecords() throws {
+        let command = try realCommand()
+        _ = try command.run(["backup", "--summary"])
+        let file = directory.appendingPathComponent("Library/Application Support/Mackeep/history.json")
+        let store = HistoryStore(url: file)
+        var records = try store.load()
+        XCTAssertEqual(records.count, 1)
+        XCTAssertEqual(records.first?.command, "backup")
+        XCTAssertEqual(records.first?.files, 1)
+        XCTAssertEqual(records.first?.bytes, 10)
+        XCTAssertEqual(records.first?.succeeded, true)
+        try store.append(RunRecord(command: "restore", succeeded: true))
+        records = try store.load()
+        XCTAssertEqual(records.count, 2)
+        try store.append(RunRecord(command: "backup", succeeded: false))
+        XCTAssertEqual(try store.load().count, 3)
+        let model = BackupModel(command: nil, historyStore: store)
+        XCTAssertEqual(model.history.count, 3)
+        model.clearHistory()
+        XCTAssertTrue(model.history.isEmpty)
+        XCTAssertTrue(try store.load().isEmpty)
+    }
+
     func testChangedRestoreConfigurationRequiresAnotherConfirmation() async throws {
         let command = try realCommand()
         var preparations = 0

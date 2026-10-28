@@ -60,7 +60,10 @@ File-size estimates are calculated when an application is selected.
 
 Dry runs, backups, and restores share an action table with an operation heading.
 Execution rows come from CLI events; up to 5,000 rows are shown, with a truncation
-notice and full-run totals. History can be cleared from its window without
+notice and full-run totals. Backup tables hide separate conflict rows; restore
+rows show an overwrite warning icon with a tooltip beside the copy action.
+History also includes new CLI backup/restore runs, including `backup --summary`,
+and reloads when its window opens. History can be cleared from its window without
 removing backup files. History is private (`0600`); read/write errors are shown.
 Before replacing damaged history, the app preserves it as `history.json.bak`
 (or a distinct `.bak` file if one exists) in the same directory. The information icon explains copy mode and the CLI-only

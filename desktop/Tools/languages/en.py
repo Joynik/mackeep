@@ -244,4 +244,6 @@ TRANSLATION: dict[str, str] = {
     "settings.tool.checking": "Checking CLI compatibility…",
     "settings.tool.recheck": "Check again",
     "settings.tool.incompatible": "The CLI is incompatible with this application. Reinstall the CLI with the same version as the desktop.",
+    "backup.action.willOverwrite": "File will be overwritten",
+    "backup.action.overwritten": "File was overwritten",
 }

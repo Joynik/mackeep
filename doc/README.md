@@ -217,6 +217,12 @@ existing progress output is unchanged, and `--force` retains its usual behavior.
 The option is limited to an actual backup, not a dry run. With `--json`, backup
 continues to emit the usual NDJSON events.
 
+New non-JSON CLI backups and restores are saved in private local history, also
+shown by the desktop app. Dry runs are not recorded. On macOS the CLI journal
+is `~/Library/Application Support/Mackeep/cli-history/`; elsewhere it uses
+`$XDG_STATE_HOME/mackeep/cli-history/` (default `~/.local/state/`). The newest
+50 runs are retained. JSON front-ends continue to manage their own history.
+
 `config`, `list`, and `show` remain usable when an automatic cloud-storage lookup
 fails. `config` reports the lookup error and an unresolved storage path; filesystem
 operations require working storage.
@@ -470,7 +476,9 @@ Without `--dry-run`, backup and restore emit NDJSON, one object per line:
 ```
 
 Committed file events are emitted after the application's transaction commits,
-not as a byte-by-byte transfer stream. `done` counters are per application;
+not as a byte-by-byte transfer stream. Restore copy events include
+`would_overwrite`, indicating whether the destination existed before staging.
+`done` counters are per application;
 consumers sum them for a run. `done` alone does not prove success: a failed
 application can emit an error event and then `done`, followed by a final error
 document and a nonzero process exit.

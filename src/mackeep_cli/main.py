@@ -103,6 +103,7 @@ from mackeep.locking import storage_lock
 from mackeep.mackeep import Mackeep
 from mackeep.migrate import plan as migration_plan
 from mackeep.migrate import run as run_migration
+from mackeep_cli.history import OperationHistory
 from mackeep_cli.summary import BackupSummary, SummaryOutput
 
 # The ANSI escape codes used to color the error messages
@@ -152,6 +153,7 @@ class _Context:
     dry_run: bool
     verbose: bool
     reporter: Reporter | None = None
+    observer: Reporter | None = None
     detail: str = "entries"
     max_actions: int = 5000
     replace_backup: bool = True
@@ -172,6 +174,7 @@ def _make_profile(ctx: _Context, app_name: str) -> ApplicationProfile:
         ctx.verbose,
     )
     app.replace_backup = ctx.replace_backup
+    app.observer = ctx.observer
     config_file: str = ctx.mckp.config.config_path
     app_file: str = ctx.app_db.get_config_file(app_name)
     app.configure(
@@ -277,6 +280,38 @@ def _ownership_baseline(ctx: _Context, selected: set[str]) -> dict[str, list[str
 
 
 def _run_action(
+    ctx: _Context,
+    app_names: set[str],
+    action: str,
+    label: str = "",
+) -> None:
+    """Record human CLI runs; JSON front-ends keep their own run history."""
+    commands = {
+        "copy_files_to_mackeep_folder": "backup",
+        "copy_files_from_mackeep_folder": "restore",
+    }
+    if action not in commands or ctx.dry_run or label:
+        _perform_action(ctx, app_names, action, label)
+        return
+    history = OperationHistory(
+        commands[action], next(iter(app_names)) if len(app_names) == 1 else None,
+    )
+    ctx.observer = history.report
+    try:
+        _perform_action(ctx, app_names, action, label)
+    except (Exception, SystemExit, KeyboardInterrupt) as exc:
+        if history.message is None:
+            history.message = str(exc) or "Operation interrupted."
+        raise
+    finally:
+        ctx.observer = None
+        try:
+            history.save()
+        except OSError as exc:
+            print(f"Warning: could not save run history: {exc}", file=sys.stderr)
+
+
+def _perform_action(
     ctx: _Context,
     app_names: set[str],
     action: str,

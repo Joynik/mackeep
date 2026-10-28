@@ -321,6 +321,7 @@ struct MackeepEvent: Codable, Equatable, Sendable {
     /// The message of an error event.
     let message: String?
     var willRemove: Bool? = nil
+    var wouldOverwrite: Bool? = nil
 
     /// Share the table row format with dry-run actions.
     var actionRow: MackeepAction? {
@@ -328,7 +329,7 @@ struct MackeepEvent: Codable, Equatable, Sendable {
               let app, let action, let src else { return nil }
         return MackeepAction(
             app: app, action: action, src: src, dst: dst ?? "", sizeBytes: sizeBytes,
-            reason: reason, wouldOverwrite: nil, willRemove: willRemove)
+            reason: reason, wouldOverwrite: wouldOverwrite, willRemove: willRemove)
     }
 
     enum CodingKeys: String, CodingKey {
@@ -345,6 +346,7 @@ struct MackeepEvent: Codable, Equatable, Sendable {
         case skipped
         case message
         case willRemove = "will_remove"
+        case wouldOverwrite = "would_overwrite"
     }
 }
 
