@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "Mackeep",
+  "project_id": "d7b790c3-a0c2-4776-a9bb-252d5634143a"
+}
