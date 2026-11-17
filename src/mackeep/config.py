@@ -81,6 +81,14 @@ class Config:
         self._global_xdg_exclude = self._parse_exclusions("xdg_exclude")
 
     @property
+    def projects_enabled(self) -> bool:
+        """Whether projects participate in global backup and restore."""
+        try:
+            return self._parser.getboolean("projects", "enabled", fallback=False)
+        except ValueError as exc:
+            raise ConfigError("projects.enabled must be true or false") from exc
+
+    @property
     def allow_external_paths(self) -> bool:
         """Whether application entries may leave their HOME/XDG root."""
         try:

@@ -12,7 +12,11 @@ struct RootView: View {
 
     var body: some View {
         NavigationSplitView {
-            List(SidebarSection.allCases, selection: $selection) { section in
+            List(
+                SidebarSection.allCases.filter {
+                    $0 != .projects || environment.settings.projectsEnabled
+                }, selection: $selection
+            ) { section in
                 Label {
                     Text(section.title)
                 } icon: {
@@ -26,6 +30,9 @@ struct RootView: View {
                 switch selection ?? .applications {
                 case .applications:
                     applications.disabled(environment.backup.isRunning)
+                case .projects:
+                    ProjectsView(model: environment.projects)
+                        .disabled(environment.backup.isRunning)
                 case .backup:
                     BackupView(model: environment.backup)
                 case .settings:
@@ -38,8 +45,12 @@ struct RootView: View {
         }
         .task(id: environment.settings.isToolSupported) {
             if environment.settings.isToolSupported {
+                environment.settings.load()
                 environment.applications.load()
             }
+        }
+        .onChange(of: environment.settings.projectsEnabled) { _, enabled in
+            if !enabled, selection == .projects { selection = .applications }
         }
         .sheet(isPresented: $showsOnboarding) {
             OnboardingView(
@@ -91,6 +102,7 @@ struct RootView: View {
 /// The sections of the sidebar.
 enum SidebarSection: String, CaseIterable, Identifiable {
     case applications
+    case projects
     case backup
     case settings
 
@@ -99,6 +111,7 @@ enum SidebarSection: String, CaseIterable, Identifiable {
     /// The title of the section.
     var title: String {
         switch self {
+        case .projects: L10n.string("section.projects.title")
         case .applications: L10n.string("section.applications.title")
         case .backup: L10n.string("section.backup.title")
         case .settings: L10n.string("section.settings.title")
@@ -108,6 +121,7 @@ enum SidebarSection: String, CaseIterable, Identifiable {
     /// The symbol of the section.
     var systemImage: String {
         switch self {
+        case .projects: "folder"
         case .applications: "square.grid.2x2"
         case .backup: "arrow.triangle.2.circlepath"
         case .settings: "gearshape"

@@ -56,7 +56,8 @@ final class SettingsModelTests: XCTestCase {
         engine: String = "file_system",
         path: String = "/Users/user/dotfiles",
         directory: String = "Mackeep",
-        allowExternalPaths: Bool = false
+        allowExternalPaths: Bool = false,
+        projectsEnabled: Bool = false
     ) throws -> MackeepCommand {
         try makeTool(
             config: """
@@ -78,9 +79,28 @@ final class SettingsModelTests: XCTestCase {
                   "global_exclude": ["**/.DS_Store"],
                   "global_xdg_exclude": [],
                   "allow_external_paths": \(allowExternalPaths),
+                  "projects_enabled": \(projectsEnabled),
                   "storage_configured": \(engine != "unconfigured")
                 }
                 """)
+    }
+
+    func testDisablingProjectsKeepsDefinitionsAndApplicationPathPolicy() async throws {
+        let command = try makeConfig(projectsEnabled: true)
+        let model = SettingsModel(command: command, capabilities: nil)
+        model.load()
+        try await waitForTheSettings(model)
+        XCTAssertTrue(model.projectsEnabled)
+        let definitions = directory.appendingPathComponent(".mackeep.cfg.projects.json")
+        let original = Data("retained project definitions".utf8)
+        try original.write(to: definitions)
+        model.projectsEnabled = false
+        model.save()
+        XCTAssertNil(model.presentedError)
+        let config = try MainConfig.load(from: directory.appendingPathComponent(".mackeep.cfg"))
+        XCTAssertEqual(config.document.value(forKey: "enabled", inSection: "projects"), "false")
+        XCTAssertFalse(config.allowExternalPaths)
+        XCTAssertEqual(try Data(contentsOf: definitions), original)
     }
 
     /// Wait for the model to finish the command it runs.

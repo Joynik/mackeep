@@ -30,6 +30,7 @@ flowchart TD
 | `src/mackeep/application.py` | Per-application backup, restore, link operations, planning, and exclusion preservation |
 | `src/mackeep/excludes.py` | Parsed rules and immutable-by-interface matchers |
 | `src/mackeep/paths.py` | HOME/external mapping, containment, and overlap checks |
+| `src/mackeep/projects.py` | Independent project definitions and root-relative copy profiles |
 | `src/mackeep/transaction.py` | Staging, replacement, rollback, and temporary-version cleanup |
 | `src/mackeep/backupstate.py` | Validated per-application leaf ownership |
 | `src/mackeep/inifile.py` | INI parsing and duplicate-section/option diagnostics |
@@ -178,3 +179,20 @@ policy, symlink handling, and JSON behavior when changing the copy pipeline.
 Add built-in applications as `.cfg` files, not Python branches. A new storage engine needs
 constants, config/path detection, tests, and desktop support. Runtime dependencies remain limited to
 the standard library and `docopt-ng`.
+
+## Project backup isolation
+
+`ProjectStore` keeps the project list outside the application definition catalog. A config-scoped
+JSON file stores UUIDs, names, roots, selections, and exclusion patterns. Definition writes use a
+local lock and atomic replacement. Invalid definitions fail instead of resetting the list.
+
+`ProjectProfile` reuses `ApplicationProfile` staging, rollback, exclusions, permission restoration,
+and ownership cleanup. It overrides source mapping and preflight only. Project sources use their own
+absolute root and never inherit HOME/XDG restrictions or exclusions. The common ownership index uses
+`project:<UUID>` keys; project snapshots live in `Project/<UUID>/`. Application preflight protects
+this namespace when project definitions or snapshots exist.
+
+Global operations add enabled project profiles only when the config enables the feature. Named
+application operations do not add projects. Desktop project mutations go through JSON CLI commands;
+the shared Backup/Restore screen handles global plans and execution. The settings switch persists
+through `MainConfig` and does not mutate definitions or snapshots.

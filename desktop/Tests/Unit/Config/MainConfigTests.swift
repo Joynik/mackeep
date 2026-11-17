@@ -26,6 +26,20 @@ final class MainConfigTests: XCTestCase {
         return url
     }
 
+    func testProjectTogglePreservesApplicationPolicyAndSelection() throws {
+        let url = try makeConfig(
+            "[security]\nallow_external_paths = false\n[applications_to_sync]\nvim\n")
+        let config = try MainConfig.load(from: url)
+        config.setProjectsEnabled(true)
+        try config.save()
+        config.setProjectsEnabled(false)
+        try config.save()
+        let saved = try MainConfig.load(from: url)
+        XCTAssertEqual(saved.document.value(forKey: "enabled", inSection: "projects"), "false")
+        XCTAssertEqual(saved.appsToSync, ["vim"])
+        XCTAssertFalse(saved.allowExternalPaths)
+    }
+
     func testTheConfigFileIsCreatedWhenItIsMissing() throws {
         let url: URL = directory.appendingPathComponent(".mackeep.cfg")
         XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))

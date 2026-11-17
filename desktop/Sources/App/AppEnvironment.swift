@@ -33,6 +33,8 @@ final class AppEnvironment {
     /// The model of the list of the applications.
     let applications: ApplicationsModel
 
+    let projects: ProjectsModel
+
     /// The model of the backup section.
     let backup: BackupModel
 
@@ -67,12 +69,19 @@ final class AppEnvironment {
         let command = injected ?? path.map { MackeepCommand(path: $0) }
         let applications = ApplicationsModel(command: command)
         self.applications = applications
+        let projects = ProjectsModel(command: command)
+        self.projects = projects
         let settings = SettingsModel(command: command, capabilities: nil)
         self.settings = settings
         self.backup = BackupModel(
             command: command,
             prepare: {
                 try settings.requireSupportedTool()
+                guard !projects.isWorking else {
+                    throw NSError(
+                        domain: "MackeepProjects", code: 1,
+                        userInfo: [NSLocalizedDescriptionKey: L10n.string("projects.busy")])
+                }
                 try await applications.flushSelection()
             })
 

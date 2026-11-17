@@ -15,6 +15,12 @@ Native SwiftUI front-end for macOS 15+ on Apple Silicon. Install with
 - **Editor:** change a custom application's paths and exclusions, and search for its files in known
   locations or with Spotlight. Search uses the text you enter; an empty query does not start a
   search.
+- **Projects:** enable this optional tab in Settings. Create, copy, edit, delete, search, and filter
+  independent project definitions. Enter a unique name and an absolute root folder. Enter files,
+  folders, and exclusions relative to that root, one per line; `.` selects the entire project. Check
+  a project to include it in global backup and restore. There is no library, installation detection,
+  or `.config` section. Disabling the feature hides the tab and skips projects, while keeping
+  definitions and backups. Deleting a project removes its definition only.
 - **Backup/Restore:** preview operations and execute them through the CLI.
 - **Settings:** storage, shared exclusions, external-path permission, language, and appearance.
 

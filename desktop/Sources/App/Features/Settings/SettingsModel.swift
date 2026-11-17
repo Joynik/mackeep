@@ -16,6 +16,8 @@ final class SettingsModel {
     /// Allow explicitly configured files outside the home directory.
     var allowExternalPaths: Bool = false
 
+    var projectsEnabled = false
+
     /// Whether the CLI understands the external path setting.
     private(set) var supportsExternalPaths: Bool = false
 
@@ -66,7 +68,7 @@ final class SettingsModel {
 
     /// Whether the settings were already read.
     private var hasLoaded: Bool = false
-    private var savedValues: (StorageEngine, String, String, Bool, [String])?
+    private var savedValues: (StorageEngine, String, String, Bool, [String], Bool)?
 
     /// The main config file of Mackeep.
     private var mainConfig: MainConfig?
@@ -249,6 +251,7 @@ final class SettingsModel {
 
         configFilePath = config.configFile
         customAppsDir = config.customAppsDir ?? config.customAppsDirs.first ?? ""
+        projectsEnabled = config.projectsEnabled ?? false
         allowExternalPaths = config.allowExternalPaths ?? false
         supportsExternalPaths = config.allowExternalPaths != nil
         globalExclude = config.globalExclude
@@ -268,7 +271,9 @@ final class SettingsModel {
         if let document: INIDocument = result.document {
             mainConfig = MainConfig(url: url, document: document)
         }
-        savedValues = (engine, storagePath, directory, allowExternalPaths, globalExclude)
+        savedValues = (
+            engine, storagePath, directory, allowExternalPaths, globalExclude, projectsEnabled
+        )
     }
 
     /// Write the settings in the config file of Mackeep.
@@ -280,6 +285,7 @@ final class SettingsModel {
             path: engine == .fileSystem ? storagePath : nil,
             directory: directory
         )
+        mainConfig.setProjectsEnabled(projectsEnabled)
         mainConfig.setGlobalExclude(globalExclude)
         if supportsExternalPaths {
             mainConfig.setAllowExternalPaths(allowExternalPaths)
@@ -287,12 +293,17 @@ final class SettingsModel {
 
         do {
             try mainConfig.save()
-            savedValues = (engine, storagePath, directory, allowExternalPaths, globalExclude)
+            savedValues = (
+                engine, storagePath, directory, allowExternalPaths, globalExclude, projectsEnabled
+            )
             resolvedBackupDirectory = ""
             storageIsConfigured = engine == .fileSystem ? !storagePath.isEmpty : engine.isAvailable
         } catch {
             if let savedValues {
-                (engine, storagePath, directory, allowExternalPaths, globalExclude) = savedValues
+                (
+                    engine, storagePath, directory, allowExternalPaths, globalExclude,
+                    projectsEnabled
+                ) = savedValues
             }
             presentedError = AppError(
                 title: L10n.string("error.save.title"),

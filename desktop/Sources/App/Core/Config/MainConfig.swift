@@ -88,6 +88,13 @@ final class MainConfig {
         valueUpdates["security", default: [:]]["allow_external_paths"] = value
     }
 
+    /// Enable projects without removing their definitions or snapshots.
+    func setProjectsEnabled(_ enabled: Bool) {
+        let value = enabled ? "true" : "false"
+        document.setValue(value, forKey: "enabled", inSection: "projects")
+        valueUpdates["projects", default: [:]]["enabled"] = value
+    }
+
     /// The global exclusion rules.
     var globalExclude: [String] {
         document.values(inSection: "exclude")

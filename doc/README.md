@@ -296,6 +296,56 @@ does not discover arbitrary secrets inside file contents.
 Review the selected paths and storage permissions. See the
 [private-key example](syncing-private-keys.md) before overriding key definitions.
 
+## Projects
+
+Projects are an optional, independent backup list. Application definitions and their HOME/XDG path
+policy remain unchanged. Enable projects in Settings, or add this to the main configuration:
+
+```ini
+[projects]
+enabled = true
+```
+
+Each project has a persistent UUID, a unique display name, an absolute `root`, relative `files`,
+ordered `exclude` patterns, and an `enabled` checkbox. Paths may be outside HOME. Relative entries
+must stay within the project root; `.` selects the whole root. Exclusions use the application's
+pattern syntax but are relative to the project root. Application and global HOME/XDG exclusions do
+not apply to projects. Nested symbolic links are copied as links, without traversing their targets.
+
+Definitions are stored beside the selected main config, with `.projects.json` appended to its name
+(default: `~/.mackeep.cfg.projects.json`). Existing backups are stored in
+`<resolved_backup_dir>/Project/<UUID>/`, preserving the selected paths relative to the project root.
+Renaming a project keeps its UUID and existing backup location. Restore writes into the currently
+configured root. Deleting a definition keeps source files and snapshots. Back up the definitions
+file separately when moving configuration to another computer.
+
+```text
+Project root/src/code.py → Backup/Project/<UUID>/src/code.py
+Project root/src/code.py ← Backup/Project/<UUID>/src/code.py
+```
+
+Global `backup` and `restore` include checked projects only when `[projects] enabled = true`.
+Disabling projects retains all definitions and snapshots. Named application operations stay limited
+to that application. The `Project` backup namespace is protected against application entries that
+would overwrite existing project data.
+
+```bash
+mackeep-cli --json projects list
+mackeep-cli --json projects save --project-data='{"name":"Example","root":"/Projects/Example","files":["src","pyproject.toml"],"exclude":["__pycache__/"],"enabled":true}'
+mackeep-cli --json --dry-run projects backup
+mackeep-cli --json projects backup <UUID>
+mackeep-cli --json --dry-run projects restore <UUID>
+mackeep-cli --json --force projects restore <UUID>
+mackeep-cli --json projects delete <UUID>
+```
+
+Save returns the full project list, including generated identifiers. Include `id` when editing; omit
+it to create a new independent project. List, save, and delete return a schema 4 JSON array; each
+definition includes `schema_version`. Execution and dry-run use the existing event and plan formats.
+Project execution events show the display name; ownership uses the persistent identifier.
+Project-specific backup and restore also require the feature to be enabled. An explicit UUID selects
+one project regardless of its checkbox. Save and delete reject `--dry-run`.
+
 ## JSON interface
 
 `--json` is supported for `config`, `list`, `show`, `backup`, `restore`, `migrate`, and library

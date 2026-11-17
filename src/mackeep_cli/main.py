@@ -5,6 +5,11 @@ Keep your application settings in sync.
 Copyright (C) 2013-2025 Laurent Raufaste <http://glop.org/>
 
 Usage:
+  mackeep-cli [options] projects list
+  mackeep-cli [options] projects save --project-data=<json>
+  mackeep-cli [options] projects delete <project>
+  mackeep-cli [options] projects backup [<project>]
+  mackeep-cli [options] projects restore [<project>]
   mackeep-cli [options] list
   mackeep-cli [options] show <application>
   mackeep-cli [options] config
@@ -29,6 +34,7 @@ Options:
   --summary                 Show a compact backup result instead of progress.
   -c --config-file=<path>   Specify custom config file path.
   --json                    Output machine-readable JSON.
+  --project-data=<json>      Project definition for projects save.
   --detail=<level>          Detail level of the dry-run: entries or files.
   --max-actions=<n>         Maximum number of actions of the JSON dry-run.
   -v -V --version           Show version.
@@ -78,6 +84,7 @@ See https://github.com/Joynik/mackeep/tree/master/doc for more information.
 
 # Mackeep is a fork of Mackup, written by Laurent Raufaste.
 
+import json
 import os
 import re
 import signal
@@ -103,6 +110,8 @@ from mackeep.locking import storage_lock
 from mackeep.mackeep import Mackeep
 from mackeep.migrate import plan as migration_plan
 from mackeep.migrate import run as run_migration
+from mackeep.paths import validate_pair
+from mackeep.projects import PREFIX, ProjectProfile, ProjectStore
 from mackeep_cli.history import OperationHistory
 from mackeep_cli.summary import BackupSummary, SummaryOutput
 
@@ -167,6 +176,33 @@ def _print_app_header(app_name: str, verbose: bool) -> None:
 
 def _make_profile(ctx: _Context, app_name: str) -> ApplicationProfile:
     """Create the profile of an application, with its exclusion rules."""
+    if app_name.startswith(PREFIX):
+        project = next(
+            (
+                project
+                for project in ProjectStore(ctx.mckp.config.config_path).load()
+                if PREFIX + project["id"] == app_name
+            ),
+            None,
+        )
+        if project is None:
+            raise ConfigError(f"Unknown project: {app_name}")
+        profile = ProjectProfile(ctx.mckp, project, ctx.dry_run, ctx.verbose)
+
+        def report(action: str, payload: dict[str, Any]) -> None:
+            details = {**payload, "app": project["name"]}
+            if ctx.reporter:
+                ctx.reporter(action, details)
+
+        def observe(action: str, payload: dict[str, Any]) -> None:
+            if ctx.observer:
+                ctx.observer(action, {**payload, "app": project["name"]})
+
+        profile.reporter = report if ctx.reporter else None
+        profile.observer = observe if ctx.observer else None
+        profile.detail = ctx.detail
+        profile.replace_backup = ctx.replace_backup
+        return profile
     app: ApplicationProfile = ApplicationProfile(
         ctx.mckp,
         ctx.app_db.get_files(app_name),
@@ -209,7 +245,12 @@ def _make_profile(ctx: _Context, app_name: str) -> ApplicationProfile:
     return app
 
 
-def _resolve_apps(app_name: str | None, ctx: _Context) -> set[str]:
+def _resolve_apps(
+    app_name: str | None,
+    ctx: _Context,
+    *,
+    include_projects: bool = False,
+) -> set[str]:
     """Resolve which apps a per-app command should act on.
 
     If an application is named, error out when it is not a supported app
@@ -228,6 +269,12 @@ def _resolve_apps(app_name: str | None, ctx: _Context) -> set[str]:
         raise _UnsupportedApplicationError(
             f"Unsupported application: {', '.join(sorted(unknown))}",
         )
+    if include_projects and ctx.mckp.config.projects_enabled:
+        names.update(
+            PREFIX + project["id"]
+            for project in ProjectStore(ctx.mckp.config.config_path).load()
+            if project["enabled"]
+        )
     return names
 
 
@@ -243,10 +290,19 @@ def _preflight(
         )
     profiles = [(name, _make_profile(ctx, name)) for name in sorted(app_names)]
     for name, profile in profiles:
-        problem = ctx.app_db.get_error(name)
+        problem = None if name.startswith(PREFIX) else ctx.app_db.get_error(name)
         if problem and name in ctx.app_db.unsafe_paths:
             raise ConfigError(problem)
         profile.preflight(action)
+        if not isinstance(profile, ProjectProfile):
+            namespace = os.path.join(ctx.mckp.mackeep_folder, "Project")
+            if (
+                os.path.lexists(namespace)
+                or ProjectStore(ctx.mckp.config.config_path).path.exists()
+            ):
+                for entry in profile.files:
+                    _, backup = profile.get_filepaths(entry)
+                    validate_pair(backup, namespace)
     return profiles
 
 
@@ -328,18 +384,19 @@ def _perform_action(
     for app_name, app in profiles:
         if _cancel_requested:
             sys.exit(CANCELLED_EXIT_CODE)
-        _print_app_header(app_name, ctx.verbose)
+        display_name = app.project["name"] if isinstance(app, ProjectProfile) else app_name
+        _print_app_header(display_name, ctx.verbose)
         if ctx.reporter is not None:
-            ctx.reporter("start", {"app": app_name, "action": label or action})
+            ctx.reporter("start", {"app": display_name, "action": label or action})
         try:
             getattr(app, action)()
         except (OSError, ConfigError, ValueError) as exc:
             app.failed = True
             print(f"Error: {app_name}: {exc}", file=sys.stderr)
             if ctx.reporter is not None:
-                ctx.reporter("error", {"app": app_name, "message": str(exc)})
+                ctx.reporter("error", {"app": display_name, "message": str(exc)})
         if ctx.reporter is not None:
-            ctx.reporter("done", {"app": app_name, "action": label or action})
+            ctx.reporter("done", {"app": display_name, "action": label or action})
         failed = failed or app.failed
     if _cancel_requested:
         sys.exit(CANCELLED_EXIT_CODE)
@@ -405,7 +462,7 @@ def _cmd_backup(args: dict[str, Any], ctx: _Context) -> None:
     # Resolve and validate the target apps before the env check, so an
     # unknown application name fails cleanly without creating the Mackeep
     # folder or prompting first.
-    app_names = _resolve_apps(args["<application>"], ctx)
+    app_names = _resolve_apps(args["<application>"], ctx, include_projects=True)
     _preflight(ctx, app_names, "copy_files_to_mackeep_folder")
     if ctx.dry_run:
         # A dry-run does not create anything.
@@ -428,7 +485,7 @@ def _cmd_backup(args: dict[str, Any], ctx: _Context) -> None:
 
 
 def _cmd_restore(args: dict[str, Any], ctx: _Context) -> None:
-    app_names = _resolve_apps(args["<application>"], ctx)
+    app_names = _resolve_apps(args["<application>"], ctx, include_projects=True)
     _preflight(ctx, app_names, "copy_files_from_mackeep_folder")
     if ctx.dry_run:
         # A dry-run does not need the backup folder to exist, the missing
@@ -705,6 +762,7 @@ def _config_json(ctx: _Context) -> dict[str, Any]:
     return {
         "schema_version": jsonapi.SCHEMA_VERSION,
         "version": VERSION,
+        "projects_enabled": config.projects_enabled,
         "config_file": config.config_path,
         "custom_apps_dir": ApplicationsDatabase.get_custom_apps_dir(),
         "custom_apps_dirs": ApplicationsDatabase.get_custom_apps_dirs(),
@@ -806,7 +864,9 @@ def _cmd_json_migrate(dry_run: bool, stream: TextIO) -> None:
 
 def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
     """Run a command and write its JSON answer to the given stream."""
-    if args["config"]:
+    if args.get("projects"):
+        _cmd_projects(args, ctx, stream)
+    elif args["config"]:
         jsonapi.emit(_config_json(ctx), stream)
     elif args["list"]:
         apps: list[dict[str, Any]] = [
@@ -824,7 +884,7 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
         )
         label: str = "backup" if args["backup"] else "restore"
 
-        app_names = _resolve_apps(args["<application>"], ctx)
+        app_names = _resolve_apps(args["<application>"], ctx, include_projects=True)
         _preflight(ctx, app_names, action)
         if ctx.dry_run:
             # A dry-run does not create anything and does not need the
@@ -852,6 +912,66 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
             )
     else:
         sys.exit("The --json option is not supported for this command.")
+
+
+def _cmd_projects(args: dict[str, Any], ctx: _Context, stream: TextIO | None) -> None:
+    """Manage definitions or run isolated project transactions."""
+    store = ProjectStore(ctx.mckp.config.config_path)
+    if args["save"] or args["delete"]:
+        if ctx.dry_run:
+            raise ConfigError("Project editing does not support --dry-run")
+        if args["save"]:
+            try:
+                value = json.loads(args["--project-data"])
+            except ValueError as exc:
+                raise ConfigError("Invalid project JSON") from exc
+            result = store.update(value)
+        else:
+            result = store.update(None, args["<project>"])
+        if stream is not None:
+            jsonapi.emit(result, stream)
+        return
+    projects = store.load()
+    if args["list"]:
+        if stream is not None:
+            jsonapi.emit(projects, stream)
+        else:
+            for project in projects:
+                print(f"{project['id']}  {project['name']}  {project['root']}")
+        return
+    if not ctx.mckp.config.projects_enabled:
+        raise ConfigError("Projects are disabled in settings")
+    identifier = args["<project>"]
+    selected = {
+        PREFIX + project["id"]
+        for project in projects
+        if (project["id"] == identifier if identifier else project["enabled"])
+    }
+    if identifier and not selected:
+        raise ConfigError(f"Unknown project: {identifier}")
+    action = "copy_files_to_mackeep_folder" if args["backup"] else "copy_files_from_mackeep_folder"
+    _preflight(ctx, selected, action)
+    if ctx.dry_run:
+        ctx.mckp.check_for_usable_environment()
+    elif args["backup"]:
+        ctx.mckp.check_for_usable_backup_env()
+    else:
+        ctx.mckp.check_for_usable_restore_env()
+    if stream is not None:
+        reporter = _JsonReporter(stream, ctx.dry_run, ctx.max_actions)
+        ctx.reporter = reporter
+        _run_action(ctx, selected, action, "backup" if args["backup"] else "restore")
+        if ctx.dry_run:
+            jsonapi.emit(
+                {
+                    "schema_version": jsonapi.SCHEMA_VERSION,
+                    "actions": reporter.actions,
+                    "summary": reporter.summary(selected),
+                },
+                stream,
+            )
+    else:
+        _run_action(ctx, selected, action)
 
 
 def _clean_error(message: str) -> str:
@@ -1078,7 +1198,9 @@ def _dispatch(
         _cmd_json(args, ctx, stdout)
         return
 
-    if args["list"]:
+    if args.get("projects"):
+        _cmd_projects(args, ctx, None)
+    elif args["list"]:
         _cmd_list(ctx.app_db)
     elif args["show"]:
         _cmd_show(args, ctx.app_db)
