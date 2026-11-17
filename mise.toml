@@ -1,0 +1,258 @@
+[settings]
+task.run_auto_install = false
+task.quiet = true
+
+[env]
+# kitflow:begin env.PYTHONUNBUFFERED
+PYTHONUNBUFFERED = "1"
+# kitflow:end env.PYTHONUNBUFFERED
+_.file = ".env"
+PROJECT_ROOT = "{{ [config_root, env.PROJECT_ROOT | default(value=vars.project_root)] | join_path | absolute }}"
+PYTHON_SOURCE = "{{ [env.PROJECT_ROOT, env.PYTHON_SOURCE | default(value=vars.python_source)] | join_path | absolute }}"
+SWIFT_BACKEND = "{{ env.SWIFT_BACKEND | default(value=vars.swift_backend) }}"
+PROJECT_SWIFT_DIRECTORY = "{{ env.PROJECT_SWIFT_DIRECTORY | default(value=config_root ~ '/' ~ vars.swift_directory) }}"
+XCODE_PROJECT = "{{ env.XCODE_PROJECT | default(value=vars.xcode_project) }}"
+XCODE_SCHEME = "{{ env.XCODE_SCHEME | default(value=vars.xcode_scheme) }}"
+XCODE_DESTINATION = "{{ env.XCODE_DESTINATION | default(value=vars.xcode_destination) }}"
+PYTHON_TESTS = "{{ env.PYTHON_TESTS | default(value=vars.python_tests) }}"
+PYTHON_ENTRYPOINT = "{{ env.PYTHON_ENTRYPOINT | default(value=vars.python_entrypoint) }}"
+PYTHON_BUILD_DIRECTORY = "{{ env.PYTHON_BUILD_DIRECTORY | default(value=vars.python_build_directory) }}"
+
+[vars]
+project_root = "."  # Relative to mise.toml; absolute paths are also allowed.
+python_source = "."  # Relative to project_root; use "." for the project folder.
+swift_directory = "."
+swift_backend = "swiftpm"
+xcode_project = ""
+xcode_scheme = ""
+xcode_destination = "platform=macOS"
+python_tests = "tests"  # Relative to project_root; absolute paths are also allowed.
+python_entrypoint = "main.py"  # Entry file, relative to project_root.
+python_build_directory = "dist"  # Output folder, relative to project_root.
+
+# kitflow:begin task.help
+[tasks."help"]
+description = "List project tasks and descriptions"
+alias = "default"
+quiet = true
+run = '''
+set -eu
+mise tasks ls
+'''
+# kitflow:end task.help
+
+# kitflow:begin task.env:local
+[tasks."env:local"]
+description = "Create .env from the example without replacing an existing file"
+run = '''
+set -eu
+if [ -e .env ] || [ -L .env ]; then
+    echo ".env already exists; edit it manually" >&2
+    exit 2
+fi
+(set -C; cat .env.example > .env)
+'''
+# kitflow:end task.env:local
+
+# kitflow:begin task.check
+[tasks."check"]
+description = "Check code, formatting, types and migrations"
+run = '''
+set -eu
+if [ "${kitflow_checked_lint:-0}" != 1 ]; then
+    mise run --quiet lint
+    kitflow_checked_lint=1
+fi
+if [ "${kitflow_checked_format_check:-0}" != 1 ]; then
+    mise run --quiet format-check
+    kitflow_checked_format_check=1
+fi
+if [ "${kitflow_checked_typecheck:-0}" != 1 ]; then
+    mise run --quiet typecheck
+    kitflow_checked_typecheck=1
+fi
+'''
+# kitflow:end task.check
+
+# kitflow:begin task.verify
+[tasks."verify"]
+description = "Run checks, application checks and tests sequentially"
+run = '''
+set -eu
+if [ "${kitflow_verified_check:-0}" != 1 ]; then
+    mise run --quiet check
+    kitflow_verified_check=1
+fi
+if [ "${kitflow_verified_test:-0}" != 1 ]; then
+    mise run --quiet test
+    kitflow_verified_test=1
+fi
+'''
+# kitflow:end task.verify
+
+# kitflow:begin task.lint
+[tasks."lint"]
+description = "Lint selected project components"
+run = '''
+set -eu
+(
+cd "${PYTHON_SOURCE:?Set PYTHON_SOURCE in mise.toml}"
+ruff check . --output-format concise
+)
+rumdl check . --output-format concise --quiet
+(
+cd "${PROJECT_SWIFT_DIRECTORY:?Set PROJECT_SWIFT_DIRECTORY in mise.toml}"
+swiftlint lint --quiet --strict --reporter xcode
+)
+'''
+# kitflow:end task.lint
+
+# kitflow:begin task.lint-fix
+[tasks."lint-fix"]
+description = "Apply supported lint fixes"
+run = '''
+set -eu
+(
+cd "${PYTHON_SOURCE:?Set PYTHON_SOURCE in mise.toml}"
+ruff check . --fix --output-format concise
+)
+rumdl check . --fix --output-format concise --quiet
+(
+cd "${PROJECT_SWIFT_DIRECTORY:?Set PROJECT_SWIFT_DIRECTORY in mise.toml}"
+swiftlint lint --fix --quiet --reporter xcode
+swiftlint lint --quiet --strict --reporter xcode
+)
+'''
+# kitflow:end task.lint-fix
+
+# kitflow:begin task.format
+[tasks."format"]
+description = "Format selected project components"
+run = '''
+set -eu
+(
+cd "${PYTHON_SOURCE:?Set PYTHON_SOURCE in mise.toml}"
+ruff format .
+)
+rumdl fmt . --output-format concise --quiet
+(
+cd "${PROJECT_SWIFT_DIRECTORY:?Set PROJECT_SWIFT_DIRECTORY in mise.toml}"
+swift format --in-place --recursive .
+)
+'''
+# kitflow:end task.format
+
+# kitflow:begin task.format-check
+[tasks."format-check"]
+description = "Check formatting without applying fixes"
+run = '''
+set -eu
+(
+cd "${PYTHON_SOURCE:?Set PYTHON_SOURCE in mise.toml}"
+ruff format . --check
+)
+rumdl fmt . --check --output-format concise --quiet
+(
+cd "${PROJECT_SWIFT_DIRECTORY:?Set PROJECT_SWIFT_DIRECTORY in mise.toml}"
+swift format lint --recursive --strict .
+)
+'''
+# kitflow:end task.format-check
+
+# kitflow:begin task.typecheck
+[tasks."typecheck"]
+description = "Check selected project types and native builds"
+run = '''
+set -eu
+(
+cd "${PYTHON_SOURCE:?Set PYTHON_SOURCE in mise.toml}"
+ty check . --output-format concise
+)
+mise run --quiet _swift build Debug
+'''
+# kitflow:end task.typecheck
+
+# kitflow:begin task.test
+[tasks."test"]
+description = "Run selected test runners"
+run = '''
+set -eu
+(
+cd "${PROJECT_ROOT:?Set PROJECT_ROOT in mise.toml}"
+uv run pytest "${PYTHON_TESTS:-tests}" --quiet
+)
+mise run --quiet _swift test Debug
+'''
+# kitflow:end task.test
+
+# kitflow:begin task.build
+[tasks."build"]
+description = "Build selected project components"
+run = '''
+set -eu
+(
+cd "${PROJECT_ROOT:?Set PROJECT_ROOT in mise.toml}"
+uv run --no-sync python -m nuitka --mode=standalone \
+    --output-dir="${PYTHON_BUILD_DIRECTORY:-dist}" \
+    "${PYTHON_ENTRYPOINT:?Set PYTHON_ENTRYPOINT in mise.toml or .env}"
+)
+mise run --quiet _swift build Debug
+'''
+# kitflow:end task.build
+
+# kitflow:begin task.build-release
+[tasks."build-release"]
+description = "Build selected native components for release"
+run = '''
+set -eu
+mise run --quiet _swift build Release
+'''
+# kitflow:end task.build-release
+
+# kitflow:begin task._swift
+[tasks."_swift"]
+description = "Run the configured SwiftPM or Xcode backend"
+usage = "arg \"<action>\"; arg \"<configuration>\""
+hide = true
+quiet = true
+run = '''
+set -eu
+(
+cd "${PROJECT_SWIFT_DIRECTORY:?Set PROJECT_SWIFT_DIRECTORY in mise.toml}"
+case "$usage_action" in build|test|resolve) ;; *) echo "Invalid Swift action" >&2; exit 2 ;; esac
+case "$usage_configuration" in Debug) configuration=debug ;; Release) configuration=release ;; *) exit 2 ;; esac
+case "${SWIFT_BACKEND:-swiftpm}" in
+    swiftpm)
+        if [ "$usage_action" = resolve ]; then
+            swift package resolve
+        else
+            # SwiftPM --quiet hides compiler warnings.
+            swift "$usage_action" --configuration "$configuration"
+        fi
+        ;;
+    xcode)
+        : "${XCODE_PROJECT:?Set vars.xcode_project}"
+        : "${XCODE_SCHEME:?Set vars.xcode_scheme}"
+        : "${XCODE_DESTINATION:?Set vars.xcode_destination}"
+        case "$XCODE_PROJECT" in
+            *.xcworkspace) set -- -workspace "$XCODE_PROJECT" ;;
+            *.xcodeproj) set -- -project "$XCODE_PROJECT" ;;
+            *) echo "Xcode requires a .xcodeproj or .xcworkspace path" >&2; exit 2 ;;
+        esac
+        action=$usage_action
+        if [ "$action" = resolve ]; then action=-resolvePackageDependencies; fi
+        xcodebuild -quiet "$@" -scheme "$XCODE_SCHEME" -destination "$XCODE_DESTINATION" -configuration "$usage_configuration" "$action"
+        ;;
+    *) echo "SWIFT_BACKEND must be swiftpm or xcode" >&2; exit 2 ;;
+esac
+)
+'''
+# kitflow:end task._swift
+
+[tasks."applications:format"]
+description = "Ensure application definitions end with exactly one newline"
+run = '''
+set -eu
+find src/mackeep/applications -type f -name '*.cfg' \
+    -exec uv run --no-sync --offline end-of-file-fixer {} +
+'''

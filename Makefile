@@ -16,10 +16,7 @@ coverage:
 coverage-report:
 	uv run python -m coverage report
 
-mypy:
-	uv run python -m mypy src/mackeep src/mackeep_cli
-
-check: lint ruff mypy ty test
+check: lint ruff ty test
 	@echo "All checks passed!"
 
 clean:
@@ -55,9 +52,7 @@ binary:
 # Cut a release in one command. Bumps the version of the tool and of the
 # application, syncs the lockfile, then commits, tags and pushes. The release
 # workflow takes over from the tag push.
-# Bump level defaults to patch: 0.12.X for the small changes,
-# `make release BUMP=minor` for the big ones (0.13.0), `BUMP=major` for the
-# breaking ones (1.0.0), or pin a version with `make release VERSION=0.13.0`.
+# BUMP defaults to patch. See doc/release.md for usage.
 BUMP ?= patch
 
 release: check

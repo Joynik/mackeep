@@ -1,0 +1,18 @@
+[global]
+line-length = 100
+
+exclude = [
+  ".beads/*.md",
+  ".agents/*.md",
+  "LICENSE",
+  # Fixture content is test input, not project documentation.
+  "tests/fixtures/Library/Mobile Documents/com~apple~CloudDocs/_blank_.md",
+]
+
+[MD013]
+line-length = 100
+code-blocks = false
+tables = false
+headings = true
+reflow = true
+reflow-mode = "normalize"
