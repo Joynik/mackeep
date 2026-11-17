@@ -53,12 +53,11 @@ final class ApplicationCreatorModel: Identifiable {
         let lowered: String = name.lowercased()
         return String(
             lowered.filter { character in
-                character.isASCII && (
-                    character.isLetter
+                character.isASCII
+                    && (character.isLetter
                         || character.isNumber
                         || character == "-"
-                        || character == "_"
-                )
+                        || character == "_")
             }
         )
     }

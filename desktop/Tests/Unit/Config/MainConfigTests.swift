@@ -111,14 +111,14 @@ final class MainConfigTests: XCTestCase {
 
     func testTheCommentsAreKeptWhenTheFileIsWritten() throws {
         let text: String = """
-        # The storage of Mackeep
-        [storage]
-        engine = dropbox
+            # The storage of Mackeep
+            [storage]
+            engine = dropbox
 
-        # The applications to sync
-        [applications_to_sync]
-        vim
-        """
+            # The applications to sync
+            [applications_to_sync]
+            vim
+            """
         let url: URL = try makeConfig(text)
         let config: MainConfig = try MainConfig.load(from: url)
 

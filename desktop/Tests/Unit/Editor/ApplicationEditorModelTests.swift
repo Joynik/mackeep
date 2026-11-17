@@ -22,21 +22,22 @@ final class ApplicationEditorModelTests: XCTestCase {
 
     /// The content of the config file of an application.
     nonisolated static let config: String = """
-    # The name of the application
-    [application]
-    name = Test App
+        # The name of the application
+        [application]
+        name = Test App
 
-    [configuration_files]
-    .testrc
-    .testdir
+        [configuration_files]
+        .testrc
+        .testdir
 
-    [exclude]
-    .testdir/cache
-    """
+        [exclude]
+        .testdir/cache
+        """
 
     /// Write a config file and return the editor.
     private func makeEditor(_ text: String = ApplicationEditorModelTests.config)
-    throws -> (ApplicationEditorModel, URL) {
+        throws -> (ApplicationEditorModel, URL)
+    {
         let url: URL = directory.appendingPathComponent("test-app.cfg")
         try text.write(to: url, atomically: true, encoding: .utf8)
         let document: INIDocument = try INIFile.load(from: url)
@@ -217,7 +218,8 @@ final class ApplicationEditorModelTests: XCTestCase {
     }
     func testExternalPathIsAcceptedWhenEnabledInSharedConfig() throws {
         let mainURL = directory.appendingPathComponent("main.cfg")
-        try "[security]\nallow_external_paths = true\n".write(to: mainURL, atomically: true, encoding: .utf8)
+        try "[security]\nallow_external_paths = true\n".write(
+            to: mainURL, atomically: true, encoding: .utf8)
         let url = directory.appendingPathComponent("external.cfg")
         let editor = ApplicationEditorModel(
             appName: "external", url: url,

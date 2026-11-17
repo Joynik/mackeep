@@ -75,10 +75,11 @@ final class HistoryStore {
             self.url = EditorPath.homeDirectory.appendingPathComponent("history.json")
             return
         }
-        let support: URL = fileManager.urls(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask
-        ).first ?? URL(fileURLWithPath: NSHomeDirectory())
+        let support: URL =
+            fileManager.urls(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask
+            ).first ?? URL(fileURLWithPath: NSHomeDirectory())
         let directory: URL = support.appendingPathComponent("Mackeep")
         self.url = directory.appendingPathComponent(HistoryStore.fileName)
     }
@@ -119,8 +120,10 @@ final class HistoryStore {
             let data = try Data(contentsOf: url)
             return try Self.decoder.decode([RunRecord].self, from: data)
                 .sorted { $0.date > $1.date }
-        } catch let error as CocoaError where
-            error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile {
+        } catch let error as CocoaError
+            where
+            error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile
+        {
             return []
         }
     }
@@ -171,7 +174,9 @@ final class HistoryStore {
     }
 
     /// Each CLI run owns a separate file, so concurrent writers never replace this history.
-    private var cliDirectory: URL { url.deletingLastPathComponent().appendingPathComponent("cli-history") }
+    private var cliDirectory: URL {
+        url.deletingLastPathComponent().appendingPathComponent("cli-history")
+    }
 
     private func cliHistoryFiles() throws -> [URL] {
         do {
@@ -180,11 +185,15 @@ final class HistoryStore {
                 throw CocoaError(.fileReadUnsupportedScheme)
             }
             return try fileManager.contentsOfDirectory(
-                at: cliDirectory, includingPropertiesForKeys: nil).filter {
-                    $0.pathExtension == "json" && UUID(uuidString: $0.deletingPathExtension().lastPathComponent) != nil
-                }
-        } catch let error as CocoaError where
-            error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile {
+                at: cliDirectory, includingPropertiesForKeys: nil
+            ).filter {
+                $0.pathExtension == "json"
+                    && UUID(uuidString: $0.deletingPathExtension().lastPathComponent) != nil
+            }
+        } catch let error as CocoaError
+            where
+            error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile
+        {
             return []
         }
     }

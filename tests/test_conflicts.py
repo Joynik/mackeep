@@ -262,7 +262,8 @@ def test_the_xdg_home_is_used(home, monkeypatch):
     assert profile._xdg_relative(".other") is None  # noqa: SLF001
 
 
-def test_the_xdg_home_outside_of_the_home_is_ignored(home, monkeypatch):
+@pytest.mark.usefixtures("home")
+def test_the_xdg_home_outside_of_the_home_is_ignored(monkeypatch):
     """The XDG config home outside of the home directory is ignored."""
     monkeypatch.setenv("XDG_CONFIG_HOME", "/somewhere/else")
 

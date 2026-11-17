@@ -16,8 +16,7 @@ def history_directory() -> Path:
     if platform.system() == "Darwin":
         return Path.home() / "Library/Application Support/Mackeep/cli-history"
     return (
-        Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state"))
-        / "mackeep/cli-history"
+        Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "mackeep/cli-history"
     )
 
 

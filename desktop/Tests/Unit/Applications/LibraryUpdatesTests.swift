@@ -142,8 +142,9 @@ final class LibraryUpdatesTests: XCTestCase {
         XCTAssertFalse(model.isListed(application))
         XCTAssertTrue(model.removedLibraryDefinitions.isEmpty)
         XCTAssertEqual(try String(contentsOf: settings, encoding: .utf8), "personal settings")
-        XCTAssertTrue(FileManager.default.fileExists(
-            atPath: directory.appendingPathComponent("removed-vim").path))
+        XCTAssertTrue(
+            FileManager.default.fileExists(
+                atPath: directory.appendingPathComponent("removed-vim").path))
     }
 
     func testDefinitionRemovalStopsIfSelectionCannotBeSaved() async throws {
@@ -155,12 +156,14 @@ final class LibraryUpdatesTests: XCTestCase {
         let application = try XCTUnwrap(model.applications.first)
         let parent = directory.appendingPathComponent("blocked")
         try Data().write(to: parent)
-        model.setConfig(MainConfig(
-            url: parent.appendingPathComponent("main.cfg"),
-            document: INIDocument(text: "[applications_to_sync]\nvim\n")))
+        model.setConfig(
+            MainConfig(
+                url: parent.appendingPathComponent("main.cfg"),
+                document: INIDocument(text: "[applications_to_sync]\nvim\n")))
         await model.removeLibraryDefinition(application)
         XCTAssertNotNil(model.libraryError)
-        XCTAssertFalse(FileManager.default.fileExists(
-            atPath: directory.appendingPathComponent("removed-vim").path))
+        XCTAssertFalse(
+            FileManager.default.fileExists(
+                atPath: directory.appendingPathComponent("removed-vim").path))
     }
 }

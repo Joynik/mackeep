@@ -740,9 +740,7 @@ class ApplicationProfile:
             paths = [staged]
             if os.path.isdir(staged):
                 for parent, directories, files in os.walk(staged):
-                    paths.extend(
-                        os.path.join(parent, name) for name in directories + files
-                    )
+                    paths.extend(os.path.join(parent, name) for name in directories + files)
             for path in reversed(paths):
                 suffix = os.path.relpath(path, staged)
                 entry = relative if suffix == "." else f"{relative}/{suffix}"
@@ -795,10 +793,7 @@ class ApplicationProfile:
                     filename,
                     local,
                     backup,
-                    {
-                        os.path.join(state.root, path)
-                        for path in state.others(self.app_name)
-                    },
+                    {os.path.join(state.root, path) for path in state.others(self.app_name)},
                 )
                 owned.update(
                     state.relative(os.path.join(destination, leaf))
@@ -849,9 +844,7 @@ class ApplicationProfile:
     ) -> None:
         """Stage only obsolete leaves that have no remaining owner."""
         obsolete_paths = (
-            set(state.owners.get(self.app_name, []))
-            - owned
-            - state.others(self.app_name)
+            set(state.owners.get(self.app_name, [])) - owned - state.others(self.app_name)
         )
         for path in sorted(obsolete_paths):
             obsolete = os.path.join(state.root, path)
@@ -864,11 +857,7 @@ class ApplicationProfile:
                 os.path.realpath(state.root),
             ):
                 raise ValueError(f"Cleanup path escapes storage: {obsolete}")
-            if (
-                os.path.isdir(obsolete)
-                and not os.path.islink(obsolete)
-                and os.listdir(obsolete)
-            ):
+            if os.path.isdir(obsolete) and not os.path.islink(obsolete) and os.listdir(obsolete):
                 continue
             if (
                 not self.dry_run
@@ -896,18 +885,12 @@ class ApplicationProfile:
         """Stage an application's replacements, cleanup, and ownership together."""
         self._restoring = not to_backup
         self.preflight(
-            "copy_files_to_mackeep_folder"
-            if to_backup
-            else "copy_files_from_mackeep_folder",
+            "copy_files_to_mackeep_folder" if to_backup else "copy_files_from_mackeep_folder",
         )
         self._restore_modes = (
             BackupState(self.mackeep.mackeep_folder).modes if not to_backup else {}
         )
-        state = (
-            BackupState(self.mackeep.mackeep_folder)
-            if to_backup and self.app_name
-            else None
-        )
+        state = BackupState(self.mackeep.mackeep_folder) if to_backup and self.app_name else None
         if state and not state.owners:
             state.owners.update(self.ownership_baseline)
         transaction = Transaction()
@@ -928,9 +911,7 @@ class ApplicationProfile:
         except OSError as exc:
             self.failed = True
             self._pending_events = None
-            qualifier = (
-                "permission issue" if isinstance(exc, PermissionError) else "I/O error"
-            )
+            qualifier = "permission issue" if isinstance(exc, PermissionError) else "I/O error"
             print(
                 f"Error: Unable to copy file for application {self.app_name} "
                 f"from {self._active_source} ({qualifier}): {exc}",
@@ -1045,15 +1026,12 @@ class ApplicationProfile:
             # If the file exists and is not already a link pointing to Mackeep
             if (os.path.isfile(home_filepath) or os.path.isdir(home_filepath)) and not (
                 os.path.islink(home_filepath)
-                and (
-                    os.path.isfile(mackeep_filepath) or os.path.isdir(mackeep_filepath)
-                )
+                and (os.path.isfile(mackeep_filepath) or os.path.isdir(mackeep_filepath))
                 and os.path.samefile(home_filepath, mackeep_filepath)
             ):
                 if self.verbose:
                     print(
-                        f"Backing up\n  {home_filepath}\n  to\n"
-                        f"  {mackeep_filepath} ...",
+                        f"Backing up\n  {home_filepath}\n  to\n  {mackeep_filepath} ...",
                     )
                 else:
                     print(f"Linking {filename} ...")
@@ -1144,8 +1122,7 @@ class ApplicationProfile:
             if file_or_dir_exists and not pointing_to_mackeep and supported:
                 if self.verbose:
                     print(
-                        f"Restoring\n  linking {home_filepath}\n"
-                        f"  to      {mackeep_filepath} ...",
+                        f"Restoring\n  linking {home_filepath}\n  to      {mackeep_filepath} ...",
                     )
                 else:
                     print(f"Restoring {filename} ...")

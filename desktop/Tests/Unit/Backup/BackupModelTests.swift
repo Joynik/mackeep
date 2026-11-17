@@ -34,44 +34,44 @@ final class BackupModelTests: XCTestCase {
     ) throws -> MackeepCommand {
         let url: URL = directory.appendingPathComponent("mackeep-cli")
         let script: String = """
-        #!/bin/sh
-        set -eu
-        printf '%s\\n' "$*" >> "$HOME/arguments"
-        [ "$1" = "--json" ] || exit 64
-        action="$2"
-        shift 2
-        if [ "$action" = "config" ]; then
-          [ "$#" -eq 0 ] || exit 64
-          cat "$CONFIG"
-          exit
-        fi
-        case "$action" in backup|restore) ;; *) exit 64 ;; esac
-        preview=0
-        force=0
-        scoped=0
-        for argument in "$@"; do
-          case "$argument" in
-            --dry-run) preview=$((preview + 1));;
-            --force) force=$((force + 1));;
-            demo) scoped=$((scoped + 1));;
-            *) exit 64;;
-          esac
-        done
-        [ "$scoped" -le 1 ] && [ "$preview" -le 1 ] && [ "$force" -le 1 ] || exit 64
-        if [ "$preview" -eq 1 ]; then
-          [ "$force" -eq 0 ] || exit 64
-          cat "$PLAN"
-          exit
-        fi
-        if [ "$action" = "restore" ]; then
-          [ "$force" -eq 1 ] || exit 64
-        else
-          [ "$force" -eq 0 ] || exit 64
-        fi
-        printf '{"schema_version":4,"event":"start","app":"demo","action":"%s"}\\n' "$action"
-        echo '{"schema_version":4,"event":"file","app":"demo","action":"copy","src":"/a/b.txt","dst":"/c/b.txt","size_bytes":12}'
-        printf '{"schema_version":4,"event":"done","app":"demo","action":"%s","files":1,"bytes":12,"skipped":0}\\n' "$action"
-        """
+            #!/bin/sh
+            set -eu
+            printf '%s\\n' "$*" >> "$HOME/arguments"
+            [ "$1" = "--json" ] || exit 64
+            action="$2"
+            shift 2
+            if [ "$action" = "config" ]; then
+              [ "$#" -eq 0 ] || exit 64
+              cat "$CONFIG"
+              exit
+            fi
+            case "$action" in backup|restore) ;; *) exit 64 ;; esac
+            preview=0
+            force=0
+            scoped=0
+            for argument in "$@"; do
+              case "$argument" in
+                --dry-run) preview=$((preview + 1));;
+                --force) force=$((force + 1));;
+                demo) scoped=$((scoped + 1));;
+                *) exit 64;;
+              esac
+            done
+            [ "$scoped" -le 1 ] && [ "$preview" -le 1 ] && [ "$force" -le 1 ] || exit 64
+            if [ "$preview" -eq 1 ]; then
+              [ "$force" -eq 0 ] || exit 64
+              cat "$PLAN"
+              exit
+            fi
+            if [ "$action" = "restore" ]; then
+              [ "$force" -eq 1 ] || exit 64
+            else
+              [ "$force" -eq 0 ] || exit 64
+            fi
+            printf '{"schema_version":4,"event":"start","app":"demo","action":"%s"}\\n' "$action"
+            echo '{"schema_version":4,"event":"file","app":"demo","action":"copy","src":"/a/b.txt","dst":"/c/b.txt","size_bytes":12}'
+            printf '{"schema_version":4,"event":"done","app":"demo","action":"%s","files":1,"bytes":12,"skipped":0}\\n' "$action"
+            """
         try script.write(to: url, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes(
             [.posixPermissions: 0o755],
@@ -98,7 +98,9 @@ final class BackupModelTests: XCTestCase {
     /// Wait for the model to finish the command it runs.
     private func waitForThePlan(_ model: BackupModel) async throws {
         do {
-            try await waitUntil("Backup stopped; error: \(String(describing: model.presentedError))") {
+            try await waitUntil(
+                "Backup stopped; error: \(String(describing: model.presentedError))"
+            ) {
                 !model.isRunning
             }
         } catch {
@@ -126,12 +128,12 @@ final class BackupModelTests: XCTestCase {
 
     func testOverwriteRowsAreHiddenForBackupAndCombinedForRestore() async throws {
         let plan = """
-        {"schema_version":4,"actions":[
-          {"app":"demo","action":"copy","src":"/a","dst":"/b","size_bytes":12},
-          {"app":"demo","action":"conflict","src":"/a","dst":"/b","size_bytes":12},
-          {"app":"demo","action":"conflict","src":"/c","dst":"/d","size_bytes":3,"would_overwrite":true}
-        ],"summary":{"apps":["demo"],"actions":{"copy":1,"conflict":2},"total_actions":3,"total_bytes":15,"files":2}}
-        """
+            {"schema_version":4,"actions":[
+              {"app":"demo","action":"copy","src":"/a","dst":"/b","size_bytes":12},
+              {"app":"demo","action":"conflict","src":"/a","dst":"/b","size_bytes":12},
+              {"app":"demo","action":"conflict","src":"/c","dst":"/d","size_bytes":3,"would_overwrite":true}
+            ],"summary":{"apps":["demo"],"actions":{"copy":1,"conflict":2},"total_actions":3,"total_bytes":15,"files":2}}
+            """
         let model = BackupModel(
             command: try makeTool(plan: plan),
             historyStore: HistoryStore(url: directory.appendingPathComponent("history.json")))
@@ -149,9 +151,12 @@ final class BackupModelTests: XCTestCase {
     }
 
     func testExecutionOverwriteFlagReachesTheTableRow() throws {
-        let event = try JSONDecoder().decode(MackeepEvent.self, from: Data("""
-        {"schema_version":4,"event":"file","app":"demo","action":"copy","src":"/a","dst":"/b","would_overwrite":true}
-        """.utf8))
+        let event = try JSONDecoder().decode(
+            MackeepEvent.self,
+            from: Data(
+                """
+                {"schema_version":4,"event":"file","app":"demo","action":"copy","src":"/a","dst":"/b","would_overwrite":true}
+                """.utf8))
         XCTAssertEqual(event.actionRow?.wouldOverwrite, true)
     }
 
@@ -197,7 +202,8 @@ final class BackupModelTests: XCTestCase {
         let toolURL = URL(fileURLWithPath: command.path)
         var script = try String(contentsOf: toolURL, encoding: .utf8)
         script += "\necho '{\"schema_version\":4,\"event\":\"start\",\"app\":\"second\"}'\n"
-        script += "\necho '{\"schema_version\":4,\"event\":\"done\",\"app\":\"second\",\"action\":\"backup\",\"files\":2,\"bytes\":8}'\n"
+        script +=
+            "\necho '{\"schema_version\":4,\"event\":\"done\",\"app\":\"second\",\"action\":\"backup\",\"files\":2,\"bytes\":8}'\n"
         try script.write(to: toolURL, atomically: true, encoding: .utf8)
         let model = BackupModel(
             command: command,
@@ -235,7 +241,9 @@ final class BackupModelTests: XCTestCase {
         XCTAssertNotNil(model.presentedError)
         XCTAssertTrue(model.history.isEmpty)
         XCTAssertTrue(model.executionActions.isEmpty)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: directory.appendingPathComponent("arguments").path))
+        XCTAssertFalse(
+            FileManager.default.fileExists(
+                atPath: directory.appendingPathComponent("arguments").path))
     }
 
     func testFailedRestorePreviewClearsAnEarlierPlan() async throws {
@@ -309,15 +317,16 @@ final class BackupModelTests: XCTestCase {
         let command = try makeTool()
         let tool = URL(fileURLWithPath: command.path)
         var script = try String(contentsOf: tool, encoding: .utf8)
-        script += "\n" + #"""
-        echo '{"schema_version":4,"event":"start","app":"large"}'
-        i=0
-        while [ $i -lt 5010 ]; do
-          printf '{"schema_version":4,"event":"file","app":"large","action":"copy","src":"/file-%s","size_bytes":1}\n' "$i"
-          i=$((i + 1))
-        done
-        echo '{"schema_version":4,"event":"done","app":"large","files":5010,"bytes":5010}'
-        """# + "\n"
+        script +=
+            "\n" + #"""
+                echo '{"schema_version":4,"event":"start","app":"large"}'
+                i=0
+                while [ $i -lt 5010 ]; do
+                  printf '{"schema_version":4,"event":"file","app":"large","action":"copy","src":"/file-%s","size_bytes":1}\n' "$i"
+                  i=$((i + 1))
+                done
+                echo '{"schema_version":4,"event":"done","app":"large","files":5010,"bytes":5010}'
+                """# + "\n"
         try script.write(to: tool, atomically: true, encoding: .utf8)
         let model = BackupModel(
             command: command,
@@ -352,7 +361,8 @@ final class BackupModelTests: XCTestCase {
     }
 
     func testExecutionRowsPreserveStaleRemovalFlags() throws {
-        let json = #"{"schema_version":4,"event":"file","app":"demo","action":"stale_in_backup","src":"/old","will_remove":true}"#
+        let json =
+            #"{"schema_version":4,"event":"file","app":"demo","action":"stale_in_backup","src":"/old","will_remove":true}"#
         let event = try JSONDecoder().decode(MackeepEvent.self, from: Data(json.utf8))
         XCTAssertEqual(event.actionRow?.willRemove, true)
         XCTAssertEqual(event.actionRow?.src, "/old")
@@ -373,13 +383,17 @@ final class BackupModelTests: XCTestCase {
         try await waitForThePlan(model)
         XCTAssertNil(model.presentedError)
         let arguments = try String(
-            contentsOf: directory.appendingPathComponent("arguments"), encoding: .utf8)
-            .split(separator: "\n").map(String.init)
-        XCTAssertEqual(arguments, [
-            "--json config", "--json backup demo --dry-run", "--json config", "--json backup demo",
-            "--json config", "--json restore demo --dry-run", "--json config",
-            "--json restore demo --dry-run", "--json restore demo --force",
-        ])
+            contentsOf: directory.appendingPathComponent("arguments"), encoding: .utf8
+        )
+        .split(separator: "\n").map(String.init)
+        XCTAssertEqual(
+            arguments,
+            [
+                "--json config", "--json backup demo --dry-run", "--json config",
+                "--json backup demo",
+                "--json config", "--json restore demo --dry-run", "--json config",
+                "--json restore demo --dry-run", "--json restore demo --force",
+            ])
         XCTAssertEqual(model.history.map(\.command).sorted(), ["backup", "restore"])
         XCTAssertTrue(model.history.allSatisfy(\.succeeded))
     }
@@ -404,7 +418,9 @@ final class BackupModelTests: XCTestCase {
         XCTAssertNil(model.plannedCommand)
         XCTAssertNil(model.presentedError)
         XCTAssertTrue(model.history.isEmpty)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: directory.appendingPathComponent("arguments").path))
+        XCTAssertFalse(
+            FileManager.default.fileExists(
+                atPath: directory.appendingPathComponent("arguments").path))
     }
 
     func testTerminationDuringStreamingWaitsForTheChildToExit() async throws {
@@ -412,17 +428,18 @@ final class BackupModelTests: XCTestCase {
         let tool = URL(fileURLWithPath: command.path)
         var script = try String(contentsOf: tool, encoding: .utf8)
         let insertion = """
-        trap 'echo "{\"schema_version\":4,\"event\":\"done\",\"app\":\"demo\",\"files\":1,\"bytes\":12}"; exit 130' USR1
-        echo $$ > "$HOME/pid"
-        touch "$HOME/stream-started"
-        i=0
-        while [ "$i" -lt 500 ]; do
-          sleep 0.01
-          i=$((i + 1))
-        done
-        exit 75
-        """
-        let completion = try XCTUnwrap(script.range(of: #"printf '{"schema_version":4,"event":"done""#))
+            trap 'echo "{\"schema_version\":4,\"event\":\"done\",\"app\":\"demo\",\"files\":1,\"bytes\":12}"; exit 130' USR1
+            echo $$ > "$HOME/pid"
+            touch "$HOME/stream-started"
+            i=0
+            while [ "$i" -lt 500 ]; do
+              sleep 0.01
+              i=$((i + 1))
+            done
+            exit 75
+            """
+        let completion = try XCTUnwrap(
+            script.range(of: #"printf '{"schema_version":4,"event":"done""#))
         script.replaceSubrange(completion.lowerBound..<script.endIndex, with: insertion + "\n")
         try script.write(to: tool, atomically: true, encoding: .utf8)
         let model = BackupModel(
@@ -430,7 +447,8 @@ final class BackupModelTests: XCTestCase {
             historyStore: HistoryStore(url: directory.appendingPathComponent("history.json")))
         model.backup()
         try await waitUntil("Stream process started") {
-            FileManager.default.fileExists(atPath: directory.appendingPathComponent("stream-started").path)
+            FileManager.default.fileExists(
+                atPath: directory.appendingPathComponent("stream-started").path)
         }
         XCTAssertTrue(model.canCancel)
         await model.stopForTermination()
@@ -440,9 +458,12 @@ final class BackupModelTests: XCTestCase {
         XCTAssertEqual(model.history.first?.succeeded, false)
         XCTAssertEqual(model.history.first?.message, L10n.string("backup.cancelled"))
         XCTAssertNil(model.presentedError)
-        let pid = try XCTUnwrap(Int32(String(
-            contentsOf: directory.appendingPathComponent("pid"), encoding: .utf8)
-            .trimmingCharacters(in: .whitespacesAndNewlines)))
+        let pid = try XCTUnwrap(
+            Int32(
+                String(
+                    contentsOf: directory.appendingPathComponent("pid"), encoding: .utf8
+                )
+                .trimmingCharacters(in: .whitespacesAndNewlines)))
         XCTAssertEqual(kill(pid, 0), -1, "Cancelled child must have exited")
         XCTAssertEqual(errno, ESRCH)
     }
@@ -450,12 +471,17 @@ final class BackupModelTests: XCTestCase {
     func testRealCLIReportsUninitializedStorageThenRoundTripsSelectedData() async throws {
         let root = INICompatibilityTests.repository
         let python = root.appendingPathComponent(".venv/bin/python")
-        XCTAssertTrue(FileManager.default.isExecutableFile(atPath: python.path), "Run uv sync before Swift integration tests")
+        XCTAssertTrue(
+            FileManager.default.isExecutableFile(atPath: python.path),
+            "Run uv sync before Swift integration tests")
         let launcher = directory.appendingPathComponent("real-cli")
-        func quoted(_ text: String) -> String { "'" + text.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+        func quoted(_ text: String) -> String {
+            "'" + text.replacingOccurrences(of: "'", with: "'\\''") + "'"
+        }
         try "#!/bin/sh\nexec \(quoted(python.path)) -m mackeep_cli \"$@\"\n".write(
             to: launcher, atomically: true, encoding: .utf8)
-        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: launcher.path)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755], ofItemAtPath: launcher.path)
         let definitions = directory.appendingPathComponent(".mackeep")
         let storage = directory.appendingPathComponent("storage")
         let local = directory.appendingPathComponent("app")
@@ -463,12 +489,14 @@ final class BackupModelTests: XCTestCase {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         }
         let config = directory.appendingPathComponent(".mackeep.cfg")
-        try "[storage]\nengine = file_system\npath = \(storage.path)\n[applications_to_sync]\n".write(
-            to: config, atomically: true, encoding: .utf8)
+        try "[storage]\nengine = file_system\npath = \(storage.path)\n[applications_to_sync]\n"
+            .write(
+                to: config, atomically: true, encoding: .utf8)
         try "[application]\nname = Demo\n[configuration_files]\napp\n[exclude]\napp/cache\n".write(
             to: definitions.appendingPathComponent("demo.cfg"), atomically: true, encoding: .utf8)
         try "[application]\nname = Ignored\n[configuration_files]\nignored\n".write(
-            to: definitions.appendingPathComponent("ignored.cfg"), atomically: true, encoding: .utf8)
+            to: definitions.appendingPathComponent("ignored.cfg"), atomically: true, encoding: .utf8
+        )
         let bytes = Data([0, 255, 65, 10])
         try bytes.write(to: local.appendingPathComponent("settings"))
         try Data("local cache".utf8).write(to: local.appendingPathComponent("cache"))
@@ -501,14 +529,17 @@ final class BackupModelTests: XCTestCase {
         XCTAssertEqual(model.lastRun?.files, 1)
         XCTAssertEqual(model.lastRun?.bytes, bytes.count)
         XCTAssertEqual(try Data(contentsOf: backup.appendingPathComponent("app/settings")), bytes)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: backup.appendingPathComponent("ignored").path))
-        XCTAssertFalse(FileManager.default.fileExists(atPath: backup.appendingPathComponent("app/cache").path))
+        XCTAssertFalse(
+            FileManager.default.fileExists(atPath: backup.appendingPathComponent("ignored").path))
+        XCTAssertFalse(
+            FileManager.default.fileExists(atPath: backup.appendingPathComponent("app/cache").path))
         let updatedBytes = Data("updated snapshot".utf8)
         try updatedBytes.write(to: local.appendingPathComponent("settings"))
         model.backup()
         try await waitForThePlan(model)
         XCTAssertEqual(model.lastRun?.succeeded, true)
-        XCTAssertEqual(try Data(contentsOf: backup.appendingPathComponent("app/settings")), updatedBytes)
+        XCTAssertEqual(
+            try Data(contentsOf: backup.appendingPathComponent("app/settings")), updatedBytes)
         try Data("local changes".utf8).write(to: local.appendingPathComponent("settings"))
         model.dryRunRestore()
         try await waitForThePlan(model)
@@ -519,7 +550,9 @@ final class BackupModelTests: XCTestCase {
         XCTAssertNil(model.presentedError)
         XCTAssertEqual(model.lastRun?.succeeded, true)
         XCTAssertEqual(try Data(contentsOf: local.appendingPathComponent("settings")), updatedBytes)
-        XCTAssertEqual(try String(contentsOf: local.appendingPathComponent("cache"), encoding: .utf8), "local cache")
+        XCTAssertEqual(
+            try String(contentsOf: local.appendingPathComponent("cache"), encoding: .utf8),
+            "local cache")
         XCTAssertEqual(model.history.count, 4)
         XCTAssertEqual(model.history.filter(\.succeeded).count, 3)
         XCTAssertEqual(model.lastRun?.bytes, updatedBytes.count)
@@ -528,7 +561,9 @@ final class BackupModelTests: XCTestCase {
     func testHistoryKeepsOnlyTheNewestFiftyRecordsInDateOrder() throws {
         let store = HistoryStore(url: directory.appendingPathComponent("history.json"))
         let records = (0..<55).map { index in
-            RunRecord(date: Date(timeIntervalSince1970: Double(index)), command: "backup", succeeded: true, files: index)
+            RunRecord(
+                date: Date(timeIntervalSince1970: Double(index)), command: "backup",
+                succeeded: true, files: index)
         }
         for record in records.reversed() { try store.append(record) }
         XCTAssertEqual(try store.load().map(\.files), Array((5..<55).reversed()))

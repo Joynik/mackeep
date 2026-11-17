@@ -10,12 +10,7 @@ from mackeep.appsdb import ApplicationsDatabase
 from mackeep.mackeep import Mackeep
 
 # The content of the main config file
-MAIN_CONFIG = (
-    "[storage]\n"
-    "engine = file_system\n"
-    "path = {storage}\n"
-    "directory = Mackeep\n"
-)
+MAIN_CONFIG = "[storage]\nengine = file_system\npath = {storage}\ndirectory = Mackeep\n"
 
 
 def write_config(home, path, content=MAIN_CONFIG):
@@ -51,8 +46,7 @@ def test_the_environment_is_not_usable_without_the_storage_folder(home):
     write_config(
         home,
         home / ".mackeep.cfg",
-        "[storage]\nengine = file_system\npath = {storage}/missing\n"
-        "directory = Mackeep\n",
+        "[storage]\nengine = file_system\npath = {storage}/missing\ndirectory = Mackeep\n",
     )
 
     mackeep = Mackeep()
@@ -144,7 +138,8 @@ def test_nothing_is_backed_up_with_an_empty_list(home):
 def test_selection_reuses_database_without_mutating_it(home):
     """Selecting from a loaded catalog must not parse it again or alter it."""
     write_config(
-        home, home / ".mackeep.cfg",
+        home,
+        home / ".mackeep.cfg",
         MAIN_CONFIG + "\n[applications_to_ignore]\nzsh\n",
     )
     mackeep = Mackeep()
@@ -159,9 +154,9 @@ def test_selection_reuses_database_without_mutating_it(home):
 def test_explicit_selection_does_not_load_catalog(home):
     """A configured list needs no catalog until the caller validates its names."""
     write_config(
-        home, home / ".mackeep.cfg",
-        MAIN_CONFIG + "\n[applications_to_sync]\nzsh\n"
-        "\n[applications_to_ignore]\nvim\n",
+        home,
+        home / ".mackeep.cfg",
+        MAIN_CONFIG + "\n[applications_to_sync]\nzsh\n\n[applications_to_ignore]\nvim\n",
     )
     mackeep = Mackeep()
     with patch("mackeep.mackeep.appsdb.ApplicationsDatabase") as constructor:

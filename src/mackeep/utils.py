@@ -70,8 +70,6 @@ def sensitive_path_reason(path: str) -> str | None:
     return sensitive_reason(absolute)
 
 
-
-
 def confirm(question: str) -> bool:
     """
     Ask the user if he really wants something to happen.
@@ -101,8 +99,6 @@ def confirm(question: str) -> bool:
             break
 
     return confirmed
-
-
 
 
 def copy(
@@ -306,9 +302,7 @@ def get_google_drive_folder_location() -> str:
         (str) Full path to the current Google Drive folder
     """
     gdrive_db_path = "Library/Application Support/Google/Drive/sync_config.db"
-    yosemite_gdrive_db_path = (
-        "Library/Application Support/Google/Drive/user_default/sync_config.db"
-    )
+    yosemite_gdrive_db_path = "Library/Application Support/Google/Drive/user_default/sync_config.db"
     yosemite_gdrive_db = os.path.join(os.path.expanduser("~"), yosemite_gdrive_db_path)
     if os.path.isfile(yosemite_gdrive_db):
         gdrive_db_path = yosemite_gdrive_db
@@ -326,10 +320,7 @@ def get_google_drive_folder_location() -> str:
                 sqlite3.connect(Path(gdrive_db).as_uri() + "?mode=ro", uri=True),
             ) as con:
                 cur = con.cursor()
-                query = (
-                    "SELECT data_value FROM data "
-                    "WHERE entry_key = 'local_sync_root_path';"
-                )
+                query = "SELECT data_value FROM data WHERE entry_key = 'local_sync_root_path';"
                 cur.execute(query)
                 data = cur.fetchone()
                 if data and data[0]:
@@ -362,10 +353,6 @@ def get_icloud_folder_location() -> str:
         error(constants.ERROR_UNABLE_TO_FIND_STORAGE.format(provider="iCloud Drive"))
 
     return str(icloud_home)
-
-
-
-
 
 
 def set_mode(path: str, mode: int) -> None:

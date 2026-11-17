@@ -40,9 +40,9 @@ struct MackeepDesktopApp: App {
                     ToolCompatibilityView(model: environment.settings)
                 }
             }
-                .environment(environment)
-                .environment(\.locale, environment.language.resolvedLocale)
-                .preferredColorScheme(environment.appearance.colorScheme)
+            .environment(environment)
+            .environment(\.locale, environment.language.resolvedLocale)
+            .preferredColorScheme(environment.appearance.colorScheme)
         }
         .defaultSize(width: 820, height: 600)
         .windowResizability(.contentMinSize)
@@ -53,7 +53,7 @@ struct MackeepDesktopApp: App {
                 ToolCompatibilityView(model: environment.settings)
                     .environment(environment)
             } else if let appName: String,
-               let model: ApplicationEditorModel = environment.editor(for: appName)
+                let model: ApplicationEditorModel = environment.editor(for: appName)
             {
                 ApplicationEditorView(model: model)
                     .environment(environment)

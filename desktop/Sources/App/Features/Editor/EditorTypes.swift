@@ -106,10 +106,10 @@ struct EditorPath: Identifiable, Equatable {
         let expanded: String = EditorPath.expanded(trimmed)
 
         // The path is inside the root of the section.
-        let rootPath: String = (isXDG
+        let rootPath: String =
+            (isXDG
             ? EditorPath.xdgDirectory
-            : EditorPath.homeDirectory
-        ).standardizedFileURL.path
+            : EditorPath.homeDirectory).standardizedFileURL.path
         let prefix: String = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
         if expanded.hasPrefix(prefix) {
             return String(expanded.dropFirst(prefix.count))
@@ -122,7 +122,7 @@ struct EditorPath: Identifiable, Equatable {
         // The path is outside of the root, the leading slash is cut.
         var relative: String = String(expanded.drop(while: { $0 == "/" }))
         if isXDG, let xdg: String = EditorPath.xdgRelativePath,
-           relative.hasPrefix(xdg + "/")
+            relative.hasPrefix(xdg + "/")
         {
             // The XDG config home is inside the home directory, it is cut
             // as well.

@@ -67,8 +67,8 @@ def test_command_writes_only_the_requested_output(tmp_path, monkeypatch):
     expected = {"revision": REVISION, "files": {}}
     monkeypatch.setattr(generate_library_manifest, "generate", lambda *_args: expected)
     monkeypatch.setattr(
-        "sys.argv", ["generate_library_manifest", "--revision", REVISION,
-                     "--output", str(destination)],
+        "sys.argv",
+        ["generate_library_manifest", "--revision", REVISION, "--output", str(destination)],
     )
     generate_library_manifest.main()
     assert json.loads(destination.read_text()) == expected
@@ -76,7 +76,8 @@ def test_command_writes_only_the_requested_output(tmp_path, monkeypatch):
 
 def test_command_requires_an_output_path(monkeypatch):
     monkeypatch.setattr(
-        "sys.argv", ["generate_library_manifest", "--revision", REVISION],
+        "sys.argv",
+        ["generate_library_manifest", "--revision", REVISION],
     )
     with pytest.raises(SystemExit) as error:
         generate_library_manifest.main()

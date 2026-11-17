@@ -47,15 +47,16 @@ final class MainConfig {
     /// - Returns: The config.
     static func createIfNeeded(at url: URL) throws -> MainConfig {
         if !FileManager.default.fileExists(atPath: url.path) {
-            let document: INIDocument = INIDocument(text: """
-            # The configuration of Mackeep.
-            # See https://github.com/Joynik/mackeep/blob/master/doc/README.md
+            let document: INIDocument = INIDocument(
+                text: """
+                    # The configuration of Mackeep.
+                    # See https://github.com/Joynik/mackeep/blob/master/doc/README.md
 
-            [storage]
-            engine = unconfigured
-            directory = Mackeep
+                    [storage]
+                    engine = unconfigured
+                    directory = Mackeep
 
-            """)
+                    """)
             try INIFile.save(document, to: url, backup: false)
         }
 
@@ -75,7 +76,8 @@ final class MainConfig {
     /// Whether definitions may refer to files outside HOME.
     var allowExternalPaths: Bool {
         ["true", "yes", "1", "on"].contains(
-            document.value(forKey: "allow_external_paths", inSection: "security")?.lowercased() ?? "false"
+            document.value(forKey: "allow_external_paths", inSection: "security")?.lowercased()
+                ?? "false"
         )
     }
 
@@ -158,7 +160,8 @@ final class MainConfig {
     func save() throws {
         Self.writeLock.lock()
         defer { Self.writeLock.unlock() }
-        var latest = FileManager.default.fileExists(atPath: url.path)
+        var latest =
+            FileManager.default.fileExists(atPath: url.path)
             ? try INIFile.load(from: url, stripsInlineComments: true)
             : document
         for section in listUpdates.keys.sorted() {

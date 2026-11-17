@@ -190,10 +190,12 @@ private struct PathRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: path.exists
-                ? (path.isDir ? "folder" : "doc")
-                : "questionmark.folder")
-                .foregroundStyle(path.exists ? Color.secondary : Color.orange)
+            Image(
+                systemName: path.exists
+                    ? (path.isDir ? "folder" : "doc")
+                    : "questionmark.folder"
+            )
+            .foregroundStyle(path.exists ? Color.secondary : Color.orange)
 
             Text(path.path)
                 .font(.callout.monospaced())

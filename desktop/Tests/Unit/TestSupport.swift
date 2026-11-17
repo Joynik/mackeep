@@ -11,8 +11,9 @@ func waitUntil(
     while !condition() {
         guard ContinuousClock.now < deadline else {
             XCTFail("Timed out: \(description)", file: file, line: line)
-            throw NSError(domain: "MackeepTests.Timeout", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: description])
+            throw NSError(
+                domain: "MackeepTests.Timeout", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: description])
         }
         try await Task.sleep(for: .milliseconds(10))
     }

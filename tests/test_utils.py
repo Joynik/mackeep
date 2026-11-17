@@ -44,8 +44,6 @@ class TestMackeep(unittest.TestCase):
                 assert utils.confirm("Retry invalid input") is expected
                 assert prompt.call_count == len(["unexpected", answer])
 
-
-
     def test_copy_file(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "source"
@@ -111,9 +109,7 @@ class TestMackeep(unittest.TestCase):
             assert destination.is_dir()
             for root in (source, destination):
                 assert {
-                    str(p.relative_to(root)): p.read_bytes()
-                    for p in root.rglob("*")
-                    if p.is_file()
+                    str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()
                 } == expected
 
     def test_copy_dir_that_exists(self):
@@ -340,7 +336,6 @@ class TestMackeep(unittest.TestCase):
             con.close()
 
             assert utils.get_google_drive_folder_location() == expected_path
-
 
     def test_can_file_be_synced_on_current_platform(self):
         # Any file path will do, even if it doesn't exist

@@ -326,7 +326,8 @@ struct MackeepEvent: Codable, Equatable, Sendable {
     /// Share the table row format with dry-run actions.
     var actionRow: MackeepAction? {
         guard event == "file" || event == "skip",
-              let app, let action, let src else { return nil }
+            let app, let action, let src
+        else { return nil }
         return MackeepAction(
             app: app, action: action, src: src, dst: dst ?? "", sizeBytes: sizeBytes,
             reason: reason, wouldOverwrite: wouldOverwrite, willRemove: willRemove)

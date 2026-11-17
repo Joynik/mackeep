@@ -97,12 +97,14 @@ def plan() -> list[dict[str, str]]:
         if action["action"] == "copy":
             directory: str | None = _storage_directory(legacy)
             if directory:
-                actions.append({
-                    "action": "set_directory",
-                    "src": legacy,
-                    "dst": new,
-                    "directory": directory,
-                })
+                actions.append(
+                    {
+                        "action": "set_directory",
+                        "src": legacy,
+                        "dst": new,
+                        "directory": directory,
+                    }
+                )
         # Only the first legacy config file is migrated.
         break
 
@@ -140,7 +142,7 @@ def _storage_directory(config_path: str) -> str | None:
     """
     try:
         config: Config = Config(config_path)
-    except (ConfigError, SystemExit):
+    except ConfigError, SystemExit:
         return None
 
     if _has_directory_option(config_path):

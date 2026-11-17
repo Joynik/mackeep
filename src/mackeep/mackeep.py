@@ -17,7 +17,10 @@ class Mackeep:
     """Main Mackeep class."""
 
     def __init__(
-        self, config_file: str | None = None, *, read_only: bool = False,
+        self,
+        config_file: str | None = None,
+        *,
+        read_only: bool = False,
     ) -> None:
         """Mackeep Constructor."""
         self._config: Config = Config(config_file, read_only=read_only)
@@ -87,7 +90,8 @@ class Mackeep:
                 utils.error("Mackeep can't do anything without a home =(")
 
     def get_apps_to_backup(
-        self, app_db: appsdb.ApplicationsDatabase | None = None,
+        self,
+        app_db: appsdb.ApplicationsDatabase | None = None,
     ) -> set[str]:
         """
         Get the list of applications that should be backed up by Mackeep.

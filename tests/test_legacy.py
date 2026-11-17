@@ -16,25 +16,14 @@ from mackeep.jsonapi import SCHEMA_VERSION
 from mackeep_cli.main import main
 
 # The content of a config file of an application
-APP_CONFIG = (
-    "[application]\n"
-    "name = Test App\n"
-    "\n"
-    "[configuration_files]\n"
-    ".testrc\n"
-)
+APP_CONFIG = "[application]\nname = Test App\n\n[configuration_files]\n.testrc\n"
 
 # The number of files of a migration
 TWO_FILES = 2
 
 # The content of the main config file
 MAIN_CONFIG = (
-    "[storage]\n"
-    "engine = file_system\n"
-    "path = {storage}\n"
-    "\n"
-    "[applications_to_sync]\n"
-    "test-app\n"
+    "[storage]\nengine = file_system\npath = {storage}\n\n[applications_to_sync]\ntest-app\n"
 )
 
 
@@ -163,7 +152,8 @@ def test_the_legacy_apps_dir_is_not_read(home):
 def test_the_xdg_apps_dir_has_the_priority_over_the_legacy_one(home):
     """The XDG Mackeep directory wins over the legacy home one."""
     write_config(
-        home, home / ".config" / "mackeep" / "applications" / "test-app.cfg",
+        home,
+        home / ".config" / "mackeep" / "applications" / "test-app.cfg",
         APP_CONFIG,
     )
     write_config(home, home / ".mackup" / "test-app.cfg", APP_CONFIG)
@@ -202,10 +192,7 @@ def test_an_explicit_storage_folder_is_never_replaced(home):
     write_config(
         home,
         home / ".mackeep.cfg",
-        "[storage]\n"
-        "engine = file_system\n"
-        "path = {storage}\n"
-        "directory = Other\n",
+        "[storage]\nengine = file_system\npath = {storage}\ndirectory = Other\n",
     )
     (home / "storage" / "Mackup").mkdir(parents=True)
 
@@ -452,10 +439,7 @@ def test_migrate_keeps_an_explicit_storage_directory(home, capsys):
     write_config(
         home,
         home / ".mackup.cfg",
-        "[storage]\n"
-        "engine = file_system\n"
-        "path = {storage}\n"
-        "directory = Other\n",
+        "[storage]\nengine = file_system\npath = {storage}\ndirectory = Other\n",
     )
     (home / "storage" / "Mackup").mkdir(parents=True)
 

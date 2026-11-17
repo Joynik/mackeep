@@ -21,7 +21,9 @@ def storage_lock(root: str) -> Generator[None]:
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     identity = hashlib.sha256(os.fsencode(os.path.realpath(root))).hexdigest()
     descriptor = os.open(
-        directory / identity, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600,
+        directory / identity,
+        os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW,
+        0o600,
     )
     try:
         info = os.fstat(descriptor)

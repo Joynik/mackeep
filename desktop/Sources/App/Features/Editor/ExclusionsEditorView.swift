@@ -220,11 +220,12 @@ struct ExclusionsEditorView: View {
     /// The children of a folder.
     private func children(of url: URL) -> [URL] {
         let manager: FileManager = .default
-        let contents: [URL] = (try? manager.contentsOfDirectory(
-            at: url,
-            includingPropertiesForKeys: nil,
-            options: [.skipsHiddenFiles]
-        )) ?? []
+        let contents: [URL] =
+            (try? manager.contentsOfDirectory(
+                at: url,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+            )) ?? []
         return contents.sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
 

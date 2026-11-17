@@ -12,9 +12,9 @@ enum INIFile {
 
         public var errorDescription: String? {
             switch self {
-            case let .cannotRead(url, error):
+            case .cannotRead(let url, let error):
                 "Cannot read \(url.path): \(error.localizedDescription)"
-            case let .cannotWrite(url, error):
+            case .cannotWrite(let url, let error):
                 "Cannot write \(url.path): \(error.localizedDescription)"
             }
         }

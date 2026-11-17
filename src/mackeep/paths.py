@@ -12,13 +12,19 @@ STATE_DIRECTORY = ".mackeep-state"
 def inside(path: str, root: str) -> bool:
     """Return whether a normalized path is within a root."""
     root = os.path.abspath(root)
-    return os.path.commonpath(
-        (os.path.abspath(path), root),
-    ) == root
+    return (
+        os.path.commonpath(
+            (os.path.abspath(path), root),
+        )
+        == root
+    )
 
 
 def entry_paths(
-    entry: str, backup: str, *, allow_external: bool = False,
+    entry: str,
+    backup: str,
+    *,
+    allow_external: bool = False,
 ) -> tuple[str, str]:
     """Map a local entry to a contained backup path.
 

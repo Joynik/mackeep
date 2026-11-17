@@ -27,9 +27,9 @@ final class SettingsModelTests: XCTestCase {
     private func makeTool() throws -> MackeepCommand {
         let url: URL = directory.appendingPathComponent("mackeep-cli")
         let script: String = """
-        #!/bin/sh
-        cat "$CONFIG"
-        """
+            #!/bin/sh
+            cat "$CONFIG"
+            """
         try script.write(to: url, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes(
             [.posixPermissions: 0o755],
@@ -58,28 +58,29 @@ final class SettingsModelTests: XCTestCase {
         directory: String = "Mackeep",
         allowExternalPaths: Bool = false
     ) throws -> MackeepCommand {
-        try makeTool(config: """
-        {
-          "schema_version": 4,
-          "version": "0.15.1",
-          "config_file": "\(self.directory.path)/.mackeep.cfg",
-          "custom_apps_dir": "/Users/user/.mackeep",
-          "custom_apps_dirs": ["/Users/user/.mackeep"],
-          "storage": {
-            "engine": "\(engine)",
-            "path": "\(path)",
-            "directory": "\(directory)",
-            "resolved_backup_dir": "\(path)/\(directory)",
-            "exists": true
-          },
-          "apps_to_sync": [],
-          "apps_to_ignore": [],
-          "global_exclude": ["**/.DS_Store"],
-          "global_xdg_exclude": [],
-          "allow_external_paths": \(allowExternalPaths),
-          "storage_configured": \(engine != "unconfigured")
-        }
-        """)
+        try makeTool(
+            config: """
+                {
+                  "schema_version": 4,
+                  "version": "0.15.1",
+                  "config_file": "\(self.directory.path)/.mackeep.cfg",
+                  "custom_apps_dir": "/Users/user/.mackeep",
+                  "custom_apps_dirs": ["/Users/user/.mackeep"],
+                  "storage": {
+                    "engine": "\(engine)",
+                    "path": "\(path)",
+                    "directory": "\(directory)",
+                    "resolved_backup_dir": "\(path)/\(directory)",
+                    "exists": true
+                  },
+                  "apps_to_sync": [],
+                  "apps_to_ignore": [],
+                  "global_exclude": ["**/.DS_Store"],
+                  "global_xdg_exclude": [],
+                  "allow_external_paths": \(allowExternalPaths),
+                  "storage_configured": \(engine != "unconfigured")
+                }
+                """)
     }
 
     /// Wait for the model to finish the command it runs.
@@ -105,25 +106,26 @@ final class SettingsModelTests: XCTestCase {
     }
 
     func testTheCustomAppsDirIsTakenFromTheOldAnswer() async throws {
-        let command: MackeepCommand = try makeTool(config: """
-        {
-          "schema_version": 4,
-          "version": "0.15.1",
-          "config_file": "\(self.directory.path)/.mackeep.cfg",
-          "custom_apps_dirs": ["/Users/user/.mackeep"],
-          "storage": {
-            "engine": "file_system",
-            "path": "/Users/user/dotfiles",
-            "directory": "Mackeep",
-            "resolved_backup_dir": "/Users/user/dotfiles/Mackeep",
-            "exists": true
-          },
-          "apps_to_sync": [],
-          "apps_to_ignore": [],
-          "global_exclude": [],
-          "global_xdg_exclude": []
-        }
-        """)
+        let command: MackeepCommand = try makeTool(
+            config: """
+                {
+                  "schema_version": 4,
+                  "version": "0.15.1",
+                  "config_file": "\(self.directory.path)/.mackeep.cfg",
+                  "custom_apps_dirs": ["/Users/user/.mackeep"],
+                  "storage": {
+                    "engine": "file_system",
+                    "path": "/Users/user/dotfiles",
+                    "directory": "Mackeep",
+                    "resolved_backup_dir": "/Users/user/dotfiles/Mackeep",
+                    "exists": true
+                  },
+                  "apps_to_sync": [],
+                  "apps_to_ignore": [],
+                  "global_exclude": [],
+                  "global_xdg_exclude": []
+                }
+                """)
         let model: SettingsModel = SettingsModel(command: command, capabilities: nil)
 
         model.load()
@@ -141,26 +143,27 @@ final class SettingsModelTests: XCTestCase {
         )
 
         // The tool answers the config file, the model writes it
-        let command: MackeepCommand = try makeTool(config: """
-        {
-          "schema_version": 4,
-          "version": "0.20.0",
-          "config_file": "\(configURL.path)",
-          "custom_apps_dir": "/Users/user/.mackeep",
-          "custom_apps_dirs": ["/Users/user/.mackeep"],
-          "storage": {
-            "engine": "file_system",
-            "path": "/Users/user/dotfiles",
-            "directory": "Mackeep",
-            "resolved_backup_dir": "/Users/user/dotfiles/Mackeep",
-            "exists": true
-          },
-          "apps_to_sync": [],
-          "apps_to_ignore": [],
-          "global_exclude": [],
-          "global_xdg_exclude": []
-        }
-        """)
+        let command: MackeepCommand = try makeTool(
+            config: """
+                {
+                  "schema_version": 4,
+                  "version": "0.20.0",
+                  "config_file": "\(configURL.path)",
+                  "custom_apps_dir": "/Users/user/.mackeep",
+                  "custom_apps_dirs": ["/Users/user/.mackeep"],
+                  "storage": {
+                    "engine": "file_system",
+                    "path": "/Users/user/dotfiles",
+                    "directory": "Mackeep",
+                    "resolved_backup_dir": "/Users/user/dotfiles/Mackeep",
+                    "exists": true
+                  },
+                  "apps_to_sync": [],
+                  "apps_to_ignore": [],
+                  "global_exclude": [],
+                  "global_xdg_exclude": []
+                }
+                """)
         let model: SettingsModel = SettingsModel(command: command, capabilities: nil)
         model.load()
         try await waitForTheSettings(model)
@@ -179,7 +182,8 @@ final class SettingsModelTests: XCTestCase {
         XCTAssertEqual(saved.globalExclude, ["**/*.log"])
     }
 
-    func testTheBackupFolderIsTakenFromTheTool() async throws {        let command: MackeepCommand = try makeConfig()
+    func testTheBackupFolderIsTakenFromTheTool() async throws {
+        let command: MackeepCommand = try makeConfig()
         let model: SettingsModel = SettingsModel(command: command, capabilities: nil)
 
         model.load()
@@ -275,7 +279,8 @@ final class SettingsModelTests: XCTestCase {
         XCTAssertEqual(saved.globalExclude, ["**/.DS_Store"])
     }
     func testTheExternalPathPolicyIsRead() async throws {
-        let model = SettingsModel(command: try makeConfig(allowExternalPaths: true), capabilities: nil)
+        let model = SettingsModel(
+            command: try makeConfig(allowExternalPaths: true), capabilities: nil)
         model.load()
         try await waitForTheSettings(model)
         XCTAssertTrue(model.allowExternalPaths)
@@ -283,7 +288,8 @@ final class SettingsModelTests: XCTestCase {
     }
 
     func testUnconfiguredStorageDoesNotShowAnInventedBackupPath() async throws {
-        let model = SettingsModel(command: try makeConfig(engine: "unconfigured", path: ""), capabilities: nil)
+        let model = SettingsModel(
+            command: try makeConfig(engine: "unconfigured", path: ""), capabilities: nil)
         model.load()
         try await waitForTheSettings(model)
         XCTAssertEqual(model.engine, .unconfigured)

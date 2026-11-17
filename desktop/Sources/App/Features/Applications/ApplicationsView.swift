@@ -61,7 +61,8 @@ struct ApplicationsView: View {
             openTheCopy(of: application)
         }
         .confirmationDialog(
-            L10n.string("applications.delete.confirm", model.selectedApplication?.displayName ?? ""),
+            L10n.string(
+                "applications.delete.confirm", model.selectedApplication?.displayName ?? ""),
             isPresented: Binding(
                 get: { applicationToDelete != nil },
                 set: { if !$0 { applicationToDelete = nil } }
@@ -234,25 +235,25 @@ struct ApplicationsView: View {
                     ApplicationRow(application: application, model: model) {
                         edit(application)
                     }
-                        .tag(application.name)
-                        .contextMenu {
-                            if application.isCustom {
-                                Button(L10n.string("applications.edit")) {
-                                    edit(application)
-                                }
-                            }
-                            Button(L10n.string("applications.copy")) {
-                                model.selection = application.name
-                                copySelected()
-                            }
-                            Button(
-                                L10n.string("applications.delete"),
-                                role: .destructive
-                            ) {
-                                model.selection = application.name
-                                deleteSelected()
+                    .tag(application.name)
+                    .contextMenu {
+                        if application.isCustom {
+                            Button(L10n.string("applications.edit")) {
+                                edit(application)
                             }
                         }
+                        Button(L10n.string("applications.copy")) {
+                            model.selection = application.name
+                            copySelected()
+                        }
+                        Button(
+                            L10n.string("applications.delete"),
+                            role: .destructive
+                        ) {
+                            model.selection = application.name
+                            deleteSelected()
+                        }
+                    }
                 }
             } header: {
                 Text(
@@ -363,7 +364,8 @@ struct LibraryView: View {
         .frame(minWidth: 820, minHeight: 420)
         .accessibilityIdentifier("applications.library.window")
         .confirmationDialog(
-            L10n.string("applications.library.removeConfirm", definitionToRemove?.displayName ?? ""),
+            L10n.string(
+                "applications.library.removeConfirm", definitionToRemove?.displayName ?? ""),
             isPresented: Binding(
                 get: { definitionToRemove != nil },
                 set: { if !$0 { definitionToRemove = nil } }
@@ -404,7 +406,9 @@ struct LibraryView: View {
                 Button {
                     Task { await model.updateLibrary(application: definition.name) }
                 } label: {
-                    Label(L10n.string("applications.library.download"), systemImage: "arrow.down.circle")
+                    Label(
+                        L10n.string("applications.library.download"),
+                        systemImage: "arrow.down.circle")
                 }
                 .disabled(isBusy || environment.backup.isRunning)
                 .accessibilityIdentifier("applications.library.download")
@@ -437,11 +441,11 @@ struct LibraryView: View {
                     .accessibilityIdentifier("applications.library.removed")
                 } else if model.libraryUpdates.contains(application.name) {
                     Image(systemName: "arrow.down.circle.fill")
-                    .font(.callout)
-                    .foregroundStyle(.blue)
-                    .help(L10n.string("applications.library.updateAvailable"))
-                    .accessibilityLabel(L10n.string("applications.library.updateAvailable"))
-                    .accessibilityIdentifier("applications.library.updateAvailable")
+                        .font(.callout)
+                        .foregroundStyle(.blue)
+                        .help(L10n.string("applications.library.updateAvailable"))
+                        .accessibilityLabel(L10n.string("applications.library.updateAvailable"))
+                        .accessibilityIdentifier("applications.library.updateAvailable")
                 }
                 if model.isInstalled(application) {
                     Image(systemName: "checkmark.circle.fill")
@@ -487,10 +491,11 @@ struct LibraryView: View {
         HStack(spacing: 8) {
             if isBusy {
                 ProgressView().controlSize(.small)
-                Text(L10n.string(
-                    model.isUpdatingLibrary
-                        ? "applications.library.updating" : "applications.library.checking"
-                ))
+                Text(
+                    L10n.string(
+                        model.isUpdatingLibrary
+                            ? "applications.library.updating" : "applications.library.checking"
+                    ))
             } else if let error = model.libraryError {
                 Label(error, systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.red)

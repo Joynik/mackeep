@@ -264,8 +264,7 @@ class Matcher:
             Matcher
         """
         rules: list[str | Rule] = [
-            Rule(pattern.raw, pattern.section, pattern.file)
-            for pattern in self._patterns
+            Rule(pattern.raw, pattern.section, pattern.file) for pattern in self._patterns
         ]
         rules.extend(patterns)
         return Matcher(rules)
@@ -342,11 +341,7 @@ class Matcher:
             if not scope:
                 # The pattern matches at any depth.
                 return True
-            if (
-                path == scope
-                or path.startswith(f"{scope}/")
-                or scope.startswith(f"{path}/")
-            ):
+            if path == scope or path.startswith(f"{scope}/") or scope.startswith(f"{path}/"):
                 return True
         return False
 

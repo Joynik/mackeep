@@ -16,14 +16,16 @@ final class INICompatibilityTests: XCTestCase {
 
     /// The config files of the applications of Mackeep.
     static var applicationConfigs: [URL] {
-        let directory: URL = repository
+        let directory: URL =
+            repository
             .appendingPathComponent("src")
             .appendingPathComponent("mackeep")
             .appendingPathComponent("applications")
-        return (try? FileManager.default.contentsOfDirectory(
-            at: directory,
-            includingPropertiesForKeys: nil
-        ))?.filter { $0.pathExtension == "cfg" } ?? []
+        return
+            (try? FileManager.default.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: nil
+            ))?.filter { $0.pathExtension == "cfg" } ?? []
     }
 
     func testTheConfigFilesOfTheApplicationsAreReadWithoutLoss() throws {

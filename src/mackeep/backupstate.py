@@ -81,19 +81,12 @@ class BackupState:
 
     def others(self, app: str) -> set[str]:
         """Return leaf entries owned by other applications."""
-        return {
-            path
-            for owner, paths in self.owners.items()
-            if owner != app
-            for path in paths
-        }
+        return {path for owner, paths in self.owners.items() if owner != app for path in paths}
 
     def keep_previous(self, app: str, root: str, owned: set[str]) -> None:
         """Retain ownership when an entry was skipped or replacement declined."""
         owned.update(
-            path
-            for path in self.owners.get(app, [])
-            if inside(os.path.join(self.root, path), root)
+            path for path in self.owners.get(app, []) if inside(os.path.join(self.root, path), root)
         )
 
     def preserve_shared(self, app: str, destination: str, staged: str) -> None:
@@ -127,10 +120,7 @@ class BackupState:
         for leaf in leaves:
             retained.update(str(parent) for parent in Path(leaf).parents)
         modes = {path: mode for path, mode in self.modes.items() if path in retained}
-        payload = (
-            json.dumps({"version": 1, "owners": owners, "modes": modes}, indent=2)
-            + "\n"
-        )
+        payload = json.dumps({"version": 1, "owners": owners, "modes": modes}, indent=2) + "\n"
 
         def write(destination: str) -> None:
             Path(destination).write_text(payload, encoding="utf-8")
@@ -149,6 +139,4 @@ class BackupState:
             original = source if suffix == "." else os.path.join(source, suffix)
             target = destination if suffix == "." else os.path.join(destination, suffix)
             if not os.path.islink(path) and os.path.exists(original):
-                self.modes[self.relative(target)] = (
-                    stat.S_IMODE(os.stat(original).st_mode) & 0o777
-                )
+                self.modes[self.relative(target)] = stat.S_IMODE(os.stat(original).st_mode) & 0o777

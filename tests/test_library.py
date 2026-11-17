@@ -37,16 +37,15 @@ def catalog(home, monkeypatch):
     def download(url, _limit):
         if url == library.MANIFEST_URL:
             return json.dumps(manifest).encode()
-        assert (
-            url == f"{library.SOURCE}/{REVISION}/src/mackeep/applications/example.cfg"
-        )
+        assert url == f"{library.SOURCE}/{REVISION}/src/mackeep/applications/example.cfg"
         return NEW
 
     monkeypatch.setattr(library, "_download", download)
     return manifest
 
 
-def test_check_is_read_only(catalog):
+@pytest.mark.usefixtures("catalog")
+def test_check_is_read_only():
     result = library.check()
     assert result["schema_version"] == SCHEMA_VERSION
     assert result["revision"] == REVISION
@@ -73,7 +72,8 @@ def test_update_replaces_only_changes(catalog, monkeypatch):
     assert calls == [library.MANIFEST_URL]
 
 
-def test_new_definition(catalog):
+@pytest.mark.usefixtures("catalog")
+def test_new_definition():
     (library.bundled_directory() / "example.cfg").unlink()
     assert library.check()["updates"]
     assert library.update()["updates"] == []
@@ -90,7 +90,8 @@ def test_checksum_failure_preserves_active_file(catalog):
     assert not list(library.directory().glob(".download-*"))
 
 
-def test_download_failure_preserves_active_file(catalog, monkeypatch):
+@pytest.mark.usefixtures("catalog")
+def test_download_failure_preserves_active_file(monkeypatch):
     original = library._download
 
     def download(url, limit):
@@ -134,7 +135,8 @@ def test_reject_invalid_manifest(catalog, field, value):
 
 
 @pytest.mark.parametrize("data", [b"[]", b"invalid", b"\xff"])
-def test_reject_invalid_json(home, monkeypatch, data):
+@pytest.mark.usefixtures("home")
+def test_reject_invalid_json(monkeypatch, data):
     monkeypatch.setattr(library, "_download", lambda *_args: data)
     with pytest.raises(ConfigError):
         library.check()
@@ -154,7 +156,8 @@ def test_download_size_and_timeout(monkeypatch):
     assert calls == [(library.MANIFEST_URL, 20)] * 2
 
 
-def test_custom_overrides_managed_library(home, catalog):
+@pytest.mark.usefixtures("catalog")
+def test_custom_overrides_managed_library(home):
     library.update()
     db = ApplicationsDatabase()
     assert db.get_files("example") == {".new"}
@@ -168,7 +171,8 @@ def test_custom_overrides_managed_library(home, catalog):
     assert (custom / "example.cfg").read_bytes() == OLD
 
 
-def test_xdg_custom_overrides_managed(home, catalog):
+@pytest.mark.usefixtures("catalog")
+def test_xdg_custom_overrides_managed(home):
     library.update()
     custom = home / ".config/mackeep/applications"
     custom.mkdir(parents=True)
@@ -179,7 +183,8 @@ def test_xdg_custom_overrides_managed(home, catalog):
 
 
 @pytest.mark.parametrize("action", ["check", "update"])
-def test_cli_library_json_without_storage(catalog, monkeypatch, capsys, action):
+@pytest.mark.usefixtures("catalog")
+def test_cli_library_json_without_storage(monkeypatch, capsys, action):
     monkeypatch.setattr("sys.argv", ["mackeep", "--json", "library", action])
     main()
     result = json.loads(capsys.readouterr().out)
@@ -187,7 +192,8 @@ def test_cli_library_json_without_storage(catalog, monkeypatch, capsys, action):
     assert bool(result["updates"]) == (action == "check")
 
 
-def test_cli_library_dry_run_does_not_write(catalog, monkeypatch, capsys):
+@pytest.mark.usefixtures("catalog")
+def test_cli_library_dry_run_does_not_write(monkeypatch, capsys):
     monkeypatch.setattr(
         "sys.argv",
         ["mackeep", "--json", "--dry-run", "library", "update"],
@@ -199,7 +205,8 @@ def test_cli_library_dry_run_does_not_write(catalog, monkeypatch, capsys):
     assert not library.directory().exists()
 
 
-def test_cli_network_failure_is_error(catalog, monkeypatch):
+@pytest.mark.usefixtures("catalog")
+def test_cli_network_failure_is_error(monkeypatch):
     monkeypatch.setattr(
         library,
         "_download",
@@ -255,7 +262,8 @@ def test_remove_bundled_definition_hides_without_writing_bundle(home, catalog):
     assert ApplicationsDatabase().is_custom("vim")
 
 
-def test_active_or_unknown_definitions_cannot_be_removed(catalog):
+@pytest.mark.usefixtures("catalog")
+def test_active_or_unknown_definitions_cannot_be_removed():
     with pytest.raises(ConfigError, match="still available"):
         library.remove("example")
     with pytest.raises(ConfigError, match="Unknown"):
@@ -355,7 +363,8 @@ def test_reject_unsafe_library_rules(rule):
 
 
 @pytest.mark.parametrize(
-    "data", [b"[application]\nname\n", b"[application]\nname=%(missing)s\n"],
+    "data",
+    [b"[application]\nname\n", b"[application]\nname=%(missing)s\n"],
 )
 def test_reject_unusable_names(data):
     with pytest.raises(ConfigError):
@@ -363,7 +372,8 @@ def test_reject_unusable_names(data):
 
 
 @pytest.mark.parametrize("value", ["not json", "{}", '["../escape.cfg"]'])
-def test_invalid_removal_index_is_visible_error(home, value):
+@pytest.mark.usefixtures("home")
+def test_invalid_removal_index_is_visible_error(value):
     library.directory().mkdir(parents=True)
     (library.directory() / "removed.json").write_text(value)
     with pytest.raises(ConfigError, match="removed library"):
@@ -373,7 +383,8 @@ def test_invalid_removal_index_is_visible_error(home, value):
 def test_cli_downloads_one_new_definition(catalog, monkeypatch, capsys):
     catalog["files"]["other.cfg"] = "b" * 64
     monkeypatch.setattr(
-        "sys.argv", ["mackeep", "--json", "library", "update", "example"],
+        "sys.argv",
+        ["mackeep", "--json", "library", "update", "example"],
     )
     main()
     result = json.loads(capsys.readouterr().out)
@@ -384,7 +395,8 @@ def test_cli_downloads_one_new_definition(catalog, monkeypatch, capsys):
 def test_cli_removes_retired_definition(catalog, monkeypatch, capsys):
     catalog["files"] = {"other.cfg": "b" * 64}
     monkeypatch.setattr(
-        "sys.argv", ["mackeep", "--json", "library", "remove", "example"],
+        "sys.argv",
+        ["mackeep", "--json", "library", "remove", "example"],
     )
     main()
     result = json.loads(capsys.readouterr().out)

@@ -85,7 +85,6 @@ struct BackupView: View {
         .padding(12)
     }
 
-
     /// The latest preview or execution report.
     @ViewBuilder
     private var content: some View {
@@ -113,18 +112,21 @@ struct BackupView: View {
     private var report: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                let operation = model.displayedCommand == "restore"
+                let operation =
+                    model.displayedCommand == "restore"
                     ? L10n.string("backup.command.restore") : L10n.string("backup.command.backup")
                 Text(model.isPreview ? L10n.string("backup.result.preview", operation) : operation)
                     .font(.headline)
                 if model.isRunning { ProgressView().controlSize(.small) }
                 if let record = model.lastRun {
                     Label(
-                        L10n.string(record.succeeded
-                                    ? "backup.history.success" : "backup.history.failure"),
+                        L10n.string(
+                            record.succeeded
+                                ? "backup.history.success" : "backup.history.failure"),
                         systemImage: record.succeeded
-                            ? "checkmark.circle" : "exclamationmark.triangle")
-                        .foregroundStyle(record.succeeded ? Color.green : Color.red)
+                            ? "checkmark.circle" : "exclamationmark.triangle"
+                    )
+                    .foregroundStyle(record.succeeded ? Color.green : Color.red)
                 }
                 Spacer()
             }
@@ -200,10 +202,13 @@ struct PlanTableView: View {
             TableColumn(L10n.string("backup.table.action")) { action in
                 HStack(spacing: 6) {
                     Label {
-                        Text(action.willRemove == true
-                             ? L10n.string(isPreview
-                                           ? "backup.action.removeStale" : "backup.action.removedStale")
-                             : actionTitle(action.action))
+                        Text(
+                            action.willRemove == true
+                                ? L10n.string(
+                                    isPreview
+                                        ? "backup.action.removeStale" : "backup.action.removedStale"
+                                )
+                                : actionTitle(action.action))
                     } icon: {
                         Image(systemName: icon(for: action.action))
                             .foregroundStyle(color(for: action.action))
@@ -212,10 +217,17 @@ struct PlanTableView: View {
                     if willOverwrite(action) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
-                            .help(L10n.string(isPreview
-                                             ? "backup.action.willOverwrite" : "backup.action.overwritten"))
-                            .accessibilityLabel(L10n.string(isPreview
-                                             ? "backup.action.willOverwrite" : "backup.action.overwritten"))
+                            .help(
+                                L10n.string(
+                                    isPreview
+                                        ? "backup.action.willOverwrite"
+                                        : "backup.action.overwritten")
+                            )
+                            .accessibilityLabel(
+                                L10n.string(
+                                    isPreview
+                                        ? "backup.action.willOverwrite"
+                                        : "backup.action.overwritten"))
                     }
                 }
             }
@@ -376,22 +388,25 @@ struct HistoryView: View {
                     }
                     .width(min: 140, ideal: 160)
                     TableColumn(L10n.string("backup.history.operation")) { record in
-                        Text(record.command == "backup"
-                             ? L10n.string("backup.command.backup")
-                             : record.command == "restore"
-                                ? L10n.string("backup.command.restore") : record.command)
+                        Text(
+                            record.command == "backup"
+                                ? L10n.string("backup.command.backup")
+                                : record.command == "restore"
+                                    ? L10n.string("backup.command.restore") : record.command)
                     }
                     .width(min: 100, ideal: 120)
                     TableColumn(L10n.string("backup.table.application")) { record in
                         Text(record.application ?? L10n.string("backup.history.allApplications"))
                             .lineLimit(1)
-                            .help(record.application ?? L10n.string("backup.history.allApplications"))
+                            .help(
+                                record.application ?? L10n.string("backup.history.allApplications"))
                     }
                     .width(min: 100, ideal: 140)
                     TableColumn(L10n.string("backup.history.result")) { record in
                         Label(
-                            L10n.string(record.succeeded
-                                        ? "backup.history.success" : "backup.history.failure"),
+                            L10n.string(
+                                record.succeeded
+                                    ? "backup.history.success" : "backup.history.failure"),
                             systemImage: record.succeeded
                                 ? "checkmark.circle" : "exclamationmark.triangle"
                         )
@@ -406,10 +421,12 @@ struct HistoryView: View {
                     }
                     .width(70)
                     TableColumn(L10n.string("backup.table.size")) { record in
-                        Text(ByteCountFormatter.string(
-                            fromByteCount: Int64(record.bytes), countStyle: .file))
-                            .monospacedDigit()
-                            .frame(maxWidth: .infinity, alignment: .trailing)
+                        Text(
+                            ByteCountFormatter.string(
+                                fromByteCount: Int64(record.bytes), countStyle: .file)
+                        )
+                        .monospacedDigit()
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .width(min: 80, ideal: 100)
                     TableColumn(L10n.string("backup.history.details")) { record in

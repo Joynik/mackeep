@@ -137,8 +137,7 @@ def test_the_json_config_holds_the_global_exclusions(home, capsys):
 def test_the_json_config_tells_the_broken_global_exclusions(home, capsys):
     """The JSON config tells what is not used of the config file."""
     (home / ".mackeep.cfg").write_text(
-        (home / ".mackeep.cfg").read_text()
-        + "\n[exclude]\n**/.DS_Store\n/absolute/path\n",
+        (home / ".mackeep.cfg").read_text() + "\n[exclude]\n**/.DS_Store\n/absolute/path\n",
     )
 
     data, code = run_json(capsys, "config")
@@ -194,11 +193,7 @@ def test_the_json_list_tells_the_broken_rules(home, capsys):
     """mackeep --json list tells what is not used of the config files."""
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[exclude]\n"
-        "/absolute/path\n",
+        "[application]\nname = Test App\n\n[exclude]\n/absolute/path\n",
     )
 
     data, code = run_json(capsys, "list")
@@ -249,7 +244,8 @@ def test_the_json_show(home, capsys):
     assert xdg_files["test-app/config"]["is_dir"] is False
 
 
-def test_the_json_show_of_an_unknown_app(home, capsys):
+@pytest.mark.usefixtures("home")
+def test_the_json_show_of_an_unknown_app(capsys):
     """An unknown application is an error."""
     data, code = run_json(capsys, "show", "not-an-app")
 
@@ -300,11 +296,7 @@ def test_the_json_backup_dry_run_does_not_copy_anything(home, capsys):
     """The dry-run does not copy anything."""
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".testrc\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.testrc\n",
     )
     (home / ".testrc").write_text("config")
 
@@ -317,11 +309,7 @@ def test_the_json_backup_streams_the_events(home, capsys):
     """mackeep --json backup streams the events as NDJSON."""
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".testrc\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.testrc\n",
     )
     (home / ".testrc").write_text("config")
 
@@ -399,7 +387,8 @@ def test_the_json_restore_dry_run(home, capsys):
     assert not (home / ".testdir").exists()
 
 
-def test_the_json_error(home, capsys):
+@pytest.mark.usefixtures("home")
+def test_the_json_error(capsys):
     """An error is reported as a JSON document."""
     with pytest.raises(SystemExit) as context:
         run("--json", "backup", "not-an-app")
@@ -417,11 +406,7 @@ def test_only_json_is_written_to_stdout(home, capsys):
     """In JSON mode, stdout only holds JSON."""
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".testrc\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.testrc\n",
     )
     (home / ".testrc").write_text("config")
 
@@ -441,11 +426,7 @@ def test_the_human_output_is_not_impacted(home, capsys):
     """Without --json, the output is the same as before."""
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".testrc\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.testrc\n",
     )
     (home / ".testrc").write_text("config")
 
@@ -457,7 +438,8 @@ def test_the_human_output_is_not_impacted(home, capsys):
     assert (home / "storage" / "Mackeep" / ".testrc").exists()
 
 
-def test_the_json_link_is_not_supported(home, capsys):
+@pytest.mark.usefixtures("home")
+def test_the_json_link_is_not_supported(capsys):
     """The link commands are not supported in JSON mode."""
     data, code = run_json(capsys, "link", "install")
 
@@ -467,7 +449,8 @@ def test_the_json_link_is_not_supported(home, capsys):
     assert "--json" in data["error"]["message"]
 
 
-def test_the_config_command(home, capsys):
+@pytest.mark.usefixtures("home")
+def test_the_config_command(capsys):
     """mackeep config shows the configuration of Mackeep."""
     run("config")
     captured = capsys.readouterr()
@@ -477,7 +460,8 @@ def test_the_config_command(home, capsys):
     assert "file_system" in captured.out
 
 
-def test_the_json_show_of_a_builtin_app(home, capsys):
+@pytest.mark.usefixtures("home")
+def test_the_json_show_of_a_builtin_app(capsys):
     """The applications of the database are described too."""
     data, code = run_json(capsys, "show", "vim")
 
@@ -503,11 +487,7 @@ def test_the_json_backup_counters_are_per_application(home, capsys):
     )
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App 2\n"
-        "\n"
-        "[configuration_files]\n"
-        ".second\n",
+        "[application]\nname = Test App 2\n\n[configuration_files]\n.second\n",
         name="test-app-2",
     )
 
@@ -545,11 +525,7 @@ def test_the_json_backup_dry_run_does_not_need_the_backup_folder(home, capsys):
     shutil.rmtree(home / "storage" / "Mackeep")
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".testrc\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.testrc\n",
     )
     (home / ".testrc").write_text("config")
 
@@ -566,11 +542,7 @@ def test_the_json_restore_dry_run_does_not_need_the_backup_folder(home, capsys):
     shutil.rmtree(home / "storage" / "Mackeep")
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".testrc\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.testrc\n",
     )
 
     data, code = run_json(capsys, "restore", "--dry-run")
@@ -580,16 +552,12 @@ def test_the_json_restore_dry_run_does_not_need_the_backup_folder(home, capsys):
     assert data["actions"][0]["action"] == "skip_missing"
 
 
-def test_the_backup_dry_run_does_not_create_the_backup_folder(home, capsys):
+def test_the_backup_dry_run_does_not_create_the_backup_folder(home):
     """A dry-run does not create the backup folder."""
     shutil.rmtree(home / "storage" / "Mackeep")
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".testrc\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.testrc\n",
     )
     (home / ".testrc").write_text("config")
 
@@ -602,11 +570,7 @@ def test_the_json_dry_run_detail_files(home, capsys):
     """The files detail level describes every file."""
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".tree\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.tree\n",
     )
     tree = home / ".tree"
     (tree / "sub" / "deep").mkdir(parents=True)
@@ -700,7 +664,8 @@ def test_the_json_dry_run_detail_files_keeps_the_negated_files(home, capsys):
 
 
 def test_the_json_dry_run_detail_files_does_not_expand_the_excluded_dirs(
-    home, capsys,
+    home,
+    capsys,
 ):
     """An excluded directory is a single entry, its content is not walked."""
     write_app_config(
@@ -732,11 +697,7 @@ def test_the_json_dry_run_detail_files_reports_the_conflicts(home, capsys):
     """A file that already exists is a conflict, and not a copy."""
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".tree\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.tree\n",
     )
     tree = home / ".tree"
     tree.mkdir()
@@ -790,11 +751,7 @@ def test_the_json_dry_run_truncates_the_actions(home, capsys):
     """The plan is truncated, but the summary is computed on the whole plan."""
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".tree\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.tree\n",
     )
     tree = home / ".tree"
     tree.mkdir()
@@ -808,7 +765,13 @@ def test_the_json_dry_run_truncates_the_actions(home, capsys):
     assert "truncated" not in data["summary"]
 
     data, code = run_json(
-        capsys, "backup", "--dry-run", "--detail", "files", "--max-actions", "2",
+        capsys,
+        "backup",
+        "--dry-run",
+        "--detail",
+        "files",
+        "--max-actions",
+        "2",
     )
 
     assert code == 0
@@ -824,11 +787,7 @@ def test_the_json_dry_run_entries_stays_the_same(home, capsys):
     """The entries detail level keeps the previous behavior."""
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".tree\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.tree\n",
     )
     tree = home / ".tree"
     (tree / "sub").mkdir(parents=True)
@@ -850,11 +809,7 @@ def test_the_json_dry_run_detail_entries_is_the_default(home, capsys):
     """The default detail level is entries."""
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".tree\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.tree\n",
     )
     tree = home / ".tree"
     tree.mkdir()
@@ -866,7 +821,8 @@ def test_the_json_dry_run_detail_entries_is_the_default(home, capsys):
     assert default == explicit
 
 
-def test_an_unknown_detail_level_is_an_error(home, capsys):
+@pytest.mark.usefixtures("home")
+def test_an_unknown_detail_level_is_an_error(capsys):
     """An unknown detail level is rejected."""
     data, code = run_json(capsys, "backup", "--dry-run", "--detail", "nope")
 

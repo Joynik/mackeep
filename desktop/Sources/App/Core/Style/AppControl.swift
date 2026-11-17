@@ -136,7 +136,9 @@ struct FieldInfoLabel: View {
     var body: some View {
         HStack(spacing: 6) {
             if !iconOnly { Text(title) }
-            Button { showsHint.toggle() } label: {
+            Button {
+                showsHint.toggle()
+            } label: {
                 Image(systemName: "info.circle")
             }
             .buttonStyle(.plain)

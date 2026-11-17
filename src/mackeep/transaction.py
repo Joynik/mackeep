@@ -101,7 +101,9 @@ class Transaction:
 
 
 def _retry_cleanup(
-    function: Callable[..., object], path: str, error: BaseException,
+    function: Callable[..., object],
+    path: str,
+    error: BaseException,
 ) -> None:
     """Retry cleanup of read-only directories without following symbolic links."""
     if not isinstance(error, PermissionError) or os.path.islink(path):

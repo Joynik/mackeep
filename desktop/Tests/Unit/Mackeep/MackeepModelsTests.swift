@@ -73,23 +73,23 @@ final class MackeepModelsTests: XCTestCase {
         // The answer of a version of Mackeep without the main custom apps
         // directory
         let json: String = """
-        {
-          "schema_version": 4,
-          "version": "0.13.0",
-          "config_file": "/Users/user/.mackeep.cfg",
-          "custom_apps_dirs": [],
-          "storage": {
-            "engine": "dropbox",
-            "path": "/Users/user/Dropbox",
-            "directory": "Mackeep",
-            "resolved_backup_dir": "/Users/user/Dropbox/Mackeep",
-            "exists": false
-          },
-          "apps_to_sync": [],
-          "apps_to_ignore": [],
-          "global_exclude": []
-        }
-        """
+            {
+              "schema_version": 4,
+              "version": "0.13.0",
+              "config_file": "/Users/user/.mackeep.cfg",
+              "custom_apps_dirs": [],
+              "storage": {
+                "engine": "dropbox",
+                "path": "/Users/user/Dropbox",
+                "directory": "Mackeep",
+                "resolved_backup_dir": "/Users/user/Dropbox/Mackeep",
+                "exists": false
+              },
+              "apps_to_sync": [],
+              "apps_to_ignore": [],
+              "global_exclude": []
+            }
+            """
         let config: MackeepConfig = try JSONDecoder().decode(
             MackeepConfig.self,
             from: Data(json.utf8)
@@ -103,20 +103,20 @@ final class MackeepModelsTests: XCTestCase {
         // The answer of a version of Mackeep that does not report the
         // problems of the config files
         let json: String = """
-        [
-          {
-            "schema_version": 2,
-            "name": "demo",
-            "display_name": "Demo",
-            "source": "custom",
-            "cfg_path": "/Users/user/.mackeep/demo.cfg",
-            "files": [],
-            "xdg_files": [],
-            "exclude": [],
-            "xdg_exclude": []
-          }
-        ]
-        """
+            [
+              {
+                "schema_version": 2,
+                "name": "demo",
+                "display_name": "Demo",
+                "source": "custom",
+                "cfg_path": "/Users/user/.mackeep/demo.cfg",
+                "files": [],
+                "xdg_files": [],
+                "exclude": [],
+                "xdg_exclude": []
+              }
+            ]
+            """
         let applications: [MackeepApplication] = try JSONDecoder().decode(
             [MackeepApplication].self,
             from: Data(json.utf8)

@@ -85,7 +85,10 @@ final class ApplicationsModel {
     func checkLibraryUpdates(force: Bool = false) async {
         guard let command, !isCheckingLibrary, !isUpdatingLibrary else { return }
         if !force, let libraryCheckedAt,
-           Date().timeIntervalSince(libraryCheckedAt) < 86_400 { return }
+            Date().timeIntervalSince(libraryCheckedAt) < 86_400
+        {
+            return
+        }
         isCheckingLibrary = true
         defer { isCheckingLibrary = false }
         do {
@@ -120,8 +123,9 @@ final class ApplicationsModel {
     /// Remove only an upstream-removed definition, after saving its deselection.
     func removeLibraryDefinition(_ application: MackeepApplication) async {
         guard let command, !isCheckingLibrary, !isUpdatingLibrary,
-              !application.isCustom,
-              removedLibraryDefinitions.contains(application.name) else { return }
+            !application.isCustom,
+            removedLibraryDefinitions.contains(application.name)
+        else { return }
         isUpdatingLibrary = true
         defer { isUpdatingLibrary = false }
         do {
@@ -394,7 +398,8 @@ final class ApplicationsModel {
             return editor
         }
         guard
-            let application: MackeepApplication = applications
+            let application: MackeepApplication =
+                applications
                 .first(where: { $0.name == appName })
         else {
             return nil
@@ -617,25 +622,29 @@ final class ApplicationsModel {
             return 0
         }
         guard isDirectory.boolValue else {
-            let attributes: [FileAttributeKey: Any] = (try? manager.attributesOfItem(
-                atPath: url.path
-            )) ?? [:]
+            let attributes: [FileAttributeKey: Any] =
+                (try? manager.attributesOfItem(
+                    atPath: url.path
+                )) ?? [:]
             return (attributes[.size] as? Int) ?? 0
         }
 
         var size: Int = 0
-        guard let enumerator: FileManager.DirectoryEnumerator = manager.enumerator(
-            at: url,
-            includingPropertiesForKeys: [.fileSizeKey],
-            options: []
-        ) else {
+        guard
+            let enumerator: FileManager.DirectoryEnumerator = manager.enumerator(
+                at: url,
+                includingPropertiesForKeys: [.fileSizeKey],
+                options: []
+            )
+        else {
             return 0
         }
         for case let file as URL in enumerator {
             if Task.isCancelled { break }
-            let attributes: [FileAttributeKey: Any] = (try? manager.attributesOfItem(
-                atPath: file.path
-            )) ?? [:]
+            let attributes: [FileAttributeKey: Any] =
+                (try? manager.attributesOfItem(
+                    atPath: file.path
+                )) ?? [:]
             size += (attributes[.size] as? Int) ?? 0
         }
         return size

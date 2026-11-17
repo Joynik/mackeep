@@ -115,7 +115,9 @@ final class MackeepDesktopUITests: XCTestCase {
 
         // It is shown only once, the XDG location is not shown
         XCTAssertEqual(folders.count, 1)
-        XCTAssertEqual(folders.element(boundBy: 0).value as? String, directory.appendingPathComponent(".mackeep").path)
+        XCTAssertEqual(
+            folders.element(boundBy: 0).value as? String,
+            directory.appendingPathComponent(".mackeep").path)
     }
     func testCreatingAnApplicationOpensItsEditor() throws {
         try startTheApplication()

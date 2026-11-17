@@ -24,8 +24,11 @@ def test_bundled_definition_is_valid(definition):
     parser = document.parser
     assert parser.get("application", "name").strip()
     assert set(parser.sections()) <= {
-        "application", "configuration_files", "xdg_configuration_files",
-        "exclude", "xdg_exclude",
+        "application",
+        "configuration_files",
+        "xdg_configuration_files",
+        "exclude",
+        "xdg_exclude",
     }
     assert any(
         parser.has_section(section) and parser.options(section)
@@ -41,7 +44,8 @@ def test_bundled_definition_is_valid(definition):
             assert entry.rstrip("/") != ".", (section, entry)
 
 
-def test_all_bundled_applications_load_without_errors(home):
+@pytest.mark.usefixtures("home")
+def test_all_bundled_applications_load_without_errors():
     """Exercise runtime validation, including exclusions, for the complete catalog."""
     assert DEFINITIONS, "The bundled catalog must not be empty"
     database = ApplicationsDatabase()
@@ -50,14 +54,17 @@ def test_all_bundled_applications_load_without_errors(home):
         assert database.get_error(name) is None, (name, database.get_error(name))
 
 
-@pytest.mark.parametrize(("application", "entry"), [
-    ("npm", ".npmrc"),
-    ("composer", ".composer/auth.json"),
-    ("codex", ".codex/auth.json"),
-    ("opencode", ".local/share/opencode/auth.json"),
-    ("gmailctl", ".gmailctl/credentials.json"),
-    ("context7", ".context7/credentials.json"),
-])
+@pytest.mark.parametrize(
+    ("application", "entry"),
+    [
+        ("npm", ".npmrc"),
+        ("composer", ".composer/auth.json"),
+        ("codex", ".codex/auth.json"),
+        ("opencode", ".local/share/opencode/auth.json"),
+        ("gmailctl", ".gmailctl/credentials.json"),
+        ("context7", ".context7/credentials.json"),
+    ],
+)
 def test_catalog_credential_entries_are_marked_sensitive(home, application, entry):
     """Check real catalog entries, without guessing secrets from filename keywords."""
     document = read(str(CATALOG / f"{application}.cfg"))

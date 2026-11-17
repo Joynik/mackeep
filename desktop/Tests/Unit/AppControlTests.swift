@@ -48,8 +48,9 @@ final class AppControlTests: XCTestCase {
     func testNativeFieldConnectsBindingDelegateAndLeftAlignedEditor() async throws {
         let state = FieldState()
         let hosting = NSHostingView(rootView: FieldHarness(state: state))
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 300, height: 40),
-                              styleMask: [.borderless], backing: .buffered, defer: false)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 300, height: 40),
+            styleMask: [.borderless], backing: .buffered, defer: false)
         window.contentView = hosting
         defer { window.contentView = nil }
         hosting.layoutSubtreeIfNeeded()
@@ -68,7 +69,9 @@ final class AppControlTests: XCTestCase {
         native.alignment = .right
         hosting.rootView = FieldHarness(state: state)
         hosting.layoutSubtreeIfNeeded()
-        try await waitUntil("Native field reflects the binding") { native.stringValue == state.text }
+        try await waitUntil("Native field reflects the binding") {
+            native.stringValue == state.text
+        }
         XCTAssertEqual(native.alignment, .left)
         XCTAssertTrue(window.makeFirstResponder(native))
         let editor = try XCTUnwrap(native.currentEditor() as? NSTextView)
@@ -76,7 +79,9 @@ final class AppControlTests: XCTestCase {
         state.text = "Editing update"
         hosting.rootView = FieldHarness(state: state)
         hosting.layoutSubtreeIfNeeded()
-        try await waitUntil("Editing field reflects the binding") { native.stringValue == state.text }
+        try await waitUntil("Editing field reflects the binding") {
+            native.stringValue == state.text
+        }
         XCTAssertEqual(editor.alignment, .left)
     }
 

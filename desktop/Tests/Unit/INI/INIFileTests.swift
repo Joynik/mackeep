@@ -69,7 +69,8 @@ final class INIFileTests: XCTestCase {
     }
 
     func testWritingAFileCreatesItsDirectory() throws {
-        let url: URL = directory
+        let url: URL =
+            directory
             .appendingPathComponent("nested")
             .appendingPathComponent("app.cfg")
         let document: INIDocument = INIDocument(text: "[application]\n")

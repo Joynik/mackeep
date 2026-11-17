@@ -35,7 +35,8 @@ def test_failed_cli_backup_records_failure_without_staged_files(home):
     setup(home)
     (home / "app").write_text("data")
     with patch(
-        "mackeep.application.utils.copy", side_effect=PermissionError("blocked"),
+        "mackeep.application.utils.copy",
+        side_effect=PermissionError("blocked"),
     ):
         assert run("backup", "--summary") == 1
     (record,) = records()
@@ -73,7 +74,8 @@ def test_history_failure_does_not_change_backup_result(home, capsys):
     backup = setup(home)
     (home / "app").write_text("data")
     with patch(
-        "mackeep_cli.history.OperationHistory.save", side_effect=OSError("blocked"),
+        "mackeep_cli.history.OperationHistory.save",
+        side_effect=OSError("blocked"),
     ):
         assert run("backup") == 0
     assert (backup / "app").read_text() == "data"

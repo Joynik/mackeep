@@ -168,11 +168,7 @@ def test_the_global_exclude_applies_to_every_application(home):
     write_mackeep_config(home, extra="\n[exclude]\n.testdir/.DS_Store\n")
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".testdir\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.testdir\n",
     )
 
     testdir = home / ".testdir"
@@ -329,11 +325,7 @@ def test_link_install_links_a_folder_without_exclusions(home):
     write_mackeep_config(home)
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".testdir\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.testdir\n",
     )
 
     testdir = home / ".testdir"
@@ -351,14 +343,7 @@ def test_link_install_skips_an_excluded_entry(home, capsys):
     write_mackeep_config(home)
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".testrc\n"
-        "\n"
-        "[exclude]\n"
-        ".testrc\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.testrc\n\n[exclude]\n.testrc\n",
     )
 
     (home / ".testrc").write_text("config")
@@ -375,11 +360,7 @@ def test_an_app_without_exclusion_is_not_impacted(home):
     write_mackeep_config(home)
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".testdir\n",
+        "[application]\nname = Test App\n\n[configuration_files]\n.testdir\n",
     )
 
     testdir = home / ".testdir"
@@ -418,12 +399,7 @@ def test_an_absolute_exclusion_is_skipped(home):
     write_mackeep_config(home)
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[exclude]\n"
-        "/absolute/path\n"
-        "*.log\n",
+        "[application]\nname = Test App\n\n[exclude]\n/absolute/path\n*.log\n",
     )
 
     db = ApplicationsDatabase()
@@ -443,12 +419,7 @@ def test_a_duplicated_exclusion_is_skipped(home):
     write_mackeep_config(home)
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[exclude]\n"
-        "*.log\n"
-        "*.log\n",
+        "[application]\nname = Test App\n\n[exclude]\n*.log\n*.log\n",
     )
 
     db = ApplicationsDatabase()
@@ -467,19 +438,11 @@ def test_a_broken_exclusion_does_not_stop_the_other_applications(home):
     write_mackeep_config(home)
     write_app_config(
         home,
-        "[application]\n"
-        "name = Test App\n"
-        "\n"
-        "[exclude]\n"
-        "/absolute/path\n",
+        "[application]\nname = Test App\n\n[exclude]\n/absolute/path\n",
     )
     apps_dir = home / ".mackeep"
     (apps_dir / "other-app.cfg").write_text(
-        "[application]\n"
-        "name = Other App\n"
-        "\n"
-        "[configuration_files]\n"
-        ".otherdir\n",
+        "[application]\nname = Other App\n\n[configuration_files]\n.otherdir\n",
     )
 
     db = ApplicationsDatabase()

@@ -22,13 +22,13 @@ final class ApplicationCreatorModelTests: XCTestCase {
 
     /// The content of the config file of an application.
     nonisolated static let config: String = """
-    # The name of the application
-    [application]
-    name = Test App
+        # The name of the application
+        [application]
+        name = Test App
 
-    [configuration_files]
-    .testrc
-    """
+        [configuration_files]
+        .testrc
+        """
 
     /// An application of the database.
     private func application(name: String, path: String) -> MackeepApplication {

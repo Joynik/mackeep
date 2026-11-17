@@ -13,11 +13,11 @@ enum MackeepCommandError: LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case let .cannotRun(path, error):
+        case .cannotRun(let path, let error):
             "Cannot run \(path): \(error.localizedDescription)"
-        case let .failed(path, code, message):
+        case .failed(let path, let code, let message):
             "\(path) failed with the code \(code): \(message)"
-        case let .invalidAnswer(path, message):
+        case .invalidAnswer(let path, let message):
             "Cannot read the answer of \(path): \(message)"
         }
     }
@@ -61,6 +61,7 @@ struct MackeepCommand: Sendable {
                 ?? (home == EditorPath.homeDirectory.path
                     ? EditorPath.xdgDirectory.path
                     : URL(fileURLWithPath: home).appendingPathComponent(".config").path)
+                ,
         ]
     }
 
@@ -189,7 +190,8 @@ struct MackeepCommand: Sendable {
         else {
             return nil
         }
-        return String(output[output.index(after: index)...].trimmingCharacters(in: .whitespacesAndNewlines))
+        return String(
+            output[output.index(after: index)...].trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     /// The capabilities of the tool.

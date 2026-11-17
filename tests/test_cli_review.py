@@ -113,9 +113,7 @@ def test_restore_preserves_original_modes_and_private_storage(home):
     directory_mode, script_mode = 0o750, 0o754
     assert stat.S_IMODE(source.stat().st_mode) == directory_mode
     assert stat.S_IMODE((source / "script").stat().st_mode) == script_mode
-    assert (
-        json.loads((backup / ".mackeep-state/owners.json").read_text())["version"] == 1
-    )
+    assert json.loads((backup / ".mackeep-state/owners.json").read_text())["version"] == 1
 
 
 def test_confirm_eof_declines():
@@ -141,13 +139,19 @@ def test_storage_lock_blocks_another_process_and_releases(home):
     with storage_lock(str(root)):
         blocked = subprocess.run(
             [sys.executable, "-c", source, str(root)],
-            env=environment, capture_output=True, text=True, check=False,
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=False,
         )
     assert blocked.returncode != 0
     assert "Another Mackeep operation" in blocked.stderr
     acquired = subprocess.run(
         [sys.executable, "-c", source, str(root)],
-        env=environment, capture_output=True, text=True, check=True,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=True,
     )
     assert acquired.stdout.strip() == "acquired"
 
@@ -200,11 +204,21 @@ def test_copy_tree_does_not_spawn_permission_processes(home):
     assert all(path.read_bytes() == b"data" for path in files)
 
 
-@pytest.mark.parametrize("path", [
-    ".npmrc", ".npmrcs/work", ".codex/auth.json", ".composer/auth.json",
-    ".gem/credentials", ".gmailctl/credentials.json", ".context7/credentials.json",
-    ".factory/auth.json", ".local/share/opencode/auth.json", ".keybase/config.json",
-])
+@pytest.mark.parametrize(
+    "path",
+    [
+        ".npmrc",
+        ".npmrcs/work",
+        ".codex/auth.json",
+        ".composer/auth.json",
+        ".gem/credentials",
+        ".gmailctl/credentials.json",
+        ".context7/credentials.json",
+        ".factory/auth.json",
+        ".local/share/opencode/auth.json",
+        ".keybase/config.json",
+    ],
+)
 def test_additional_secret_paths_are_detected(path):
     assert utils.sensitive_reason(path) is not None
 
@@ -243,7 +257,8 @@ def test_force_does_not_leak_into_the_next_invocation(home, capsys):
 
 
 @pytest.mark.parametrize(
-    "modes", [{"../outside": 0o777}, {"app": 0o4777}, {".": 0o700}],
+    "modes",
+    [{"../outside": 0o777}, {"app": 0o4777}, {".": 0o700}],
 )
 def test_invalid_saved_permissions_refuse_restore(home, modes):
     root = setup(home)

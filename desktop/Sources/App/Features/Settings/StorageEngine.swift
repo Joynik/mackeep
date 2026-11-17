@@ -60,9 +60,10 @@ enum StorageEngine: String, CaseIterable, Identifiable, Codable {
         case .googleDrive:
             // The folder of Google Drive has a suffix that changes
             guard let path: String = standardPath else { return false }
-            let contents: [String] = (try? FileManager.default.contentsOfDirectory(
-                atPath: path
-            )) ?? []
+            let contents: [String] =
+                (try? FileManager.default.contentsOfDirectory(
+                    atPath: path
+                )) ?? []
             return contents.contains { $0.hasPrefix("GoogleDrive") }
         default:
             guard let path: String = standardPath else { return false }

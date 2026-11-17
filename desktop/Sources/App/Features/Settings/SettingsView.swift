@@ -1,5 +1,5 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 /// The settings of Mackeep.
 struct SettingsView: View {
@@ -165,12 +165,14 @@ struct SettingsView: View {
     /// Size the field labels using every translated label in the storage section.
     private func storageFieldLabel(_ key: String) -> some View {
         ZStack(alignment: .leading) {
-            ForEach([
-                "settings.storage.available",
-                "settings.storage.path",
-                "settings.storage.directory",
-                "settings.storage.resolved",
-            ], id: \.self) { label in
+            ForEach(
+                [
+                    "settings.storage.available",
+                    "settings.storage.path",
+                    "settings.storage.directory",
+                    "settings.storage.resolved",
+                ], id: \.self
+            ) { label in
                 Text(L10n.string(label))
                     .hidden()
                     .accessibilityHidden(true)
@@ -319,7 +321,9 @@ struct SettingsView: View {
 
         return Section(L10n.string("settings.appearance.title")) {
             LabeledContent(L10n.string("settings.appearance.language")) {
-                Picker(L10n.string("settings.appearance.language"), selection: $environment.language) {
+                Picker(
+                    L10n.string("settings.appearance.language"), selection: $environment.language
+                ) {
                     Text(L10n.string("settings.language.system")).tag(AppLanguage.system)
                     Text(L10n.string("settings.language.russian")).tag(AppLanguage.russian)
                     Text(L10n.string("settings.language.english")).tag(AppLanguage.english)
@@ -337,7 +341,8 @@ struct SettingsView: View {
             }
 
             LabeledContent(L10n.string("settings.appearance.theme")) {
-                Picker(L10n.string("settings.appearance.theme"), selection: $environment.appearance) {
+                Picker(L10n.string("settings.appearance.theme"), selection: $environment.appearance)
+                {
                     Text(L10n.string("settings.theme.system")).tag(AppAppearance.system)
                     Text(L10n.string("settings.theme.light")).tag(AppAppearance.light)
                     Text(L10n.string("settings.theme.dark")).tag(AppAppearance.dark)

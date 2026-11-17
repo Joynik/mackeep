@@ -24,7 +24,7 @@ enum MackeepDiscovery {
         fileManager: FileManager = .default
     ) -> String? {
         if let manualPath, !manualPath.isEmpty,
-           isExecutable(manualPath, fileManager: fileManager)
+            isExecutable(manualPath, fileManager: fileManager)
         {
             return manualPath
         }

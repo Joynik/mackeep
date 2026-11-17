@@ -371,8 +371,7 @@ def test_external_xdg_root_uses_its_exclusion_rules(home, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(external))
     backup = setup(home, "", "[security]\nallow_external_paths = true\n")
     (home / ".mackeep/audit.cfg").write_text(
-        "[application]\nname = Audit\n[xdg_configuration_files]\napp\n"
-        "[xdg_exclude]\napp/cache\n",
+        "[application]\nname = Audit\n[xdg_configuration_files]\napp\n[xdg_exclude]\napp/cache\n",
     )
     (external / "app").mkdir()
     (external / "app/keep").write_text("keep")
@@ -705,11 +704,7 @@ main()
     ) as process:
         try:
             deadline = time.monotonic() + 10
-            while (
-                not marker.exists()
-                and process.poll() is None
-                and time.monotonic() < deadline
-            ):
+            while not marker.exists() and process.poll() is None and time.monotonic() < deadline:
                 time.sleep(0.01)
             assert marker.exists(), "The first application never reached copy"
             process.send_signal(signal.SIGUSR1)

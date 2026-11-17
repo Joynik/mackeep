@@ -21,10 +21,12 @@ final class MackeepCommandTests: XCTestCase {
 
     /// The directory of the fixtures of the tests.
     static var fixtureDirectory: String {
-        guard let url: URL = Bundle(for: Self.self).url(
-            forResource: "config",
-            withExtension: "json"
-        ) else {
+        guard
+            let url: URL = Bundle(for: Self.self).url(
+                forResource: "config",
+                withExtension: "json"
+            )
+        else {
             return ""
         }
         return url.deletingLastPathComponent().path
@@ -66,7 +68,8 @@ final class MackeepCommandTests: XCTestCase {
 
         let output: String = try command.run([])
 
-        XCTAssertEqual(output.trimmingCharacters(in: .whitespacesAndNewlines), "HOME=/tmp/mackeep-home")
+        XCTAssertEqual(
+            output.trimmingCharacters(in: .whitespacesAndNewlines), "HOME=/tmp/mackeep-home")
         XCTAssertEqual(command.environment["HOME"], "/tmp/mackeep-home")
         XCTAssertTrue(command.environment["PATH"]?.contains("/opt/homebrew/bin") ?? false)
     }
@@ -201,7 +204,7 @@ final class MackeepCommandTests: XCTestCase {
         let path: String = try makeTool("#!/bin/sh\necho ok\n")
 
         XCTAssertEqual(MackeepDiscovery.find(manualPath: path), path)
-            // An unknown path falls back to the known directories
+        // An unknown path falls back to the known directories
         XCTAssertNotEqual(
             MackeepDiscovery.find(manualPath: "/does/not/exist/mackeep-cli"),
             "/does/not/exist/mackeep-cli"

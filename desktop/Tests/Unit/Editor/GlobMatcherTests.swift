@@ -82,15 +82,23 @@ final class GlobMatcherTests: XCTestCase {
         struct Case: Decodable {
             let patterns: [String]
             let path: String
-            let is_directory: Bool
+            let isDirectory: Bool
             let excluded: Bool
+
+            enum CodingKeys: String, CodingKey {
+                case patterns, path, excluded
+                case isDirectory = "is_directory"
+            }
         }
-        let url = INICompatibilityTests.repository.appendingPathComponent("tests/fixtures/exclusion-cases.json")
+        let url = INICompatibilityTests.repository.appendingPathComponent(
+            "tests/fixtures/exclusion-cases.json")
         let cases = try JSONDecoder().decode([Case].self, from: Data(contentsOf: url))
         XCTAssertFalse(cases.isEmpty)
         for test in cases {
-            XCTAssertEqual(GlobMatcher(patterns: test.patterns).matches(test.path, isDirectory: test.is_directory),
-                           test.excluded, "Rules \(test.patterns), path \(test.path)")
+            XCTAssertEqual(
+                GlobMatcher(patterns: test.patterns).matches(
+                    test.path, isDirectory: test.isDirectory),
+                test.excluded, "Rules \(test.patterns), path \(test.path)")
         }
     }
 }

@@ -110,7 +110,6 @@ final class AppEnvironment {
         applications.editor(for: appName)
     }
 
-
 }
 
 /// The languages of the interface.

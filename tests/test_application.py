@@ -20,10 +20,15 @@ class TestApplicationProfile(unittest.TestCase):
             tempfile.TemporaryDirectory(),
         )
         self.temp_home = self.enterContext(tempfile.TemporaryDirectory())
-        self.enterContext(patch.dict(os.environ, {
-            "HOME": self.temp_home,
-            "XDG_CONFIG_HOME": str(Path(self.temp_home) / ".config"),
-        }))
+        self.enterContext(
+            patch.dict(
+                os.environ,
+                {
+                    "HOME": self.temp_home,
+                    "XDG_CONFIG_HOME": str(Path(self.temp_home) / ".config"),
+                },
+            )
+        )
 
         # Define test files
         self.test_files = {".testfile", ".testfolder"}
@@ -73,7 +78,6 @@ class TestApplicationProfile(unittest.TestCase):
                 # Call the method
                 app_profile_dry.copy_files_to_mackeep_folder()
 
-
             # Verify that copy was NOT called (dry_run mode)
             mock_copy.assert_not_called()
 
@@ -106,7 +110,6 @@ class TestApplicationProfile(unittest.TestCase):
             with contextlib.redirect_stdout(captured_output):
                 # Call the method
                 app_profile_dry.copy_files_from_mackeep_folder()
-
 
             # Verify that copy was NOT called (dry_run mode)
             mock_copy.assert_not_called()
@@ -185,7 +188,6 @@ class TestApplicationProfile(unittest.TestCase):
                 # Call the method
                 self.app_profile.link_uninstall()
 
-
             # Verify that delete and copy were NOT called
             mock_copy.assert_not_called()
 
@@ -225,7 +227,6 @@ class TestApplicationProfile(unittest.TestCase):
             with contextlib.redirect_stdout(captured_output):
                 # Call the method
                 self.app_profile.link_uninstall()
-
 
             # Verify that delete and copy were NOT called
             mock_copy.assert_not_called()
@@ -284,7 +285,6 @@ class TestApplicationProfile(unittest.TestCase):
                 # Call the method
                 self.app_profile.copy_files_to_mackeep_folder()
 
-
             # Verify that delete and copy were NOT called (should skip)
             mock_copy.assert_not_called()
 
@@ -333,7 +333,6 @@ class TestApplicationProfile(unittest.TestCase):
             with contextlib.redirect_stdout(captured_output):
                 # Call the method
                 app_profile_verbose.copy_files_to_mackeep_folder()
-
 
             # Verify that delete and copy were NOT called (should skip)
             mock_copy.assert_not_called()

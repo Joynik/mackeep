@@ -255,13 +255,15 @@ struct ApplicationEditorView: View {
     /// The text of the config file.
     private var textEditor: some View {
         VStack(spacing: 0) {
-            TextEditor(text: Binding(
-                get: { model.text },
-                set: { newValue in
-                    model.remember()
-                    model.text = newValue
-                }
-            ))
+            TextEditor(
+                text: Binding(
+                    get: { model.text },
+                    set: { newValue in
+                        model.remember()
+                        model.text = newValue
+                    }
+                )
+            )
             .font(.body.monospaced())
             .padding(8)
             .accessibilityLabel(L10n.string("editor.text.label"))
@@ -308,7 +310,10 @@ struct ApplicationEditorView: View {
 
     /// Write the config file.
     private func save(overwrite: Bool = false) {
-        if !overwrite && model.hasChangedOutside() { showsReloadAlert = true; return }
+        if !overwrite && model.hasChangedOutside() {
+            showsReloadAlert = true
+            return
+        }
         do {
             try model.save(overwrite: overwrite)
         } catch {
@@ -386,10 +391,12 @@ struct PathEditorView: View {
             } else {
                 ForEach(paths) { path in
                     HStack(spacing: 8) {
-                        Image(systemName: path.exists
-                            ? (path.url.hasDirectoryPath ? "folder" : "doc")
-                            : "questionmark.folder")
-                            .foregroundStyle(path.exists ? Color.secondary : Color.orange)
+                        Image(
+                            systemName: path.exists
+                                ? (path.url.hasDirectoryPath ? "folder" : "doc")
+                                : "questionmark.folder"
+                        )
+                        .foregroundStyle(path.exists ? Color.secondary : Color.orange)
 
                         Text(path.path)
                             .font(.callout.monospaced())

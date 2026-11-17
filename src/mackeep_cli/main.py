@@ -272,9 +272,7 @@ def _ownership_baseline(ctx: _Context, selected: set[str]) -> dict[str, list[str
                 continue
             else:
                 leaves = profile._inventory_filtered(backup, filename)  # noqa: SLF001
-            entries.update(
-                os.path.relpath(os.path.join(backup, leaf), root) for leaf in leaves
-            )
+            entries.update(os.path.relpath(os.path.join(backup, leaf), root) for leaf in leaves)
         baseline[name] = sorted(entries)
     return baseline
 
@@ -294,7 +292,8 @@ def _run_action(
         _perform_action(ctx, app_names, action, label)
         return
     history = OperationHistory(
-        commands[action], next(iter(app_names)) if len(app_names) == 1 else None,
+        commands[action],
+        next(iter(app_names)) if len(app_names) == 1 else None,
     )
     ctx.observer = history.report
     try:
@@ -353,9 +352,7 @@ def _cmd_list(app_db: ApplicationsDatabase) -> None:
     for app_name in sorted(app_db.get_app_names()):
         output += f" - {app_name}\n"
     output += "\n"
-    output += (
-        f"{len(app_db.get_app_names())} applications supported in Mackeep v{VERSION}"
-    )
+    output += f"{len(app_db.get_app_names())} applications supported in Mackeep v{VERSION}"
     print(output)
 
 
@@ -460,9 +457,7 @@ def _cmd_link_install(args: dict[str, Any], ctx: _Context) -> None:
 def _cmd_link_uninstall(args: dict[str, Any], ctx: _Context) -> None:
     # Validate any named application before the env check, so an unknown
     # name fails cleanly before any prompt or side effect.
-    named_apps = (
-        _resolve_apps(args["<application>"], ctx) if args["<application>"] else None
-    )
+    named_apps = _resolve_apps(args["<application>"], ctx) if args["<application>"] else None
 
     # Check the env where the command is being run
     ctx.mckp.check_for_usable_restore_env()
@@ -504,9 +499,7 @@ def _cmd_link_uninstall(args: dict[str, Any], ctx: _Context) -> None:
 
 def _cmd_link(args: dict[str, Any], ctx: _Context) -> None:
     # Validate any named application before the env check.
-    named_apps = (
-        _resolve_apps(args["<application>"], ctx) if args["<application>"] else None
-    )
+    named_apps = _resolve_apps(args["<application>"], ctx) if args["<application>"] else None
 
     # Check the env where the command is being run
     ctx.mckp.check_for_usable_restore_env()
@@ -534,10 +527,7 @@ def _cmd_link(args: dict[str, Any], ctx: _Context) -> None:
     # Mackeep has already been done
     app_names.discard(MACKEEP_APP_NAME)
 
-    if (
-        not ctx.dry_run
-        and os.path.realpath(ctx.mckp.mackeep_folder) != original_storage
-    ):
+    if not ctx.dry_run and os.path.realpath(ctx.mckp.mackeep_folder) != original_storage:
         with storage_lock(ctx.mckp.mackeep_folder):
             _run_action(ctx, app_names, "link")
     else:
@@ -753,8 +743,7 @@ def _cmd_migrate(dry_run: bool) -> None:
             print(f"Copy {action['src']}\n  to {action['dst']}")
         elif action["action"] == "set_directory":
             print(
-                f"Set the storage directory to {action['directory']}\n"
-                f"  in {action['dst']}",
+                f"Set the storage directory to {action['directory']}\n  in {action['dst']}",
             )
         else:
             print(f"Skip {action['src']}\n  {action['dst']} already exists")
@@ -776,11 +765,7 @@ def _cmd_config(ctx: _Context) -> None:
     print(f"Backup directory: {config.fullpath}")
     sync: list[str] = sorted(config.apps_to_sync)
     ignore: list[str] = sorted(config.apps_to_ignore)
-    sync_label = (
-        ", ".join(sync)
-        if sync
-        else ("none" if config.apps_to_sync_is_explicit else "all")
-    )
+    sync_label = ", ".join(sync) if sync else ("none" if config.apps_to_sync_is_explicit else "all")
     print(f"Applications to sync: {sync_label}")
     print(f"Applications to ignore: {', '.join(ignore) if ignore else 'none'}")
     if config.global_exclude:
@@ -825,8 +810,7 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
         jsonapi.emit(_config_json(ctx), stream)
     elif args["list"]:
         apps: list[dict[str, Any]] = [
-            _app_json(ctx.app_db, app_name)
-            for app_name in sorted(ctx.app_db.get_app_names())
+            _app_json(ctx.app_db, app_name) for app_name in sorted(ctx.app_db.get_app_names())
         ]
         jsonapi.emit(apps, stream)
     elif args["show"]:
@@ -836,9 +820,7 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
         jsonapi.emit(_app_json(ctx.app_db, app_name), stream)
     elif args["backup"] or args["restore"]:
         action: str = (
-            "copy_files_to_mackeep_folder"
-            if args["backup"]
-            else "copy_files_from_mackeep_folder"
+            "copy_files_to_mackeep_folder" if args["backup"] else "copy_files_from_mackeep_folder"
         )
         label: str = "backup" if args["backup"] else "restore"
 
@@ -884,7 +866,6 @@ def _clean_error(message: str) -> str:
     """
     text: str = ANSI_CODES.sub("", message).strip()
     return text.removeprefix("Error: ")
-
 
 
 def main() -> None:
@@ -1079,11 +1060,7 @@ def _run(args: dict[str, Any], json_mode: bool, stdout: TextIO) -> None:
         _ = mckp.config.path
     _print_warnings(ctx)
 
-    if (
-        not ctx.dry_run
-        and (args["backup"] or args["restore"] or args["link"])
-        and mckp.config.path
-    ):
+    if not ctx.dry_run and (args["backup"] or args["restore"] or args["link"]) and mckp.config.path:
         with storage_lock(mckp.mackeep_folder):
             _dispatch(args, ctx, json_mode, stdout)
     else:
@@ -1091,7 +1068,10 @@ def _run(args: dict[str, Any], json_mode: bool, stdout: TextIO) -> None:
 
 
 def _dispatch(
-    args: dict[str, Any], ctx: _Context, json_mode: bool, stdout: TextIO,
+    args: dict[str, Any],
+    ctx: _Context,
+    json_mode: bool,
+    stdout: TextIO,
 ) -> None:
     """Dispatch after acquiring a local lock for filesystem writes."""
     if json_mode:

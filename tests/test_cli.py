@@ -325,10 +325,7 @@ class TestCLI(unittest.TestCase):
             with pytest.raises(SystemExit) as context:
                 main()
 
-            assert (
-                str(context.value)
-                == "Options --force and --force-no are mutually exclusive."
-            )
+            assert str(context.value) == "Options --force and --force-no are mutually exclusive."
 
     def test_backup_single_named_app(self):
         """mackeep backup <app> backs up that application's files."""

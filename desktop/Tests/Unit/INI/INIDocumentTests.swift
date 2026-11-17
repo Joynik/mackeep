@@ -6,26 +6,26 @@ import XCTest
 final class INIDocumentTests: XCTestCase {
     /// A config file of an application, with everything it can hold.
     static let applicationConfig: String = """
-    # The config of an application
-    [application]
-    name = Test App
+        # The config of an application
+        [application]
+        name = Test App
 
-    ; The paths of the application
-    [configuration_files]
-    .testrc
-    .testdir
+        ; The paths of the application
+        [configuration_files]
+        .testrc
+        .testdir
 
-    [xdg_configuration_files]
-    test-app/config
+        [xdg_configuration_files]
+        test-app/config
 
-    # The paths that are not backed up
-    [exclude]
-    .testdir/cache
-    *.log
+        # The paths that are not backed up
+        [exclude]
+        .testdir/cache
+        *.log
 
-    [xdg_exclude]
-    test-app/cache
-    """
+        [xdg_exclude]
+        test-app/cache
+        """
 
     func testTheDocumentIsLossless() {
         let document: INIDocument = INIDocument(text: Self.applicationConfig)

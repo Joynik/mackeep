@@ -100,7 +100,8 @@ final class SettingsModel {
             return L10n.string("settings.tool.versionUnknown")
         }
         if desktopVersion != mackeepVersion {
-            let key = desktopVersion.compare(mackeepVersion, options: .numeric) == .orderedAscending
+            let key =
+                desktopVersion.compare(mackeepVersion, options: .numeric) == .orderedAscending
                 ? "settings.tool.updateDesktop" : "settings.tool.updateCLI"
             return L10n.string(key, desktopVersion, mackeepVersion)
         }

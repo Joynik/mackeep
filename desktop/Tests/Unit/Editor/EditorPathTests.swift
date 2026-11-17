@@ -97,7 +97,8 @@ final class EditorPathTests: XCTestCase {
     }
     func testExternalPathsKeepTheirAbsoluteLocationWhenAllowed() {
         XCTAssertEqual(
-            EditorPath.corrected("/Volumes/External/config", isXDG: false, allowExternalPaths: true),
+            EditorPath.corrected(
+                "/Volumes/External/config", isXDG: false, allowExternalPaths: true),
             "/Volumes/External/config"
         )
         XCTAssertEqual(

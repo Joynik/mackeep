@@ -73,11 +73,13 @@ struct GlobMatcher: Sendable {
     func matchingFiles(in url: URL, relativeTo root: URL? = nil, limit: Int = 300) -> [String] {
         guard !isEmpty else { return [] }
         let manager: FileManager = .default
-        guard let enumerator: FileManager.DirectoryEnumerator = manager.enumerator(
-            at: url,
-            includingPropertiesForKeys: nil,
-            options: []
-        ) else {
+        guard
+            let enumerator: FileManager.DirectoryEnumerator = manager.enumerator(
+                at: url,
+                includingPropertiesForKeys: nil,
+                options: []
+            )
+        else {
             return []
         }
 
@@ -133,9 +135,11 @@ struct GlobMatcher: Sendable {
         var expression = GlobMatcher.expression(for: source)
         if isAnchored && !source.hasSuffix("/**") { expression += "(?:/.*)?" }
         expression = "^" + expression + "$"
-        guard let regex: NSRegularExpression = try? NSRegularExpression(
-            pattern: expression
-        ) else {
+        guard
+            let regex: NSRegularExpression = try? NSRegularExpression(
+                pattern: expression
+            )
+        else {
             return nil
         }
         return Pattern(
@@ -186,8 +190,8 @@ struct GlobMatcher: Sendable {
     }
 }
 
-private extension NSRegularExpression {
-    func matches(_ value: String) -> Bool {
+extension NSRegularExpression {
+    fileprivate func matches(_ value: String) -> Bool {
         firstMatch(in: value, range: NSRange(value.startIndex..., in: value)) != nil
     }
 }

@@ -21,10 +21,10 @@ enum INILine: Equatable, Sendable {
     /// The original text of the line.
     var text: String {
         switch self {
-        case let .empty(text): text
-        case let .comment(text): text
-        case let .section(_, text): text
-        case let .option(option): option.text
+        case .empty(let text): text
+        case .comment(let text): text
+        case .section(_, let text): text
+        case .option(let option): option.text
         }
     }
 }
@@ -69,7 +69,7 @@ struct INIOption: Equatable, Sendable {
 extension INILine {
     /// The option of the line, when the line holds one.
     var optionValue: INIOption {
-        if case let .option(option) = self { return option }
+        if case .option(let option) = self { return option }
         return INIOption(key: "")
     }
 }
@@ -133,7 +133,7 @@ struct INIDocument: Equatable, Sendable {
     /// The names of the sections, in the order they appear.
     var sectionNames: [String] {
         lines.compactMap { line in
-            if case let .section(name, _) = line { return name }
+            if case .section(let name, _) = line { return name }
             return nil
         }
     }
@@ -158,8 +158,8 @@ struct INIDocument: Equatable, Sendable {
         var current: String?
         for line in lines {
             switch line {
-            case let .section(name, _): current = name
-            case let .option(option) where current == section:
+            case .section(let name, _): current = name
+            case .option(let option) where current == section:
                 if let last = result.last, last.hasValue, option.prefix.count > last.prefix.count {
                     let text = option.text.trimmingCharacters(in: .whitespaces)
                     let value = stripsInlineComments ? Self.splitInlineComment(text).0 : text
@@ -209,14 +209,14 @@ struct INIDocument: Equatable, Sendable {
         for (offset, line) in lines.enumerated() {
             let location = "Line \(offset + 1)"
             switch line {
-            case let .section(name, _):
+            case .section(let name, _):
                 if !sections.insert(name).inserted {
                     problems.append("\(location): duplicate section [\(name)]")
                 }
                 section = name
                 previous = nil
                 keys = []
-            case let .option(option):
+            case .option(let option):
                 if let previous, option.prefix.count > previous.prefix.count {
                     if !previous.hasValue {
                         problems.append("\(location): continuation after an option without a value")
@@ -252,7 +252,7 @@ struct INIDocument: Equatable, Sendable {
             option.comment = ""
             lines[index] = .option(option)
             while index + 1 < lines.count,
-                case let .option(continuation) = lines[index + 1],
+                case .option(let continuation) = lines[index + 1],
                 continuation.prefix.count > option.prefix.count
             {
                 lines.remove(at: index + 1)
@@ -298,7 +298,7 @@ struct INIDocument: Equatable, Sendable {
         var skipping: Bool = false
         for line in lines {
             switch line {
-            case let .section(section, _):
+            case .section(let section, _):
                 skipping = section == name
                 if !skipping { result.append(line) }
             case .option:
@@ -317,9 +317,9 @@ struct INIDocument: Equatable, Sendable {
         var current: String?
         for (index, line) in lines.enumerated() {
             switch line {
-            case let .section(name, _):
+            case .section(let name, _):
                 current = name
-            case let .option(option):
+            case .option(let option):
                 if current == section, self.key(of: option, in: section) == key { return index }
             case .empty(_), .comment:
                 continue
@@ -334,7 +334,7 @@ struct INIDocument: Equatable, Sendable {
         var current: String?
         for (index, line) in lines.enumerated() {
             switch line {
-            case let .section(name, _):
+            case .section(let name, _):
                 current = name
                 if name == section { last = index }
             case .option:
@@ -365,7 +365,7 @@ struct INIDocument: Equatable, Sendable {
         var current: String?
         for (index, line) in lines.enumerated() {
             switch line {
-            case let .section(name, _):
+            case .section(let name, _):
                 current = name
                 if current == section { header = index }
             case .option:
@@ -446,7 +446,8 @@ struct INIDocument: Equatable, Sendable {
         )
         let rawValue: String = String(afterKey.dropFirst(spaces.count))
         // The separator keeps the whitespace around the delimiter
-        let separator: String = String(rawKey.dropFirst(key.count))
+        let separator: String =
+            String(rawKey.dropFirst(key.count))
             + String(rest[delimiterIndex])
             + spaces
 

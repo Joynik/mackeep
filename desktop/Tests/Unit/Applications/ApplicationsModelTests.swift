@@ -36,12 +36,12 @@ final class ApplicationsModelTests: XCTestCase {
         let model: ApplicationsModel = ApplicationsModel(command: nil)
         let document: INIDocument = INIDocument(
             text: """
-            [applications_to_sync]
-            \(sync.joined(separator: "\n"))
+                [applications_to_sync]
+                \(sync.joined(separator: "\n"))
 
-            [applications_to_ignore]
-            \(ignore.joined(separator: "\n"))
-            """
+                [applications_to_ignore]
+                \(ignore.joined(separator: "\n"))
+                """
         )
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(
             "mackeep-tests-\(UUID().uuidString)/main.cfg")
@@ -186,7 +186,7 @@ final class ApplicationsModelTests: XCTestCase {
     func testTheApplicationsOfTheLibraryAreNotInTheList() {
         let model: ApplicationsModel = model(
             applications: [
-                application(name: "vim"),
+                application(name: "vim")
             ]
         )
 
@@ -195,7 +195,8 @@ final class ApplicationsModelTests: XCTestCase {
     }
 
     func testTheApplicationWithAnErrorIsStillInTheList() {
-        let reason: String = "Invalid exclusion pattern in /Users/user/.mackeep/vim.cfg: unsupported absolute path: /absolute/path"
+        let reason: String =
+            "Invalid exclusion pattern in /Users/user/.mackeep/vim.cfg: unsupported absolute path: /absolute/path"
         let model: ApplicationsModel = model(
             applications: [
                 application(name: "vim", error: reason),
@@ -213,7 +214,7 @@ final class ApplicationsModelTests: XCTestCase {
     func testTheApplicationOfTheLibraryIsRemovedFromTheList() {
         let model: ApplicationsModel = model(
             applications: [
-                application(name: "vim"),
+                application(name: "vim")
             ],
             sync: ["vim"]
         )
@@ -306,7 +307,8 @@ final class ApplicationsModelTests: XCTestCase {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         let url = directory.appendingPathComponent("main.cfg")
-        try "[security]\nallow_external_paths = false\n".write(to: url, atomically: true, encoding: .utf8)
+        try "[security]\nallow_external_paths = false\n".write(
+            to: url, atomically: true, encoding: .utf8)
         let model = ApplicationsModel(command: nil)
         model.setConfig(try MainConfig.load(from: url))
         let settings = try MainConfig.load(from: url)
@@ -342,7 +344,8 @@ final class ApplicationsModelTests: XCTestCase {
         let app = application(name: "vim")
         model.setEnabled(true, for: app)
         do {
-            try await model.flushSelection(); XCTFail("An unsaved selection must block operations")
+            try await model.flushSelection()
+            XCTFail("An unsaved selection must block operations")
         } catch {}
         XCTAssertFalse(model.isEnabled(app))
         XCTAssertNotNil(model.presentedError)

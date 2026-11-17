@@ -290,7 +290,8 @@ class ApplicationsDatabase:
         """
         home: str = os.path.expanduser("~")
         xdg_config_home: str = os.environ.get(
-            "XDG_CONFIG_HOME", os.path.join(home, ".config"),
+            "XDG_CONFIG_HOME",
+            os.path.join(home, ".config"),
         )
         return [
             ApplicationsDatabase.get_custom_apps_dir(),
@@ -308,7 +309,8 @@ class ApplicationsDatabase:
         """
         home: str = os.path.expanduser("~")
         xdg_config_home: str = os.environ.get(
-            "XDG_CONFIG_HOME", os.path.join(home, ".config"),
+            "XDG_CONFIG_HOME",
+            os.path.join(home, ".config"),
         )
         return [
             (
@@ -341,7 +343,8 @@ class ApplicationsDatabase:
         """
         # Configure the config parser
         apps_dir: str = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), APPS_DIR,
+            os.path.dirname(os.path.realpath(__file__)),
+            APPS_DIR,
         )
 
         # The directories of the custom application configs, the Mackeep
@@ -372,20 +375,14 @@ class ApplicationsDatabase:
         removed_files = hidden_definitions()
         if managed_dir.is_dir():
             for managed_path in sorted(managed_dir.glob("*.cfg")):
-                if (
-                    managed_path.is_file()
-                    and managed_path.name not in custom_files | removed_files
-                ):
+                if managed_path.is_file() and managed_path.name not in custom_files | removed_files:
                     config_files.add(str(managed_path))
                     custom_files.add(managed_path.name)
 
         # Add the default provided app config files, but only if those are not
         # customized, as we don't want to overwrite custom app config.
         for filename in os.listdir(apps_dir):
-            if (
-                filename.endswith(".cfg")
-                and filename not in custom_files | removed_files
-            ):
+            if filename.endswith(".cfg") and filename not in custom_files | removed_files:
                 config_files.add(os.path.join(apps_dir, filename))
 
         return config_files
@@ -526,7 +523,8 @@ class ApplicationsDatabase:
         """
         config_file: str = self.get_config_file(name)
         apps_dir: str = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), APPS_DIR,
+            os.path.dirname(os.path.realpath(__file__)),
+            APPS_DIR,
         )
         return os.path.dirname(config_file) not in {apps_dir, str(library_directory())}
 

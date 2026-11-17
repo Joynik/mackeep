@@ -14,7 +14,8 @@ final class DesktopSafetyTests: XCTestCase {
     }
 
     override func tearDownWithError() throws {
-        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directory.path)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o700], ofItemAtPath: directory.path)
         try FileManager.default.removeItem(at: directory)
     }
 
@@ -27,8 +28,9 @@ final class DesktopSafetyTests: XCTestCase {
         let model = BackupModel(command: nil, historyStore: store)
         XCTAssertNotNil(model.presentedError)
         XCTAssertEqual(try Data(contentsOf: file), damaged)
-        let record = RunRecord(date: Date(timeIntervalSince1970: 1_700_000_000),
-                               command: "backup", succeeded: true)
+        let record = RunRecord(
+            date: Date(timeIntervalSince1970: 1_700_000_000),
+            command: "backup", succeeded: true)
         let recovery = try XCTUnwrap(store.append(record))
         XCTAssertEqual(try Data(contentsOf: recovery), damaged)
         XCTAssertEqual(try store.load(), [record])
@@ -48,7 +50,8 @@ final class DesktopSafetyTests: XCTestCase {
         let store = HistoryStore(url: file)
         try store.append(RunRecord(command: "backup", succeeded: true))
         let original = try Data(contentsOf: file)
-        try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: directory.path)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o500], ofItemAtPath: directory.path)
         XCTAssertThrowsError(try store.append(RunRecord(command: "restore", succeeded: false)))
         XCTAssertEqual(try Data(contentsOf: file), original)
     }
@@ -73,20 +76,28 @@ final class DesktopSafetyTests: XCTestCase {
         let root = INICompatibilityTests.repository
         let launcher = directory.appendingPathComponent("real-cli")
         let python = root.appendingPathComponent(".venv/bin/python")
-        func quoted(_ text: String) -> String { "'" + text.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+        func quoted(_ text: String) -> String {
+            "'" + text.replacingOccurrences(of: "'", with: "'\\''") + "'"
+        }
         try "#!/bin/sh\nexec \(quoted(python.path)) -m mackeep_cli \"$@\"\n".write(
             to: launcher, atomically: true, encoding: .utf8)
-        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: launcher.path)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755], ofItemAtPath: launcher.path)
         for name in [".mackeep", "storage/Mackeep"] {
             try FileManager.default.createDirectory(
                 at: directory.appendingPathComponent(name), withIntermediateDirectories: true)
         }
-        try "[storage]\nengine = file_system\npath = \(directory.path)/storage\n[applications_to_sync]\ndemo\n".write(
-            to: directory.appendingPathComponent(".mackeep.cfg"), atomically: true, encoding: .utf8)
+        try
+            "[storage]\nengine = file_system\npath = \(directory.path)/storage\n[applications_to_sync]\ndemo\n"
+            .write(
+                to: directory.appendingPathComponent(".mackeep.cfg"), atomically: true,
+                encoding: .utf8)
         try "[application]\nname = Demo\n[configuration_files]\napp\n".write(
-            to: directory.appendingPathComponent(".mackeep/demo.cfg"), atomically: true, encoding: .utf8)
+            to: directory.appendingPathComponent(".mackeep/demo.cfg"), atomically: true,
+            encoding: .utf8)
         try Data("local data".utf8).write(to: directory.appendingPathComponent("app"))
-        try Data("backup data".utf8).write(to: directory.appendingPathComponent("storage/Mackeep/app"))
+        try Data("backup data".utf8).write(
+            to: directory.appendingPathComponent("storage/Mackeep/app"))
         var command = MackeepCommand(path: launcher.path, home: directory.path)
         command.environment["PYTHONPATH"] = root.appendingPathComponent("src").path
         return command
@@ -95,7 +106,8 @@ final class DesktopSafetyTests: XCTestCase {
     func testRealCLIHistoryIsMergedWithoutDuplicatingDesktopRecords() throws {
         let command = try realCommand()
         _ = try command.run(["backup", "--summary"])
-        let file = directory.appendingPathComponent("Library/Application Support/Mackeep/history.json")
+        let file = directory.appendingPathComponent(
+            "Library/Application Support/Mackeep/history.json")
         let store = HistoryStore(url: file)
         var records = try store.load()
         XCTAssertEqual(records.count, 1)
@@ -126,7 +138,8 @@ final class DesktopSafetyTests: XCTestCase {
                 preparations += 1
                 if preparations == 2 {
                     let text = try String(contentsOf: config, encoding: .utf8)
-                    try (text + "\n[exclude]\napp\n").write(to: config, atomically: true, encoding: .utf8)
+                    try (text + "\n[exclude]\napp\n").write(
+                        to: config, atomically: true, encoding: .utf8)
                 }
             })
         model.dryRunRestore()
@@ -139,12 +152,16 @@ final class DesktopSafetyTests: XCTestCase {
         XCTAssertEqual(model.plannedCommand, "restore")
         XCTAssertNil(model.lastRun)
         XCTAssertTrue(model.history.isEmpty)
-        XCTAssertEqual(try String(contentsOf: directory.appendingPathComponent("app"), encoding: .utf8), "local data")
+        XCTAssertEqual(
+            try String(contentsOf: directory.appendingPathComponent("app"), encoding: .utf8),
+            "local data")
         model.restore()
         try await waitUntil("Confirmed updated plan") { !model.isRunning }
         XCTAssertNil(model.presentedError)
         XCTAssertEqual(model.lastRun?.succeeded, true)
-        XCTAssertEqual(try String(contentsOf: directory.appendingPathComponent("app"), encoding: .utf8), "local data")
+        XCTAssertEqual(
+            try String(contentsOf: directory.appendingPathComponent("app"), encoding: .utf8),
+            "local data")
     }
 
     func testRestoreCannotUseAnotherApplicationScope() async throws {
@@ -157,7 +174,9 @@ final class DesktopSafetyTests: XCTestCase {
         model.restore()
         XCTAssertFalse(model.isRunning)
         XCTAssertNil(model.lastRun)
-        XCTAssertEqual(try String(contentsOf: directory.appendingPathComponent("app"), encoding: .utf8), "local data")
+        XCTAssertEqual(
+            try String(contentsOf: directory.appendingPathComponent("app"), encoding: .utf8),
+            "local data")
     }
 
     func testTerminationWaitsForPreparationAndNeverStartsTheCLI() async throws {
@@ -188,8 +207,12 @@ final class DesktopSafetyTests: XCTestCase {
         await stop.value
         XCTAssertNil(model.lastRun)
         XCTAssertTrue(model.history.isEmpty)
-        XCTAssertEqual(try String(contentsOf: directory.appendingPathComponent("storage/Mackeep/app"), encoding: .utf8), "backup data")
-        XCTAssertEqual(MackeepAppDelegate().applicationShouldTerminate(NSApplication.shared), .terminateNow)
+        XCTAssertEqual(
+            try String(
+                contentsOf: directory.appendingPathComponent("storage/Mackeep/app"), encoding: .utf8
+            ), "backup data")
+        XCTAssertEqual(
+            MackeepAppDelegate().applicationShouldTerminate(NSApplication.shared), .terminateNow)
     }
 
     func testChangedApplicationRulesRefreshTheRestorePlan() async throws {
@@ -201,13 +224,16 @@ final class DesktopSafetyTests: XCTestCase {
         try await waitUntil("Original restore plan") { !model.isRunning }
         let original = model.plan
         try "[application]\nname = Demo\n[configuration_files]\nother\n".write(
-            to: directory.appendingPathComponent(".mackeep/demo.cfg"), atomically: true, encoding: .utf8)
+            to: directory.appendingPathComponent(".mackeep/demo.cfg"), atomically: true,
+            encoding: .utf8)
         model.restore()
         try await waitUntil("Changed rules checked") { !model.isRunning }
         XCTAssertNotEqual(model.plan, original)
         XCTAssertNotNil(model.presentedError)
         XCTAssertNil(model.lastRun)
-        XCTAssertEqual(try String(contentsOf: directory.appendingPathComponent("app"), encoding: .utf8), "local data")
+        XCTAssertEqual(
+            try String(contentsOf: directory.appendingPathComponent("app"), encoding: .utf8),
+            "local data")
     }
 
     func testHistoryFailureIsVisibleWithoutMisreportingTheBackup() async throws {
@@ -220,14 +246,20 @@ final class DesktopSafetyTests: XCTestCase {
         let previous = try Data(contentsOf: file)
         let model = BackupModel(command: command, historyStore: store)
         try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: parent.path)
-        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: parent.path) }
+        defer {
+            try? FileManager.default.setAttributes(
+                [.posixPermissions: 0o700], ofItemAtPath: parent.path)
+        }
         model.backup()
         try await waitUntil("Backup with unwritable history") { !model.isRunning }
         XCTAssertEqual(model.lastRun?.succeeded, true)
         XCTAssertNotNil(model.presentedError)
         XCTAssertEqual(model.history.count, 1)
         XCTAssertEqual(try Data(contentsOf: file), previous)
-        XCTAssertEqual(try String(contentsOf: directory.appendingPathComponent("storage/Mackeep/app"), encoding: .utf8), "local data")
+        XCTAssertEqual(
+            try String(
+                contentsOf: directory.appendingPathComponent("storage/Mackeep/app"), encoding: .utf8
+            ), "local data")
     }
 
     func testClosingConfirmationDuringPreparationDoesNotRestore() async throws {
@@ -254,6 +286,8 @@ final class DesktopSafetyTests: XCTestCase {
         try await waitUntil("Preparation cancelled") { !model.isRunning }
         XCTAssertNil(model.lastRun)
         XCTAssertNil(model.presentedError)
-        XCTAssertEqual(try String(contentsOf: directory.appendingPathComponent("app"), encoding: .utf8), "local data")
+        XCTAssertEqual(
+            try String(contentsOf: directory.appendingPathComponent("app"), encoding: .utf8),
+            "local data")
     }
 }

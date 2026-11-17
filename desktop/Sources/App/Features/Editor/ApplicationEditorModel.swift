@@ -285,7 +285,8 @@ final class ApplicationEditorModel {
                 )
             }
             if !allowsExternal,
-               path.path.hasPrefix("/") || path.path.split(separator: "/").contains("..") {
+                path.path.hasPrefix("/") || path.path.split(separator: "/").contains("..")
+            {
                 issues.append(
                     ValidationIssue(
                         severity: .error,

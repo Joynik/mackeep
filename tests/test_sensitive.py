@@ -85,10 +85,7 @@ def test_the_sensitive_paths_are_found():
     assert utils.sensitive_reason(".gnupg/secring.gpg") == reason
     assert utils.sensitive_reason(".aws/credentials") == "The credentials of AWS"
     assert utils.sensitive_reason("Library/Keychains") == "The keychain of macOS"
-    assert (
-        utils.sensitive_reason("Library/Keychains/login.keychain-db")
-        == "The keychain of macOS"
-    )
+    assert utils.sensitive_reason("Library/Keychains/login.keychain-db") == "The keychain of macOS"
     assert utils.sensitive_reason(".configrc") is None
 
 

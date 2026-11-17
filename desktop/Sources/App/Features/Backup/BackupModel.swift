@@ -113,9 +113,11 @@ final class BackupModel {
         return actions.compactMap { action in
             if action.action == "conflict" {
                 guard displayedCommand == "restore", isPreview,
-                      !copies.contains(key(action)) else { return nil }
+                    !copies.contains(key(action))
+                else { return nil }
             } else if displayedCommand != "restore" || action.action != "copy"
-                        || !overwrites.contains(key(action)) {
+                || !overwrites.contains(key(action))
+            {
                 return action
             }
             return MackeepAction(
@@ -138,8 +140,7 @@ final class BackupModel {
 
     /// Read the history.
     func loadHistory() {
-        do { history = try historyStore.load() }
-        catch { presentHistoryError(error) }
+        do { history = try historyStore.load() } catch { presentHistoryError(error) }
     }
 
     /// Clear persisted history and update the table only after success.
@@ -291,7 +292,8 @@ final class BackupModel {
         guard let command, !isRunning else { return }
         if name == "restore" {
             guard plannedCommand == "restore", plan != nil,
-                  plannedApplication == application else { return }
+                plannedApplication == application
+            else { return }
         }
         let confirmedPlan = plan
         let confirmedConfig = plannedConfig
@@ -423,7 +425,8 @@ final class BackupModel {
             MackeepSummary(
                 apps: apps.sorted(), actions: counts, totalActions: total, totalBytes: bytes,
                 files: files, truncated: total > actionLimit, limit: actionLimit),
-            message)
+            message
+        )
     }
 
     /// Live rows may be coalesced; execution replaces them with the collected result.

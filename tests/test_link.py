@@ -10,13 +10,7 @@ from mackeep import utils
 from mackeep_cli.main import main
 
 # The content of the config file of the test application
-APP_CONFIG = (
-    "[application]\n"
-    "name = Test App\n"
-    "\n"
-    "[configuration_files]\n"
-    ".testrc\n"
-)
+APP_CONFIG = "[application]\nname = Test App\n\n[configuration_files]\n.testrc\n"
 
 # The content of the main config file
 MAIN_CONFIG = (
@@ -36,7 +30,7 @@ def write_config(home, path, content=MAIN_CONFIG):
     path.write_text(content.format(storage=home / "storage"))
 
 
-def setup(home, files=(".testrc",), apps="test-app", content=MAIN_CONFIG):
+def setup(home, files=(".testrc",), content=MAIN_CONFIG):
     """Set up a home directory with a config file and a test application."""
     write_config(home, home / ".mackeep.cfg", content)
     write_config(home, home / ".mackeep" / "test-app.cfg", APP_CONFIG)

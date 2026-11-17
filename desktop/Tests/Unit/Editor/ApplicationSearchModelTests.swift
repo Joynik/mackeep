@@ -249,9 +249,10 @@ final class ApplicationSearchModelTests: XCTestCase {
                 $0.url.resolvingSymlinksInPath() == expected.resolvingSymlinksInPath()
             },
             "Expected \(expected.path), found \(model.results.map { $0.url.path })")
-        XCTAssertFalse(model.results.contains {
-            $0.url.resolvingSymlinksInPath() == known.resolvingSymlinksInPath()
-        })
+        XCTAssertFalse(
+            model.results.contains {
+                $0.url.resolvingSymlinksInPath() == known.resolvingSymlinksInPath()
+            })
     }
 
     @MainActor
@@ -278,7 +279,10 @@ final class ApplicationSearchModelTests: XCTestCase {
     ) async throws {
         for _ in 0..<200 {
             if !model.isSearching,
-               expected == nil || model.results.contains(where: { $0.url == expected }) { break }
+                expected == nil || model.results.contains(where: { $0.url == expected })
+            {
+                break
+            }
             try await Task.sleep(for: .milliseconds(10))
         }
         XCTAssertFalse(model.isSearching)

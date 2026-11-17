@@ -61,8 +61,7 @@ def read(
         read_files: list[str] = parser.read(path)
     except configparser.DuplicateOptionError as e:
         problems.append(
-            f"Invalid option in {path}: '{e.option}' is duplicated in the "
-            f"section [{e.section}]",
+            f"Invalid option in {path}: '{e.option}' is duplicated in the section [{e.section}]",
         )
         parser = _make_parser(
             strict=False,

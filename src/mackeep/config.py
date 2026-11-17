@@ -64,9 +64,7 @@ class Config:
 
         # Get the path where the Mackeep folder is
         self._path: str | None = (
-            self._parse_path()
-            if self.engine in {ENGINE_FS, ENGINE_UNCONFIGURED}
-            else None
+            self._parse_path() if self.engine in {ENGINE_FS, ENGINE_UNCONFIGURED} else None
         )
 
         # Get the directory replacing 'Mackeep', if any
@@ -239,11 +237,7 @@ class Config:
 
         # Keep track of the config file that is used
         self._config_path: str = self._best_config_path(filename)
-        if (
-            not self.read_only
-            and not filename
-            and not Path(self._config_path).is_file()
-        ):
+        if not self.read_only and not filename and not Path(self._config_path).is_file():
             # The config file is created when it does not exist
             self._create_config_file()
 
@@ -356,8 +350,7 @@ class Config:
             config_path.relative_to(Path.home())
         except ValueError:
             error(
-                f"The config file '{config_path}' is not in your home "
-                "directory. Aborting.",
+                f"The config file '{config_path}' is not in your home directory. Aborting.",
             )
 
         # return the absolute path to the config file
@@ -432,12 +425,12 @@ class Config:
                 if not cfg_path:
                     return ""
                 path = os.path.join(
-                    os.path.expanduser("~"), os.path.expanduser(cfg_path),
+                    os.path.expanduser("~"),
+                    os.path.expanduser(cfg_path),
                 )
             else:
                 raise ConfigError(
-                    "The required 'path' can't be found while"
-                    " the 'file_system' engine is used.",
+                    "The required 'path' can't be found while the 'file_system' engine is used.",
                 )
 
         return str(path)

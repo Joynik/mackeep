@@ -212,9 +212,7 @@ def update(name: str | None = None) -> dict[str, Any]:
             for change in changes:
                 filename = f"{change['name']}.cfg"
                 os.replace(staged / filename, target / filename)
-            hidden = hidden_definitions() - {
-                f"{change['name']}.cfg" for change in changes
-            }
+            hidden = hidden_definitions() - {f"{change['name']}.cfg" for change in changes}
             _write_hidden(hidden, staged)
     return _status(manifest)
 

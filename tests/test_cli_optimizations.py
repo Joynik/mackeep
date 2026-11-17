@@ -16,7 +16,9 @@ def test_no_exclusions_need_no_directory_scan(home):
     with patch("mackeep.application.os.listdir") as listing:
         assert not profile._contains_excluded(str(existing), "existing")  # noqa: SLF001
         profile._preserve_local_exclusions(  # noqa: SLF001
-            str(existing), str(home / "staged"), "existing",
+            str(existing),
+            str(home / "staged"),
+            "existing",
         )
         listing.assert_not_called()
 
@@ -24,19 +26,27 @@ def test_no_exclusions_need_no_directory_scan(home):
 def test_last_match_search_preserves_forward_reference():
     """The winning rule and its metadata must match a forward scan."""
     rule_sets = [
-        [], ["*.log", "!keep.log"], ["cache/", "!cache/keep.log"],
+        [],
+        ["*.log", "!keep.log"],
+        ["cache/", "!cache/keep.log"],
         ["**/*.log", "!app/**", "app/private/**"],
         ["/app/cache/", "!app/cache/", "app/cache/private"],
     ]
     for rules in rule_sets:
         matcher = Matcher(rules)
-        for path in ("app.log", "keep.log", "cache", "cache/keep.log",
-                     "app/cache/private/file", "app/private/file.log"):
+        for path in (
+            "app.log",
+            "keep.log",
+            "cache",
+            "cache/keep.log",
+            "app/cache/private/file",
+            "app/private/file.log",
+        ):
             for is_dir in (False, True):
                 expected = None
                 components = path.split("/")
                 for index in range(len(components)):
-                    prefix = "/".join(components[:index + 1])
+                    prefix = "/".join(components[: index + 1])
                     directory = index < len(components) - 1 or is_dir
                     deciding = None
                     for pattern in matcher._patterns:  # noqa: SLF001

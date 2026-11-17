@@ -79,7 +79,10 @@ final class ApplicationSearchModel {
         self.query = query
     }
 
-    func start() { active = true; search() }
+    func start() {
+        active = true
+        search()
+    }
 
     func cancel() {
         active = false
@@ -163,11 +166,12 @@ final class ApplicationSearchModel {
         matching text: String,
         known: Set<String>
     ) -> [FoundFile] {
-        let children: [URL] = (try? FileManager.default.contentsOfDirectory(
-            at: home,
-            includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
-            options: []
-        )) ?? []
+        let children: [URL] =
+            (try? FileManager.default.contentsOfDirectory(
+                at: home,
+                includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+                options: []
+            )) ?? []
 
         var folders: [URL] = []
         var found: [FoundFile] = []
@@ -220,11 +224,12 @@ final class ApplicationSearchModel {
         known: Set<String>
     ) -> [FoundFile] {
         let folder: URL = home.appendingPathComponent("Library/Preferences")
-        let children: [URL] = (try? FileManager.default.contentsOfDirectory(
-            at: folder,
-            includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
-            options: []
-        )) ?? []
+        let children: [URL] =
+            (try? FileManager.default.contentsOfDirectory(
+                at: folder,
+                includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+                options: []
+            )) ?? []
 
         var found: [FoundFile] = []
         for child: URL in children {
@@ -356,8 +361,10 @@ final class ApplicationSearchModel {
                 // The identifier of the bundle of the application, the files
                 // of an application are often named after it
                 let identifiers =
-                    cached ?? (names + Self.bundleIdentifiers(
-                        named: names, cancellation: token, query: query))
+                    cached
+                    ?? (names
+                        + Self.bundleIdentifiers(
+                            named: names, cancellation: token, query: query))
 
                 // The standard places of the application, they are named
                 // after the application and after its bundle
@@ -416,14 +423,15 @@ final class ApplicationSearchModel {
                     identifiers,
                     found
                         .filter { seen.insert($0.id).inserted }
-                    .sorted { $0.relativePath < $1.relativePath }
+                        .sorted { $0.relativePath < $1.relativePath }
                         .prefix(Self.maximumResults).map { $0 }
                 )
             }
             let (identifiers, found) = await withTaskCancellationHandler {
                 await worker.value
             } onCancel: {
-                worker.cancel(); token.cancel()
+                worker.cancel()
+                token.cancel()
             }
 
             guard !Task.isCancelled else { return }
@@ -474,7 +482,7 @@ final class ApplicationSearchModel {
         for root: URL in roots {
             // The folder itself is a file of the application
             if let root: FoundFile = makeFile(root),
-               matches(root, text: text),
+                matches(root, text: text),
                 !known.contains(root.id)
             {
                 found.append(root)
@@ -485,11 +493,12 @@ final class ApplicationSearchModel {
                 if Task.isCancelled { break }
                 guard item.depth < maximumDepth else { continue }
 
-                let children: [URL] = (try? manager.contentsOfDirectory(
-                    at: item.url,
-                    includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
-                    options: []
-                )) ?? []
+                let children: [URL] =
+                    (try? manager.contentsOfDirectory(
+                        at: item.url,
+                        includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+                        options: []
+                    )) ?? []
 
                 for child: URL in children {
                     if Task.isCancelled { break }
@@ -598,9 +607,10 @@ final class ApplicationSearchModel {
     /// - Parameter url: The path of the file.
     /// - Returns: The file, nil when it cannot be read.
     nonisolated static func makeFile(_ url: URL) -> FoundFile? {
-        let values: URLResourceValues = (try? url.resourceValues(
-            forKeys: [.isDirectoryKey, .fileSizeKey]
-        )) ?? URLResourceValues()
+        let values: URLResourceValues =
+            (try? url.resourceValues(
+                forKeys: [.isDirectoryKey, .fileSizeKey]
+            )) ?? URLResourceValues()
         let isXDG: Bool = ApplicationSearchModel.isXDG(url)
 
         return FoundFile(

@@ -14,13 +14,7 @@ from mackeep_cli import main as main_module
 from mackeep_cli.main import _Context, main
 
 # The content of the config file of the test application
-APP_CONFIG = (
-    "[application]\n"
-    "name = Test App\n"
-    "\n"
-    "[configuration_files]\n"
-    ".testrc\n"
-)
+APP_CONFIG = "[application]\nname = Test App\n\n[configuration_files]\n.testrc\n"
 
 # The content of the main config file
 MAIN_CONFIG = (
@@ -168,9 +162,7 @@ def test_the_json_restore_command_writes_the_events(home, capsys):
         code = e.code if isinstance(e.code, int) else 1
     captured = capsys.readouterr()
 
-    events: list[dict] = [
-        json.loads(line) for line in captured.out.splitlines() if line
-    ]
+    events: list[dict] = [json.loads(line) for line in captured.out.splitlines() if line]
 
     assert code == 0
     assert events[0]["event"] == "start"
