@@ -21,11 +21,11 @@ PYTHON_BUILD_DIRECTORY = "{{ env.PYTHON_BUILD_DIRECTORY | default(value=vars.pyt
 [vars]
 project_root = "."  # Relative to mise.toml; absolute paths are also allowed.
 python_source = "."  # Relative to project_root; use "." for the project folder.
-swift_directory = "."
-swift_backend = "swiftpm"
-xcode_project = ""
-xcode_scheme = ""
-xcode_destination = "platform=macOS"
+swift_directory = "desktop"
+swift_backend = "xcode"
+xcode_project = "MackeepDesktop.xcodeproj"
+xcode_scheme = "MackeepDesktop"
+xcode_destination = "platform=macOS,arch=arm64"
 python_tests = "tests"  # Relative to project_root; absolute paths are also allowed.
 python_entrypoint = "main.py"  # Entry file, relative to project_root.
 python_build_directory = "dist"  # Output folder, relative to project_root.
@@ -209,7 +209,6 @@ mise run --quiet _swift build Release
 '''
 # kitflow:end task.build-release
 
-# kitflow:begin task._swift
 [tasks."_swift"]
 description = "Run the configured SwiftPM or Xcode backend"
 usage = "arg \"<action>\"; arg \"<configuration>\""
@@ -241,13 +240,19 @@ case "${SWIFT_BACKEND:-swiftpm}" in
         esac
         action=$usage_action
         if [ "$action" = resolve ]; then action=-resolvePackageDependencies; fi
-        xcodebuild -quiet "$@" -scheme "$XCODE_SCHEME" -destination "$XCODE_DESTINATION" -configuration "$usage_configuration" "$action"
+        xcodegen generate --spec project.yml
+        if [ "$action" = test ]; then
+            set -- "$@" MACKEEP_BUNDLE_IDENTIFIER=com.joynik.mackeep.testing \
+                -only-testing:MackeepDesktopTests
+        fi
+        xcodebuild -quiet "$@" -scheme "$XCODE_SCHEME" -destination "$XCODE_DESTINATION" \
+            -configuration "$usage_configuration" -derivedDataPath build/mise \
+            CODE_SIGNING_ALLOWED=NO "$action"
         ;;
     *) echo "SWIFT_BACKEND must be swiftpm or xcode" >&2; exit 2 ;;
 esac
 )
 '''
-# kitflow:end task._swift
 
 [tasks."applications:format"]
 description = "Ensure application definitions end with exactly one newline"
@@ -256,3 +261,14 @@ set -eu
 find src/mackeep/applications -type f -name '*.cfg' \
     -exec uv run --no-sync --offline end-of-file-fixer {} +
 '''
+
+# Project tasks are kept outside KitFlow-managed blocks.
+[tasks.coverage]
+description = "Run Python tests with terminal, HTML and XML coverage reports"
+dir = "{{ env.PROJECT_ROOT }}"
+run = "uv run --no-sync --offline python -m pytest --cov=mackeep --cov=mackeep_cli --cov-report=term --cov-report=html --cov-report=xml"
+
+[tasks.coverage-report]
+description = "Display the last Python coverage report"
+dir = "{{ env.PROJECT_ROOT }}"
+run = "uv run --no-sync --offline python -m coverage report"

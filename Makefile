@@ -1,23 +1,13 @@
-lint:
-	uv run rumdl check .
+.PHONY: lint ruff ty test format format-check typecheck verify coverage coverage-report check clean binary release
 
-ruff:
-	uv run python -m ruff check .
+lint test format format-check typecheck verify coverage coverage-report:
+	mise run $@
 
-ty:
-	uv run python -m ty check
+ruff: lint
 
-test:
-	uv run python -m pytest
+ty: typecheck
 
-coverage:
-	uv run python -m pytest --cov=mackeep --cov=mackeep_cli --cov-report=term --cov-report=html --cov-report=xml
-
-coverage-report:
-	uv run python -m coverage report
-
-check: lint ruff ty test
-	@echo "All checks passed!"
+check: verify
 
 clean:
 	rm -rf src/mackeep/__pycache__

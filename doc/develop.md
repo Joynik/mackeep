@@ -15,15 +15,25 @@ only on the standard library and `docopt-ng`.
 
 ## Checks
 
-| Command | Checks |
-| --- | --- |
-| `make check` | Markdown, Ruff, ty, and pytest |
-| `make lint` | Markdown with rumdl |
-| `make ruff` | Python linting, including modernization and performance rules |
-| `make ty` | Python types |
-| `make test` | Python test suite |
-| `make coverage` | Combined statement/branch coverage; fails below 90%; writes HTML/XML reports |
-| `make coverage-report` | Display the last coverage result |
+`Makefile` delegates checks to `mise.toml`. Change task implementations in mise; the Make commands
+remain stable. Install mise and the selected tools before running checks.
+
+| Command | mise task | Checks |
+| --- | --- | --- |
+| `make check` | `verify` | All checks, then Python and Desktop unit/integration tests |
+| `make lint` | `lint` | Ruff, rumdl and SwiftLint |
+| `make ruff` | `lint` | Compatibility alias for `make lint` |
+| `make ty` / `make typecheck` | `typecheck` | Python types and a Desktop Debug build |
+| `make format-check` | `format-check` | Python, Markdown and Swift formatting |
+| `make format` | `format` | Apply formatting |
+| `make test` | `test` | Python and Desktop unit/integration tests |
+| `make coverage` | `coverage` | Python branch coverage; fails below 90%; writes HTML/XML reports |
+| `make coverage-report` | `coverage-report` | Display the last Python coverage result |
+
+Desktop tasks generate the Xcode project with XcodeGen and use `desktop/build/mise` for build
+products. Local mise builds disable code signing. Tests use a separate bundle identifier and run
+`MackeepDesktopTests`; UI tests remain a separate manual check. Packaging and publication remain in
+the Makefiles.
 
 Run a focused test with `uv run python -m pytest tests/test_excludes.py -q`. GitHub Actions runs
 Ruff, ty, and Markdown in separate workflows on pushes to `master` and pull requests. Tests cover
