@@ -1,34 +1,31 @@
 # Configuration and CLI reference
 
-Start with the [quickstart](../README.md#quickstart) or
-[installation guide](../INSTALL.md). This page describes the files and behavior
-shared by the CLI and desktop application.
+Start with the [quickstart](../README.md#quickstart) or [installation guide](../INSTALL.md). This
+page describes the files and behavior shared by the CLI and desktop application.
 
 ## Configuration file location
 
-`--config-file` selects an existing file explicitly; relative paths are relative
-to HOME. The config must be inside HOME. Without that option, the first existing
-file in this order wins:
+`--config-file` selects an existing file explicitly; relative paths are relative to HOME. The config
+must be inside HOME. Without that option, the first existing file in this order wins:
 
 1. `~/.mackeep.cfg`
 2. `$MACKEEP_CONFIG`
 3. `$XDG_CONFIG_HOME/mackeep/mackeep.cfg` (default `~/.config/mackeep/mackeep.cfg`)
 
-An ordinary first run creates `~/.mackeep.cfg` and `~/.mackeep/`. The new config
-uses `engine = unconfigured`; backup storage waits for the user to choose it.
-Backup and restore with `--dry-run` do not create configuration, data, or
-ownership records. `config` reports the active config path and resolved storage.
+An ordinary first run creates `~/.mackeep.cfg` and `~/.mackeep/`. The new config uses
+`engine = unconfigured`; backup storage waits for the user to choose it. Backup and restore with
+`--dry-run` do not create configuration, data, or ownership records. `config` reports the active
+config path and resolved storage.
 
-See the [sample config](.mackeep.cfg). Config paths containing spaces do not
-need shell escaping or quotes inside the INI file.
+See the [sample config](.mackeep.cfg). Config paths containing spaces do not need shell escaping or
+quotes inside the INI file.
 
 ## Storage
 
-The storage engine determines the base folder. `directory`, default `Mackeep`,
-is appended to it. It must be a nonempty relative path without `.` or `..`
-components, and its resolved destination must stay inside the base folder.
-The base folder must exist before backup; Mackeep asks to create its backup
-subdirectory when needed.
+The storage engine determines the base folder. `directory`, default `Mackeep`, is appended to it. It
+must be a nonempty relative path without `.` or `..` components, and its resolved destination must
+stay inside the base folder. The base folder must exist before backup; Mackeep asks to create its
+backup subdirectory when needed.
 
 | Engine | Base folder |
 | --- | --- |
@@ -45,24 +42,22 @@ path = dotfiles
 directory = Mackeep
 ```
 
-This stores backups under `~/dotfiles/Mackeep`. The file-system `path` option
-is required; an empty value is unconfigured, not HOME. Both HOME-relative
-paths and `~/...` are accepted. Older configs without
-an engine retain the implicit Dropbox behavior. Provider detection depends on
-the local client layout; use `file_system` when detection cannot find the
-folder. Mackeep copies files locally; the storage provider handles remote sync.
+This stores backups under `~/dotfiles/Mackeep`. The file-system `path` option is required; an empty
+value is unconfigured, not HOME. Both HOME-relative paths and `~/...` are accepted. Older configs
+without an engine retain the implicit Dropbox behavior. Provider detection depends on the local
+client layout; use `file_system` when detection cannot find the folder. Mackeep copies files
+locally; the storage provider handles remote sync.
 
 ### Switching storage
 
-For copy mode, wait for active operations to finish, copy the entire backup
-folder (including `.mackeep-state`) to the new storage, and update `[storage]`
-on each machine. Preview the next operation before running it. Keep the old
-folder until you verify the new one. Restore only when you want to replace
-local settings with the stored version.
+For copy mode, wait for active operations to finish, copy the entire backup folder (including
+`.mackeep-state`) to the new storage, and update `[storage]` on each machine. Preview the next
+operation before running it. Keep the old folder until you verify the new one. Restore only when you
+want to replace local settings with the stored version.
 
-For legacy link mode, first run `mackeep-cli link uninstall` on each machine
-while the old storage is accessible. Change storage, then use copy mode or
-explicitly reinstall links. Changing the config alone does not retarget links.
+For legacy link mode, first run `mackeep-cli link uninstall` on each machine while the old storage
+is accessible. Change storage, then use copy mode or explicitly reinstall links. Changing the config
+alone does not retarget links.
 
 ## Applications
 
@@ -80,8 +75,8 @@ vim
 - An absent `[applications_to_sync]` means all supported applications.
 - A present but empty section means none.
 - Ignored applications are removed from the selection.
-- Naming an application, such as `mackeep-cli backup vim`, overrides both lists
-  for that command. An unsupported name fails before backup data is changed.
+- Naming an application, such as `mackeep-cli backup vim`, overrides both lists for that command. An
+  unsupported name fails before backup data is changed.
 - Disabling an application does not delete its existing backup.
 
 ### Custom applications
@@ -102,10 +97,10 @@ my-editor
 my-editor/cache/
 ```
 
-`my-editor` becomes the CLI identifier. `[configuration_files]` paths are
-relative to HOME; `[xdg_configuration_files]` paths are relative to
-`$XDG_CONFIG_HOME`, default `~/.config`. Prefer XDG entries to hardcoded `.config`.
-Directories are recursive; shell glob expansion is not applied to file entries.
+`my-editor` becomes the CLI identifier. `[configuration_files]` paths are relative to HOME;
+`[xdg_configuration_files]` paths are relative to `$XDG_CONFIG_HOME`, default `~/.config`. Prefer
+XDG entries to hardcoded `.config`. Directories are recursive; shell glob expansion is not applied
+to file entries.
 
 Definition precedence for a matching filename is:
 
@@ -113,15 +108,15 @@ Definition precedence for a matching filename is:
 2. `$XDG_CONFIG_HOME/mackeep/applications/`
 3. Built-in `src/mackeep/applications/`
 
-A custom definition replaces the built-in file entirely; it is not merged.
-Inspect it with `mackeep-cli show my-editor`, then preview
-`mackeep-cli --dry-run backup my-editor`. Examples are in [.mackeep/](.mackeep/).
+A custom definition replaces the built-in file entirely; it is not merged. Inspect it with
+`mackeep-cli show my-editor`, then preview `mackeep-cli --dry-run backup my-editor`. Examples are in
+[.mackeep/](.mackeep/).
 
 ## Exclusions
 
-Use `[exclude]` for HOME-relative patterns and `[xdg_exclude]` for XDG-relative
-patterns. Both sections work globally in `.mackeep.cfg` and per application;
-global rules precede application rules within each matcher.
+Use `[exclude]` for HOME-relative patterns and `[xdg_exclude]` for XDG-relative patterns. Both
+sections work globally in `.mackeep.cfg` and per application; global rules precede application rules
+within each matcher.
 
 ```ini
 [exclude]
@@ -142,67 +137,59 @@ my-editor/cache/
 | Trailing `/` | Match directories only |
 | Leading `!` | Re-include a path excluded by an earlier rule |
 
-Matching is case-sensitive. The last matching rule within a matcher wins.
-An excluded parent directory is not walked: re-include the directory before
-trying to re-include its children. A HOME exclusion still excludes a path even
-if an XDG rule would re-include it. Leading absolute-path patterns are rejected
-by the config loader. Square brackets are literal characters, not character classes. Do not assume
-all Git pattern features are supported.
+Matching is case-sensitive. The last matching rule within a matcher wins. An excluded parent
+directory is not walked: re-include the directory before trying to re-include its children. A HOME
+exclusion still excludes a path even if an XDG rule would re-include it. Leading absolute-path
+patterns are rejected by the config loader. Square brackets are literal characters, not character
+classes. Do not assume all Git pattern features are supported.
 
-Patterns normally appear as bare lines. If an INI entry has a value, that value
-is the pattern: `cache_rule = my-editor/cache/`. Text after `=` is not a
-comment describing the pattern.
+Patterns normally appear as bare lines. If an INI entry has a value, that value is the pattern:
+`cache_rule = my-editor/cache/`. Text after `=` is not a comment describing the pattern.
 
-Backup omits excluded files and cleans their previous tracked backup entries
-after successful replacement. Restore preserves excluded local files.
-Link mode skips entries containing excluded files because a link cannot filter
-the contents of its target.
+Backup omits excluded files and cleans their previous tracked backup entries after successful
+replacement. Restore preserves excluded local files. Link mode skips entries containing excluded
+files because a link cannot filter the contents of its target.
 
-Malformed definitions and duplicate or unsupported rules produce warnings in
-`stderr`. Other usable rules can still be loaded; invalid application paths
-block an operation selecting that application. JSON exposes application
-problems in `error` and main-config problems in `errors`.
+Malformed definitions and duplicate or unsupported rules produce warnings in `stderr`. Other usable
+rules can still be loaded; invalid application paths block an operation selecting that application.
+JSON exposes application problems in `error` and main-config problems in `errors`.
 
 ## External paths
 
-By default, absolute application entries, parent traversal (`..`), and sources
-resolving outside HOME are rejected. To explicitly allow them:
+By default, absolute application entries, parent traversal (`..`), and sources resolving outside
+HOME are rejected. To explicitly allow them:
 
 ```ini
 [security]
 allow_external_paths = true
 ```
 
-Desktop exposes the same setting under Security. It is unavailable when an
-older CLI does not advertise the capability. It does not grant OS permissions
-or bypass source/destination overlap checks.
+Desktop exposes the same setting under Security. It is unavailable when an older CLI does not
+advertise the capability. It does not grant OS permissions or bypass source/destination overlap
+checks.
 
-Paths outside HOME map into
-`.mackeep-external/<absolute-path-without-leading-slash>` inside storage.
-Restore uses the absolute local path from the active definition; verify it on
-each machine. External XDG roots require this permission, too. Their exclusion
-patterns remain relative to XDG. `.mackeep-external` and `.mackeep-state` are
-reserved backup namespaces.
+Paths outside HOME map into `.mackeep-external/<absolute-path-without-leading-slash>` inside
+storage. Restore uses the absolute local path from the active definition; verify it on each machine.
+External XDG roots require this permission, too. Their exclusion patterns remain relative to XDG.
+`.mackeep-external` and `.mackeep-state` are reserved backup namespaces.
 
 ## Backup and restore behavior
 
-Copy mode prepares fresh replacements beside the destinations before replacing
-existing data. A preparation failure leaves previous destinations intact. A
-commit failure attempts to roll back changes for that application. Ordinary
-I/O failures allow other applications to run, but the command exits nonzero
-when any application fails. Backup is not incremental: selected entries are
-copied again even if their contents have not changed.
+Copy mode prepares fresh replacements beside the destinations before replacing existing data. A
+preparation failure leaves previous destinations intact. A commit failure attempts to roll back
+changes for that application. Ordinary I/O failures allow other applications to run, but the command
+exits nonzero when any application fails. Backup is not incremental: selected entries are copied
+again even if their contents have not changed.
 
-Backup replaces existing snapshots and removes obsolete owned entries without
-confirmation, including in JSON mode. Restore and legacy link replacements
-require confirmation; `--force` accepts them. `--force-no` declines replacements
-and cleanup, including during backup. A declined copy or cleanup preserves old
-data and ownership, counts as skipped in JSON copy results, and makes the command
-exit nonzero. Both options together are invalid. Closed stdin counts as a refusal.
-CLI rejects superuser execution unless `--root` is explicitly provided.
+Backup replaces existing snapshots and removes obsolete owned entries without confirmation,
+including in JSON mode. Restore and legacy link replacements require confirmation; `--force` accepts
+them. `--force-no` declines replacements and cleanup, including during backup. A declined copy or
+cleanup preserves old data and ownership, counts as skipped in JSON copy results, and makes the
+command exit nonzero. Both options together are invalid. Closed stdin counts as a refusal. CLI
+rejects superuser execution unless `--root` is explicitly provided.
 
-On macOS, copy permission errors include a Full Disk Access hint for the terminal
-or, when called by the desktop app, for MacKeep. The original error is retained.
+On macOS, copy permission errors include a Full Disk Access hint for the terminal or, when called by
+the desktop app, for MacKeep. The original error is retained.
 
 ### Compact backup output
 
@@ -213,68 +200,60 @@ mackeep-cli backup --summary
 mackeep backup --force --summary
 ```
 
-The table reports applications processed, succeeded, and failed, plus files
-copied and paths skipped. Application totals are distinct from file and path
-totals. Errors and warnings remain visible on stderr. Without `--summary`, the
-existing progress output is unchanged, and `--force` retains its usual behavior.
-The option is limited to an actual backup, not a dry run. With `--json`, backup
-continues to emit the usual NDJSON events.
+The table reports applications processed, succeeded, and failed, plus files copied and paths
+skipped. Application totals are distinct from file and path totals. Errors and warnings remain
+visible on stderr. Without `--summary`, the existing progress output is unchanged, and `--force`
+retains its usual behavior. The option is limited to an actual backup, not a dry run. With `--json`,
+backup continues to emit the usual NDJSON events.
 
-New non-JSON CLI backups and restores are saved in private local history, also
-shown by the desktop app. Dry runs are not recorded. On macOS the CLI journal
-is `~/Library/Application Support/Mackeep/cli-history/`; elsewhere it uses
-`$XDG_STATE_HOME/mackeep/cli-history/` (default `~/.local/state/`). The newest
-50 runs are retained. JSON front-ends continue to manage their own history.
+New non-JSON CLI backups and restores are saved in private local history, also shown by the desktop
+app. Dry runs are not recorded. On macOS the CLI journal is
+`~/Library/Application Support/Mackeep/cli-history/`; elsewhere it uses
+`$XDG_STATE_HOME/mackeep/cli-history/` (default `~/.local/state/`). The newest 50 runs are retained.
+JSON front-ends continue to manage their own history.
 
-`config`, `list`, and `show` remain usable when an automatic cloud-storage lookup
-fails. `config` reports the lookup error and an unresolved storage path; filesystem
-operations require working storage.
+`config`, `list`, and `show` remain usable when an automatic cloud-storage lookup fails. `config`
+reports the lookup error and an unresolved storage path; filesystem operations require working
+storage.
 
 ### Cleanup and ownership
 
-Ownership is recorded in `.mackeep-state/owners.json` inside the backup. Data
-and the index are updated in the same application transaction. A successful
-backup removes that application's previously tracked leaves that are now
-excluded or no longer listed. Another application's owned leaves are retained
-when a shared directory is replaced. A still-listed but missing top-level
-source is skipped and its previous backup retained.
+Ownership is recorded in `.mackeep-state/owners.json` inside the backup. Data and the index are
+updated in the same application transaction. A successful backup removes that application's
+previously tracked leaves that are now excluded or no longer listed. Another application's owned
+leaves are retained when a shared directory is replaced. A still-listed but missing top-level source
+is skipped and its previous backup retained.
 
-An old backup without an index is initialized from currently listed definitions,
-including configured ignored applications. Paths removed before ownership was
-recorded cannot be identified automatically. Files outside replaced paths are
-not guessed to belong to an application. Inspect old backups manually when
-upgrading. Keep the ownership index with the data and do not edit it by hand;
+An old backup without an index is initialized from currently listed definitions, including
+configured ignored applications. Paths removed before ownership was recorded cannot be identified
+automatically. Files outside replaced paths are not guessed to belong to an application. Inspect old
+backups manually when upgrading. Keep the ownership index with the data and do not edit it by hand;
 a malformed index refuses cleanup.
 
 ### Links, metadata, and limits
 
-Nested symlinks are copied as links, including dangling and cyclic links;
-their targets are not traversed. Explicit top-level symlinks copy their target
-when allowed by path policy. Backup skips a link already installed by legacy
-link mode. Restoring an absolute symlink does not rewrite its target for a new
-machine.
+Nested symlinks are copied as links, including dangling and cyclic links; their targets are not
+traversed. Explicit top-level symlinks copy their target when allowed by path policy. Backup skips a
+link already installed by legacy link mode. Restoring an absolute symlink does not rewrite its
+target for a new machine.
 
-Backups retain timestamps and use private permissions: ordinary files use
-`0600`, owner-executable files use `0700`, and directories use `0700`. The ownership
-index also records original permission bits for copied files and directories;
-restore reapplies these bits, without setuid, setgid, or sticky bits. Excluded
-local entries retain their own permissions. Older backups without recorded modes
-retain their stored permissions on restore; missing original modes cannot be
-recovered. This does not promise preservation of every ACL or extended attribute
-across filesystems.
+Backups retain timestamps and use private permissions: ordinary files use `0600`, owner-executable
+files use `0700`, and directories use `0700`. The ownership index also records original permission
+bits for copied files and directories; restore reapplies these bits, without setuid, setgid, or
+sticky bits. Excluded local entries retain their own permissions. Older backups without recorded
+modes retain their stored permissions on restore; missing original modes cannot be recovered. This
+does not promise preservation of every ACL or extended attribute across filesystems.
 
-A nonblocking local lock under `~/.local/state/mackeep/locks/` prevents simultaneous
-writes by the same user to the same resolved storage. Dry-run creates no lock
-files. Lock files stay in place and can be reused after the process exits; they
-contain no backup data. This lock does not coordinate different computers or
-users: wait for cloud sync and finish one operation before starting another.
-Transactions are per application, not for the entire command, and are not a
-power-loss recovery journal. If rollback fails, temporary previous versions are kept and the error
-reports their locations. An ordinary cleanup failure warns with the retained
-workspace path and continues cleaning other workspaces; it does not undo a
-successful commit. Mackeep never automatically deletes workspaces from a failed
-rollback. Successful replacement removes the rollback copy;
-there is no version history. Leave enough free space for old and staged data.
+A nonblocking local lock under `~/.local/state/mackeep/locks/` prevents simultaneous writes by the
+same user to the same resolved storage. Dry-run creates no lock files. Lock files stay in place and
+can be reused after the process exits; they contain no backup data. This lock does not coordinate
+different computers or users: wait for cloud sync and finish one operation before starting another.
+Transactions are per application, not for the entire command, and are not a power-loss recovery
+journal. If rollback fails, temporary previous versions are kept and the error reports their
+locations. An ordinary cleanup failure warns with the retained workspace path and continues cleaning
+other workspaces; it does not undo a successful commit. Mackeep never automatically deletes
+workspaces from a failed rollback. Successful replacement removes the rollback copy; there is no
+version history. Leave enough free space for old and staged data.
 
 ### Legacy link mode
 
@@ -284,48 +263,44 @@ there is no version history. Leave enough free space for old and staged data.
 | `link [application]` | Create local links to existing stored data |
 | `link uninstall [application]` | Restore copies in place of installed links; keep storage |
 
-Use copy mode for macOS 14+ because symlinked application preferences can fail.
-An application-specific uninstall skips the global uninstall confirmation and
-acts only on that application's installed links.
+Use copy mode for macOS 14+ because symlinked application preferences can fail. An
+application-specific uninstall skips the global uninstall confirmation and acts only on that
+application's installed links.
 
 ## Compatibility with Mackup
 
-Mackup's `.mackup.cfg` and `.mackup/` definitions are not read automatically.
-Normal commands do not scan old directories or print migration reminders.
-Preview migration before creating a fresh Mackeep config if you intend to
-preserve the old configuration:
+Mackup's `.mackup.cfg` and `.mackup/` definitions are not read automatically. Normal commands do not
+scan old directories or print migration reminders. Preview migration before creating a fresh Mackeep
+config if you intend to preserve the old configuration:
 
 ```bash
 mackeep-cli migrate --dry-run
 mackeep-cli migrate
 ```
 
-Migration copies the first legacy main config found and legacy custom configs
-to their Mackeep locations. It never deletes the originals or overwrites an
-existing destination. If the detected old storage uses `Mackup` and no directory
-is explicitly set, migration writes `directory = Mackup` into the new copy to
-keep that storage location. Review the result before backup or restore.
+Migration copies the first legacy main config found and legacy custom configs to their Mackeep
+locations. It never deletes the originals or overwrites an existing destination. If the detected old
+storage uses `Mackup` and no directory is explicitly set, migration writes `directory = Mackup` into
+the new copy to keep that storage location. Review the result before backup or restore.
 
-Migration preview does not copy legacy files. Reading a legacy storage config
-can still initialize `~/.mackeep/`; it is not the same read-only initialization
-path as backup/restore dry-run.
+Migration preview does not copy legacy files. Reading a legacy storage config can still initialize
+`~/.mackeep/`; it is not the same read-only initialization path as backup/restore dry-run.
 
 ## Sensitive files
 
-Backups are unencrypted. Known sensitive HOME/XDG paths are marked by
-`sensitive` and `sensitive_reason` in JSON; text copy output summarizes sensitive
-paths per application, showing up to ten paths and the full count. Public-key `.pub` files are not marked. Detection is
-advisory and does not discover arbitrary secrets inside file contents.
+Backups are unencrypted. Known sensitive HOME/XDG paths are marked by `sensitive` and
+`sensitive_reason` in JSON; text copy output summarizes sensitive paths per application, showing up
+to ten paths and the full count. Public-key `.pub` files are not marked. Detection is advisory and
+does not discover arbitrary secrets inside file contents.
 
 Review the selected paths and storage permissions. See the
 [private-key example](syncing-private-keys.md) before overriding key definitions.
 
 ## JSON interface
 
-`--json` is supported for `config`, `list`, `show`, `backup`, `restore`,
-`migrate`, and library commands. Stdout contains JSON only; diagnostics go to
-stderr. No prompts are asked. `--force-no` is implied unless `--force` is
-supplied. Check both JSON errors and process exit status.
+`--json` is supported for `config`, `list`, `show`, `backup`, `restore`, `migrate`, and library
+commands. Stdout contains JSON only; diagnostics go to stderr. No prompts are asked. `--force-no` is
+implied unless `--force` is supplied. Check both JSON errors and process exit status.
 
 ### Library commands
 
@@ -338,24 +313,22 @@ mackeep-cli --json library update vscode
 mackeep-cli --json library remove retired-application
 ```
 
-`update` downloads only changed definitions, or only the named definition when
-given. Downloaded files live in `~/.local/share/mackeep/library/` and take
-precedence over bundled definitions; custom definitions in `~/.mackeep/` and
-the XDG applications directory take precedence over both. The manifest is
-generated from the definitions by GitHub Actions and published on the separate
+`update` downloads only changed definitions, or only the named definition when given. Downloaded
+files live in `~/.local/share/mackeep/library/` and take precedence over bundled definitions; custom
+definitions in `~/.mackeep/` and the XDG applications directory take precedence over both. The
+manifest is generated from the definitions by GitHub Actions and published on the separate
 `library-index` branch; no generated manifest is committed to `master`.
 
-The response is one schema 4 JSON object containing `revision`, `updates`
-(`name` and `sha256`), `new` (`name` and `display_name`), `removed` (retired
-application names), and `checked_at`. `library remove` only accepts a
-definition that has left the upstream catalog. It requires the application to
-be deselected first and removes or hides only the Mackeep definition; it does
-not delete application settings or backup data. Removal is explicit.
+The response is one schema 4 JSON object containing `revision`, `updates` (`name` and `sha256`),
+`new` (`name` and `display_name`), `removed` (retired application names), and `checked_at`.
+`library remove` only accepts a definition that has left the upstream catalog. It requires the
+application to be deselected first and removes or hides only the Mackeep definition; it does not
+delete application settings or backup data. Removal is explicit.
 
 ### Schema and configuration
 
-Current `schema_version` is **4**. Consumers must handle unsupported schema
-versions rather than assume deletion semantics from an older response.
+Current `schema_version` is **4**. Consumers must handle unsupported schema versions rather than
+assume deletion semantics from an older response.
 
 ```bash
 mackeep-cli --json config
@@ -386,15 +359,14 @@ mackeep-cli --json config
 }
 ```
 
-`storage_configured` means a nonempty storage path was resolved, not that the
-folder exists or is writable. Check `storage.exists` for the backup directory.
-New configurations use `unconfigured` with an empty resolved backup path.
+`storage_configured` means a nonempty storage path was resolved, not that the folder exists or is
+writable. Check `storage.exists` for the backup directory. New configurations use `unconfigured`
+with an empty resolved backup path.
 
-`supports_safe_cancellation` is optional for compatibility with older tools.
-When true, SIGUSR1 requests a stop after the current application transaction.
-No further application starts; the command emits a `cancelled` error and exits
-with status 130. This does not interrupt a commit or rollback. Consumers must
-check this capability before sending the signal to an older CLI.
+`supports_safe_cancellation` is optional for compatibility with older tools. When true, SIGUSR1
+requests a stop after the current application transaction. No further application starts; the
+command emits a `cancelled` error and exits with status 130. This does not interrupt a commit or
+rollback. Consumers must check this capability before sending the signal to an older CLI.
 
 ### Application descriptions
 
@@ -417,10 +389,9 @@ check this capability before sending the signal to an older CLI.
 }
 ```
 
-The example is shortened; actual definitions may select more paths.
-`source` is `builtin` or `custom`; `files` is HOME-relative, `xdg_files` is
-XDG-relative unless external entries are explicitly enabled. `error` is null
-when the definition has no reported problems.
+The example is shortened; actual definitions may select more paths. `source` is `builtin` or
+`custom`; `files` is HOME-relative, `xdg_files` is XDG-relative unless external entries are
+explicitly enabled. `error` is null when the definition has no reported problems.
 
 ### Dry-run plans
 
@@ -428,9 +399,8 @@ when the definition has no reported problems.
 mackeep-cli --json --dry-run backup vim --detail files --max-actions 5000
 ```
 
-`--detail entries` (default) summarizes each top-level entry; `files` describes
-individual files. Excluded directories remain a single action and are not
-walked.
+`--detail entries` (default) summarizes each top-level entry; `files` describes individual files.
+Excluded directories remain a single action and are not walked.
 
 ```json
 {
@@ -457,16 +427,15 @@ walked.
 | `stale_in_backup` | Stale backup data; `will_remove: true` marks planned cleanup |
 | `error` | Application operation failed |
 
-Detailed exclusion actions can include `reason` with `pattern`, `section`, and
-`file`. In file detail, an existing destination is a `conflict` with
-`would_overwrite: true` instead of `copy`. Entry detail may report a copy and a
-conflict for the same entry; its bytes contribute once to the summary.
-`summary.files` counts copy actions, not all files in the filesystem.
+Detailed exclusion actions can include `reason` with `pattern`, `section`, and `file`. In file
+detail, an existing destination is a `conflict` with `would_overwrite: true` instead of `copy`.
+Entry detail may report a copy and a conflict for the same entry; its bytes contribute once to the
+summary. `summary.files` counts copy actions, not all files in the filesystem.
 
-`--max-actions` is a positive retained-action limit, default 5000. If exceeded,
-`summary` adds `truncated: true` and `limit`. Totals cover all visited actions;
-the limit does not stop traversal or bound all memory used by planning.
-Dry-run does not predict what a later interactive confirmation will accept.
+`--max-actions` is a positive retained-action limit, default 5000. If exceeded, `summary` adds
+`truncated: true` and `limit`. Totals cover all visited actions; the limit does not stop traversal
+or bound all memory used by planning. Dry-run does not predict what a later interactive confirmation
+will accept.
 
 ### Execution events and errors
 
@@ -478,32 +447,29 @@ Without `--dry-run`, backup and restore emit NDJSON, one object per line:
 {"schema_version": 4, "event": "done", "app": "vim", "action": "backup", "files": 1, "bytes": 128, "skipped": 0}
 ```
 
-Committed file events are emitted after the application's transaction commits,
-not as a byte-by-byte transfer stream. Restore copy events include
-`would_overwrite`, indicating whether the destination existed before staging.
-`done` counters are per application;
-consumers sum them for a run. `done` alone does not prove success: a failed
-application can emit an error event and then `done`, followed by a final error
-document and a nonzero process exit.
+Committed file events are emitted after the application's transaction commits, not as a byte-by-byte
+transfer stream. Restore copy events include `would_overwrite`, indicating whether the destination
+existed before staging. `done` counters are per application; consumers sum them for a run. `done`
+alone does not prove success: a failed application can emit an error event and then `done`, followed
+by a final error document and a nonzero process exit.
 
 ```json
 {"schema_version": 4, "error": {"code": "unsupported_application", "message": "Unsupported application: unknown-app"}}
 ```
 
-Error codes include `unsupported_application`, `config_error`, and `error`.
-Unexpected exceptions also produce a traceback in stderr.
+Error codes include `unsupported_application`, `config_error`, and `error`. Unexpected exceptions
+also produce a traceback in stderr.
 
-`--json migrate` returns a single object with `schema_version`, `actions`, and
-`summary`. Actions are `copy`, `skip`, or `set_directory`, with `src` and `dst`
-(and `directory` for the latter). Summary fields are `copied`, `skipped`,
-`updated`, `total_actions`, and `dry_run`; counts in a preview describe the
-plan, while `copied` remains zero.
+`--json migrate` returns a single object with `schema_version`, `actions`, and `summary`. Actions
+are `copy`, `skip`, or `set_directory`, with `src` and `dst` (and `directory` for the latter).
+Summary fields are `copied`, `skipped`, `updated`, `total_actions`, and `dry_run`; counts in a
+preview describe the plan, while `copied` remains zero.
 
 ### Schema changes
 
-- **4:** Adds `allow_external_paths` and `storage_configured`; permits
-  `unconfigured` storage; `stale_in_backup` can now mean deletion when
-  `will_remove: true`. Clients must check the flag before presenting removal.
+- **4:** Adds `allow_external_paths` and `storage_configured`; permits `unconfigured` storage;
+  `stale_in_backup` can now mean deletion when `will_remove: true`. Clients must check the flag
+  before presenting removal.
 - **3:** Adds application `error` and configuration `errors`.
 - **2:** Removes `config_file_is_legacy`, `legacy_custom_apps_dirs`, and
   `storage.using_legacy_directory`; adds `custom_apps_dir`.
