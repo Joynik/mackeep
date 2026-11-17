@@ -36,9 +36,26 @@ final class LibraryUpdatesTests: XCTestCase {
             echo '{"schema_version":4,"revision":"abc","updates":[],"new":[],"removed":[]}' ;;
           'list ')
             if [ -f "$HOME/removed-vim" ]; then echo '[]'; exit; fi
-            echo '[{"schema_version":4,"name":"vim","display_name":"Vim","source":"builtin","cfg_path":"/library/vim.cfg","files":[],"xdg_files":[]}]' ;;
+            echo '[{"schema_version":4,
+            "name":"vim",
+            "display_name":"Vim",
+            "source":"builtin",
+            "cfg_path":"/library/vim.cfg",
+            "files":[],
+            "xdg_files":[]}]' ;;
           'config ')
-            printf '{"schema_version":4,"version":"0.24.0","config_file":"%s/.mackeep.cfg","custom_apps_dirs":[],"storage":{"engine":"file_system","path":"/tmp","directory":"Mackeep","resolved_backup_dir":"/tmp/Mackeep","exists":false},"apps_to_sync":[],"apps_to_ignore":[],"global_exclude":[]}' "$HOME" ;;
+            printf '{"schema_version":4,
+            "version":"0.24.0",
+            "config_file":"%s/.mackeep.cfg",
+            "custom_apps_dirs":[],
+            "storage":{"engine":"file_system",
+            "path":"/tmp",
+            "directory":"Mackeep",
+            "resolved_backup_dir":"/tmp/Mackeep",
+            "exists":false},
+            "apps_to_sync":[],
+            "apps_to_ignore":[],
+            "global_exclude":[]}' "$HOME" ;;
           *) exit 64 ;;
         esac
         """.write(to: tool, atomically: true, encoding: .utf8)

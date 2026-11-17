@@ -273,28 +273,10 @@ final class ApplicationEditorModel {
             )
         }
 
-        let allPaths: [EditorPath] = paths + xdgPaths
-        var seen: Set<String> = []
-        for path: EditorPath in allPaths {
-            if !seen.insert(path.id).inserted {
-                issues.append(
-                    ValidationIssue(
-                        severity: .error,
-                        message: L10n.string("editor.validation.duplicate", path.path)
-                    )
-                )
-            }
-            if !allowsExternal,
-                path.path.hasPrefix("/") || path.path.split(separator: "/").contains("..")
-            {
-                issues.append(
-                    ValidationIssue(
-                        severity: .error,
-                        message: L10n.string("editor.validation.absolute", path.path)
-                    )
-                )
-            }
-        }
+        issues += pathValidationIssues(
+            for: paths + xdgPaths,
+            allowsExternal: allowsExternal
+        )
 
         // The rules of the exclusions are relative to the home directory, or
         // to the XDG config home.
@@ -318,6 +300,37 @@ final class ApplicationEditorModel {
         }
 
         self.issues = issues
+    }
+
+    private func pathValidationIssues(
+        for allPaths: [EditorPath],
+        allowsExternal: Bool
+    ) -> [ValidationIssue] {
+        var issues: [ValidationIssue] = []
+        var seen: Set<String> = []
+        for path in allPaths {
+            if !seen.insert(path.id).inserted {
+                issues.append(
+                    ValidationIssue(
+                        severity: .error,
+                        message: L10n.string("editor.validation.duplicate", path.path)
+                    )
+                )
+            }
+            if !allowsExternal && isExternalPath(path.path) {
+                issues.append(
+                    ValidationIssue(
+                        severity: .error,
+                        message: L10n.string("editor.validation.absolute", path.path)
+                    )
+                )
+            }
+        }
+        return issues
+    }
+
+    private func isExternalPath(_ path: String) -> Bool {
+        path.hasPrefix("/") || path.split(separator: "/").contains("..")
     }
 
     /// Whether the config file can be saved.

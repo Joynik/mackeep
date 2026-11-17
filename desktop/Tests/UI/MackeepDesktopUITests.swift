@@ -16,7 +16,7 @@ final class MackeepDesktopUITests: XCTestCase {
         application.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         application.launchEnvironment = [
             "MACKEEP_TESTING": "1", "MACKEEP_TEST_HOME": directory.path,
-            "MACKEEP_TEST_CLI": tool.path,
+            "MACKEEP_TEST_CLI": tool.path
         ]
     }
 

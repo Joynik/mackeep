@@ -90,7 +90,6 @@ fi
 '''
 # kitflow:end task.verify
 
-# kitflow:begin task.lint
 [tasks."lint"]
 description = "Lint selected project components"
 run = '''
@@ -102,12 +101,10 @@ ruff check . --output-format concise
 rumdl check . --output-format concise --quiet
 (
 cd "${PROJECT_SWIFT_DIRECTORY:?Set PROJECT_SWIFT_DIRECTORY in mise.toml}"
-swiftlint lint --quiet --strict --reporter xcode
+swiftlint lint --quiet --strict --reporter xcode Sources Tests
 )
 '''
-# kitflow:end task.lint
 
-# kitflow:begin task.lint-fix
 [tasks."lint-fix"]
 description = "Apply supported lint fixes"
 run = '''
@@ -119,13 +116,11 @@ ruff check . --fix --output-format concise
 rumdl check . --fix --output-format concise --quiet
 (
 cd "${PROJECT_SWIFT_DIRECTORY:?Set PROJECT_SWIFT_DIRECTORY in mise.toml}"
-swiftlint lint --fix --quiet --reporter xcode
-swiftlint lint --quiet --strict --reporter xcode
+swiftlint lint --fix --quiet --reporter xcode Sources Tests
+swiftlint lint --quiet --strict --reporter xcode Sources Tests
 )
 '''
-# kitflow:end task.lint-fix
 
-# kitflow:begin task.format
 [tasks."format"]
 description = "Format selected project components"
 run = '''
@@ -137,12 +132,10 @@ ruff format .
 rumdl fmt . --output-format concise --quiet
 (
 cd "${PROJECT_SWIFT_DIRECTORY:?Set PROJECT_SWIFT_DIRECTORY in mise.toml}"
-swift format --in-place --recursive .
+swift format --in-place --recursive Sources Tests
 )
 '''
-# kitflow:end task.format
 
-# kitflow:begin task.format-check
 [tasks."format-check"]
 description = "Check formatting without applying fixes"
 run = '''
@@ -154,10 +147,9 @@ ruff format . --check
 rumdl fmt . --check --output-format concise --quiet
 (
 cd "${PROJECT_SWIFT_DIRECTORY:?Set PROJECT_SWIFT_DIRECTORY in mise.toml}"
-swift format lint --recursive --strict .
+swift format lint --recursive --strict Sources Tests
 )
 '''
-# kitflow:end task.format-check
 
 # kitflow:begin task.typecheck
 [tasks."typecheck"]

@@ -47,7 +47,7 @@ final class INIDocumentTests: XCTestCase {
                 "configuration_files",
                 "xdg_configuration_files",
                 "exclude",
-                "xdg_exclude",
+                "xdg_exclude"
             ]
         )
     }
@@ -178,7 +178,7 @@ final class INIDocumentTests: XCTestCase {
     func testInvalidStructureHasLineDiagnostics() {
         for text in [
             "name = App", "[application]\nname = App\n[application]",
-            "[application]\nname = A\nname = B", "[application]\n[broken",
+            "[application]\nname = A\nname = B", "[application]\n[broken"
         ] {
             XCTAssertFalse(INIDocument(text: text).diagnostics.isEmpty, text)
         }
@@ -186,7 +186,8 @@ final class INIDocumentTests: XCTestCase {
 
     func testMainConfigOptionCaseAndNoValueCommentsFollowCLI() {
         let text =
-            "[storage]\nPATH = /tmp/store # comment\n[applications_to_sync]\nVIM # comment\n[exclude]\nLibrary/Cache # comment\n"
+            "[storage]\nPATH = /tmp/store # comment\n"
+            + "[applications_to_sync]\nVIM # comment\n[exclude]\nLibrary/Cache # comment\n"
         var document = INIDocument(text: text, stripsInlineComments: true)
         XCTAssertEqual(document.value(forKey: "path", inSection: "storage"), "/tmp/store")
         XCTAssertEqual(document.optionKeys(inSection: "applications_to_sync"), ["vim"])

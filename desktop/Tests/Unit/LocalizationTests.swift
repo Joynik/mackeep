@@ -2,28 +2,28 @@ import XCTest
 
 @testable import MackeepDesktop
 
+/// A translation string in the catalog.
+struct StringUnit: Decodable {
+    /// The text of the translation.
+    let value: String
+}
+
+/// A localized version of a catalog string.
+struct StringLocalization: Decodable {
+    /// The translation.
+    let stringUnit: StringUnit
+}
+
+/// One string entry in the catalog.
+struct StringCatalogEntry: Decodable {
+    /// The translations of the string, by language.
+    let localizations: [String: StringLocalization]
+}
+
 /// The catalog of the strings.
 struct StringCatalog: Decodable {
     /// The strings of the catalog.
-    struct Entry: Decodable {
-        /// A translation of a string.
-        struct Localization: Decodable {
-            /// The translation itself.
-            struct Unit: Decodable {
-                /// The text of the translation.
-                let value: String
-            }
-
-            /// The translation.
-            let stringUnit: Unit
-        }
-
-        /// The translations of the string, by language.
-        let localizations: [String: Localization]
-    }
-
-    /// The strings of the catalog.
-    let strings: [String: Entry]
+    let strings: [String: StringCatalogEntry]
 }
 
 /// The tests of the localization.
@@ -64,9 +64,9 @@ final class LocalizationTests: XCTestCase {
             let text = try String(contentsOf: file, encoding: .utf8)
             for match in call.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
                 let arguments = String(text[try XCTUnwrap(Range(match.range(at: 1), in: text))])
-                for key in literal.matches(
+                let matches = literal.matches(
                     in: arguments, range: NSRange(arguments.startIndex..., in: arguments))
-                {
+                for key in matches {
                     keys.insert(
                         String(arguments[try XCTUnwrap(Range(key.range(at: 1), in: arguments))]))
                 }
@@ -76,7 +76,7 @@ final class LocalizationTests: XCTestCase {
         // Settings passes these label keys through its storageFieldLabel helper.
         keys.formUnion([
             "settings.storage.available", "settings.storage.path",
-            "settings.storage.directory", "settings.storage.resolved",
+            "settings.storage.directory", "settings.storage.resolved"
         ])
         return keys
     }
@@ -104,7 +104,7 @@ final class LocalizationTests: XCTestCase {
         ("pt-BR", "settings.language.portuguese"),
         ("ja", "settings.language.japanese"),
         ("ko", "settings.language.korean"),
-        ("zh-Hans", "settings.language.chinese"),
+        ("zh-Hans", "settings.language.chinese")
     ]
 
     func testEveryKeyIsTranslated() throws {
@@ -112,7 +112,7 @@ final class LocalizationTests: XCTestCase {
 
         for (key, entry) in catalog.strings {
             for language: String in Self.languages.map(\.code) {
-                let localization: StringCatalog.Entry.Localization? =
+                let localization: StringLocalization? =
                     entry
                     .localizations[language]
                 let text: String = localization?.stringUnit.value ?? ""
@@ -170,7 +170,7 @@ final class LocalizationTests: XCTestCase {
 
     func testTheNameOfTheUkrainianIsInEveryLanguage() throws {
         let catalog: StringCatalog = try Self.catalog
-        let entry: StringCatalog.Entry = try XCTUnwrap(
+        let entry: StringCatalogEntry = try XCTUnwrap(
             catalog.strings["settings.language.ukrainian"]
         )
         let name: String = entry.localizations["uk"]?.stringUnit.value ?? ""
@@ -185,8 +185,8 @@ final class LocalizationTests: XCTestCase {
                 #"%(?:([0-9]+)\$)?([-+#0 ]*[0-9]*(?:\.[0-9]+)?(?:hh|ll|[hljztL])?[@diuoxXfFeEgGaAcCsSp])|%%"#
         )
         var position = 0
-        return expression.matches(in: text, range: NSRange(text.startIndex..., in: text)).compactMap
-        { match in
+        let matches = expression.matches(in: text, range: NSRange(text.startIndex..., in: text))
+        return matches.compactMap { match in
             let token = String(text[Range(match.range, in: text)!])
             if token == "%%" { return nil }
             position += 1

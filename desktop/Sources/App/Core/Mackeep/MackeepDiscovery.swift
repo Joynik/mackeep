@@ -10,7 +10,7 @@ enum MackeepDiscovery {
         "/opt/homebrew/bin",
         "/usr/local/bin",
         "/usr/bin",
-        "/bin",
+        "/bin"
     ]
 
     /// Find the binary of Mackeep.
@@ -23,10 +23,8 @@ enum MackeepDiscovery {
         manualPath: String? = nil,
         fileManager: FileManager = .default
     ) -> String? {
-        if let manualPath, !manualPath.isEmpty,
-            isExecutable(manualPath, fileManager: fileManager)
-        {
-            return manualPath
+        if let manualPath, !manualPath.isEmpty {
+            if isExecutable(manualPath, fileManager: fileManager) { return manualPath }
         }
 
         for directory in directories {

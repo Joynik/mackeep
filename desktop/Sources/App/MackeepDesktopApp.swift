@@ -18,12 +18,11 @@ struct MackeepDesktopApp: App {
                     NotificationCenter.default.publisher(
                         for: NSApplication.willTerminateNotification)
                 ) { _ in
-                    if EditorPath.isTesting,
+                    guard EditorPath.isTesting,
                         let home = EditorPath.testValue("MACKEEP_TEST_HOME"),
                         home.hasPrefix("/private/tmp/mackeep-ui-")
-                    {
-                        try? FileManager.default.removeItem(atPath: home)
-                    }
+                    else { return }
+                    try? FileManager.default.removeItem(atPath: home)
                 }
         }
         .defaultSize(width: 1100, height: 720)
@@ -52,11 +51,11 @@ struct MackeepDesktopApp: App {
             if !environment.settings.isToolSupported {
                 ToolCompatibilityView(model: environment.settings)
                     .environment(environment)
-            } else if let appName: String,
-                let model: ApplicationEditorModel = environment.editor(for: appName)
-            {
-                ApplicationEditorView(model: model)
-                    .environment(environment)
+            } else if let appName: String {
+                if let model = environment.editor(for: appName) {
+                    ApplicationEditorView(model: model)
+                        .environment(environment)
+                }
             }
         }
         .defaultSize(width: 780, height: 640)

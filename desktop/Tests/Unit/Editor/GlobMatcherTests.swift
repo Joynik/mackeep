@@ -2,6 +2,18 @@ import XCTest
 
 @testable import MackeepDesktop
 
+private struct GlobMatcherCase: Decodable {
+    let patterns: [String]
+    let path: String
+    let isDirectory: Bool
+    let excluded: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case patterns, path, excluded
+        case isDirectory = "is_directory"
+    }
+}
+
 /// The tests of the matcher of the exclusion masks.
 final class GlobMatcherTests: XCTestCase {
     func testAMaskWithoutSlashMatchesANameAtAnyDepth() {
@@ -79,20 +91,9 @@ final class GlobMatcherTests: XCTestCase {
     }
 
     func testSharedDesktopAndCLIExclusionContract() throws {
-        struct Case: Decodable {
-            let patterns: [String]
-            let path: String
-            let isDirectory: Bool
-            let excluded: Bool
-
-            enum CodingKeys: String, CodingKey {
-                case patterns, path, excluded
-                case isDirectory = "is_directory"
-            }
-        }
         let url = INICompatibilityTests.repository.appendingPathComponent(
             "tests/fixtures/exclusion-cases.json")
-        let cases = try JSONDecoder().decode([Case].self, from: Data(contentsOf: url))
+        let cases = try JSONDecoder().decode([GlobMatcherCase].self, from: Data(contentsOf: url))
         XCTAssertFalse(cases.isEmpty)
         for test in cases {
             XCTAssertEqual(

@@ -1,79 +1,5 @@
 import Foundation
 
-/// A line of an INI file.
-///
-/// The lines keep their original text, so a document can be read and written
-/// back without any loss: the comments, the order of the sections and the
-/// unknown sections are preserved.
-enum INILine: Equatable, Sendable {
-    /// An empty line, with its original text.
-    case empty(String)
-
-    /// A comment, with its original text.
-    case comment(String)
-
-    /// A section, with its name.
-    case section(name: String, text: String)
-
-    /// An option, with or without a value.
-    case option(INIOption)
-
-    /// The original text of the line.
-    var text: String {
-        switch self {
-        case .empty(let text): text
-        case .comment(let text): text
-        case .section(_, let text): text
-        case .option(let option): option.text
-        }
-    }
-}
-
-/// An option of an INI file.
-struct INIOption: Equatable, Sendable {
-    /// The whitespace before the key.
-    var prefix: String = ""
-
-    /// The key of the option.
-    var key: String
-
-    /// The text between the key and the value, the delimiter included.
-    var separator: String = ""
-
-    /// The value of the option, without the inline comment.
-    var value: String = ""
-
-    /// The inline comment, with the whitespace that precedes it.
-    var comment: String = ""
-
-    /// The whitespace at the end of the line.
-    var suffix: String = ""
-
-    /// Whether the option has a value.
-    var hasValue: Bool { !separator.isEmpty }
-
-    /// The original text of the option.
-    var text: String {
-        prefix + key + separator
-            + value.replacingOccurrences(of: "\n", with: "\n" + prefix + "    ") + comment + suffix
-    }
-
-    /// The value of the option, the inline comment included when the
-    /// document keeps it.
-    func resolvedValue(stripsInlineComments: Bool) -> String {
-        (stripsInlineComments ? value : value + comment).trimmingCharacters(
-            in: .whitespacesAndNewlines)
-    }
-}
-
-extension INILine {
-    /// The option of the line, when the line holds one.
-    var optionValue: INIOption {
-        if case .option(let option) = self { return option }
-        return INIOption(key: "")
-    }
-}
-
 /// A document of an INI file.
 ///
 /// The document is lossless: reading a file and writing it back gives the
@@ -251,10 +177,7 @@ struct INIDocument: Equatable, Sendable {
             option.value = value
             option.comment = ""
             lines[index] = .option(option)
-            while index + 1 < lines.count,
-                case .option(let continuation) = lines[index + 1],
-                continuation.prefix.count > option.prefix.count
-            {
+            while hasContinuation(after: index, indentation: option.prefix.count) {
                 lines.remove(at: index + 1)
             }
             return
@@ -303,7 +226,7 @@ struct INIDocument: Equatable, Sendable {
                 if !skipping { result.append(line) }
             case .option:
                 if !skipping { result.append(line) }
-            case .empty(_), .comment:
+            case .empty, .comment:
                 if !skipping { result.append(line) }
             }
         }
@@ -311,6 +234,13 @@ struct INIDocument: Equatable, Sendable {
     }
 
     // MARK: - Private
+
+    private func hasContinuation(after index: Int, indentation: Int) -> Bool {
+        guard index + 1 < lines.count, case .option(let option) = lines[index + 1] else {
+            return false
+        }
+        return option.prefix.count > indentation
+    }
 
     /// The index of an option of a section.
     private func indexOfOption(forKey key: String, inSection section: String) -> Int? {
@@ -321,7 +251,7 @@ struct INIDocument: Equatable, Sendable {
                 current = name
             case .option(let option):
                 if current == section, self.key(of: option, in: section) == key { return index }
-            case .empty(_), .comment:
+            case .empty, .comment:
                 continue
             }
         }
@@ -339,7 +269,7 @@ struct INIDocument: Equatable, Sendable {
                 if name == section { last = index }
             case .option:
                 if current == section { last = index }
-            case .empty(_), .comment:
+            case .empty, .comment:
                 continue
             }
         }
@@ -358,22 +288,7 @@ struct INIDocument: Equatable, Sendable {
 
     /// Replace the options of a section.
     private mutating func replaceOptions(_ options: [INIOption], inSection section: String) {
-        // Find the lines of the options of the section, and the line of its
-        // header
-        var indexes: [Int] = []
-        var header: Int?
-        var current: String?
-        for (index, line) in lines.enumerated() {
-            switch line {
-            case .section(let name, _):
-                current = name
-                if current == section { header = index }
-            case .option:
-                if current == section { indexes.append(index) }
-            case .empty(_), .comment:
-                continue
-            }
-        }
+        let (indexes, header) = optionLocations(in: section)
 
         guard let first = indexes.first else {
             if let header {
@@ -399,102 +314,26 @@ struct INIDocument: Equatable, Sendable {
         }
     }
 
-    /// Parse a line of a file.
-    ///
-    /// - Parameter line: The line.
-    /// - Returns: The parsed line.
-    static func parse(_ line: String) -> INILine {
-        let trimmed: String = line.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return .empty(line) }
-
-        if trimmed.hasPrefix("#") || trimmed.hasPrefix(";") {
-            return .comment(line)
-        }
-
-        if trimmed.hasPrefix("["), let end = trimmed.firstIndex(of: "]"),
-            end > trimmed.index(after: trimmed.startIndex)
-        {
-            let name = String(trimmed[trimmed.index(after: trimmed.startIndex)..<end])
-            return .section(name: name, text: line)
-        }
-
-        return .option(INIDocument.parseOption(line))
-    }
-
-    /// Parse the option of a line.
-    ///
-    /// - Parameter line: The line.
-    /// - Returns: The option.
-    static func parseOption(_ line: String) -> INIOption {
-        let prefix: String = String(line.prefix(while: { $0 == " " || $0 == "\t" }))
-        var rest: Substring = line.dropFirst(prefix.count)
-        let suffix: String = String(
-            rest.reversed().prefix(while: { $0 == " " || $0 == "\t" }).reversed()
-        )
-        if !suffix.isEmpty { rest = rest.dropLast(suffix.count) }
-
-        // The key ends at the first delimiter
-        guard let delimiterIndex = rest.firstIndex(where: { $0 == "=" || $0 == ":" }) else {
-            return INIOption(prefix: prefix, key: String(rest), suffix: suffix)
-        }
-
-        let rawKey: String = String(rest[..<delimiterIndex])
-        let key: String = rawKey.trimmingCharacters(in: .whitespaces)
-        let afterKey: Substring = rest[rest.index(after: delimiterIndex)...]
-        let spaces: String = String(
-            afterKey.prefix(while: { $0 == " " || $0 == "\t" })
-        )
-        let rawValue: String = String(afterKey.dropFirst(spaces.count))
-        // The separator keeps the whitespace around the delimiter
-        let separator: String =
-            String(rawKey.dropFirst(key.count))
-            + String(rest[delimiterIndex])
-            + spaces
-
-        // The inline comment, when there is one
-        let (value, comment): (String, String) = INIDocument.splitInlineComment(rawValue)
-
-        return INIOption(
-            prefix: prefix,
-            key: key,
-            separator: separator,
-            value: value,
-            comment: comment,
-            suffix: suffix
-        )
-    }
-
-    /// Split the inline comment of a value.
-    ///
-    /// The comment starts at the beginning of the line or after a
-    /// whitespace, the way Python's `configparser` finds it.
-    ///
-    /// - Parameter value: The value.
-    /// - Returns: The value and the comment.
-    static func splitInlineComment(_ value: String) -> (String, String) {
-        var index: String.Index = value.startIndex
-        while index < value.endIndex {
-            let character: Character = value[index]
-            if character == ";" || character == "#" {
-                let previous: Character? =
-                    index == value.startIndex
-                    ? nil
-                    : value[value.index(before: index)]
-                if index == value.startIndex || previous == " " || previous == "\t" {
-                    // The whitespace before the comment belongs to it
-                    var start: String.Index = index
-                    while start > value.startIndex {
-                        let before: Character = value[value.index(before: start)]
-                        if before != " " && before != "\t" { break }
-                        start = value.index(before: start)
-                    }
-                    let comment: String = String(value[start...])
-                    let head: String = String(value[..<start])
-                    return (head.trimmingCharacters(in: .whitespaces), comment)
-                }
+    /// Locate the existing options and header before replacing a section.
+    private func optionLocations(in section: String) -> (indexes: [Int], header: Int?) {
+        // Find the lines of the options of the section, and the line of its
+        // header
+        var indexes: [Int] = []
+        var header: Int?
+        var current: String?
+        for (index, line) in lines.enumerated() {
+            switch line {
+            case .section(let name, _):
+                current = name
+                if current == section { header = index }
+            case .option:
+                if current == section { indexes.append(index) }
+            case .empty, .comment:
+                continue
             }
-            index = value.index(after: index)
         }
-        return (value, "")
+
+        return (indexes, header)
     }
+
 }

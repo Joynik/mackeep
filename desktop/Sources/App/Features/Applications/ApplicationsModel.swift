@@ -7,20 +7,9 @@ struct LibraryStatus: Decodable, Sendable {
         let sha256: String
     }
 
-    struct NewDefinition: Decodable, Sendable, Identifiable {
-        let name: String
-        let displayName: String
-        var id: String { name }
-
-        enum CodingKeys: String, CodingKey {
-            case name
-            case displayName = "display_name"
-        }
-    }
-
     let revision: String
     let updates: [Update]
-    let new: [NewDefinition]
+    let new: [NewLibraryDefinition]
     let removed: [String]
 
     enum CodingKeys: String, CodingKey { case revision, updates, new, removed }
@@ -29,8 +18,20 @@ struct LibraryStatus: Decodable, Sendable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         revision = try container.decode(String.self, forKey: .revision)
         updates = try container.decode([Update].self, forKey: .updates)
-        new = try container.decodeIfPresent([NewDefinition].self, forKey: .new) ?? []
+        new = try container.decodeIfPresent([NewLibraryDefinition].self, forKey: .new) ?? []
         removed = try container.decodeIfPresent([String].self, forKey: .removed) ?? []
+    }
+}
+
+/// A definition that is new in the application library.
+struct NewLibraryDefinition: Decodable, Sendable, Identifiable {
+    let name: String
+    let displayName: String
+    var id: String { name }
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case displayName = "display_name"
     }
 }
 
@@ -70,87 +71,16 @@ enum ApplicationFilter: String, CaseIterable, Identifiable {
 @MainActor
 final class ApplicationsModel {
     /// The applications of Mackeep.
-    private(set) var applications: [MackeepApplication] = []
+    var applications: [MackeepApplication] = []
 
     /// The names of library definitions with a newer published version.
-    private(set) var libraryUpdates: Set<String> = []
-    private(set) var newLibraryDefinitions: [LibraryStatus.NewDefinition] = []
-    private(set) var removedLibraryDefinitions: Set<String> = []
-    private(set) var isCheckingLibrary = false
-    private(set) var isUpdatingLibrary = false
-    private(set) var libraryCheckedAt: Date?
-    private(set) var libraryError: String?
-
-    /// Fetch only the catalog manifest; existing definitions remain usable offline.
-    func checkLibraryUpdates(force: Bool = false) async {
-        guard let command, !isCheckingLibrary, !isUpdatingLibrary else { return }
-        if !force, let libraryCheckedAt,
-            Date().timeIntervalSince(libraryCheckedAt) < 86_400
-        {
-            return
-        }
-        isCheckingLibrary = true
-        defer { isCheckingLibrary = false }
-        do {
-            let status = try await Task.detached {
-                try command.runJSON(["--json", "library", "check"], as: LibraryStatus.self)
-            }.value
-            applyLibraryStatus(status)
-        } catch {
-            libraryError = error.localizedDescription
-        }
-    }
-
-    /// Replace changed library definitions through the shared CLI implementation.
-    func updateLibrary(application: String? = nil) async {
-        guard let command, !isCheckingLibrary, !isUpdatingLibrary else { return }
-        isUpdatingLibrary = true
-        defer { isUpdatingLibrary = false }
-        do {
-            let arguments = ["--json", "library", "update"] + (application.map { [$0] } ?? [])
-            let status = try await Task.detached {
-                try command.runJSON(arguments, as: LibraryStatus.self)
-            }.value
-            applyLibraryStatus(status)
-            if !(await reload()) {
-                libraryError = L10n.string("applications.library.reloadFailed")
-            }
-        } catch {
-            libraryError = error.localizedDescription
-        }
-    }
-
-    /// Remove only an upstream-removed definition, after saving its deselection.
-    func removeLibraryDefinition(_ application: MackeepApplication) async {
-        guard let command, !isCheckingLibrary, !isUpdatingLibrary,
-            !application.isCustom,
-            removedLibraryDefinitions.contains(application.name)
-        else { return }
-        isUpdatingLibrary = true
-        defer { isUpdatingLibrary = false }
-        do {
-            removeFromTheList(application)
-            try await flushSelection()
-            let name = application.name
-            let status = try await Task.detached {
-                try command.runJSON(["--json", "library", "remove", name], as: LibraryStatus.self)
-            }.value
-            applyLibraryStatus(status)
-            if !(await reload()) {
-                libraryError = L10n.string("applications.library.reloadFailed")
-            }
-        } catch {
-            libraryError = error.localizedDescription
-        }
-    }
-
-    private func applyLibraryStatus(_ status: LibraryStatus) {
-        libraryUpdates = Set(status.updates.map(\.name))
-        newLibraryDefinitions = status.new
-        removedLibraryDefinitions = Set(status.removed)
-        libraryCheckedAt = Date()
-        libraryError = nil
-    }
+    var libraryUpdates: Set<String> = []
+    var newLibraryDefinitions: [NewLibraryDefinition] = []
+    var removedLibraryDefinitions: Set<String> = []
+    var isCheckingLibrary = false
+    var isUpdatingLibrary = false
+    var libraryCheckedAt: Date?
+    var libraryError: String?
 
     /// The identifier of the selected application.
     var selection: String?
@@ -165,35 +95,35 @@ final class ApplicationsModel {
     var filter: ApplicationFilter = .all
 
     /// The estimated size of the applications, in bytes.
-    private(set) var sizes: [String: Int] = [:]
+    var sizes: [String: Int] = [:]
 
     /// The error shown to the user, when there is one.
     var presentedError: AppError?
 
     /// The main config file of Mackeep.
-    private(set) var config: MainConfig?
+    var config: MainConfig?
 
     /// The applications that are used for the backup.
     ///
     /// They are kept here, and not only in the config file, so the view is
     /// told when they change.
-    private(set) var syncedApps: Set<String> = []
+    var syncedApps: Set<String> = []
 
     /// The applications of the list that are not used for the backup.
-    private(set) var ignoredApps: Set<String> = []
+    var ignoredApps: Set<String> = []
 
     /// The directory where the config files of the user are.
-    private(set) var customAppsDir: String?
+    var customAppsDir: String?
 
     /// The command line tool of Mackeep.
-    private let command: MackeepCommand?
+    let command: MackeepCommand?
 
     /// The latest save, chained after earlier writes to preserve click order.
-    private var pendingSave: Task<Void, Never>?
-    private var saveRevision = 0
-    private var saveError: String?
-    private var savedSelection: (Set<String>, Set<String>) = ([], [])
-    private var sizeTask: Task<Void, Never>?
+    var pendingSave: Task<Void, Never>?
+    var saveRevision = 0
+    var saveError: String?
+    var savedSelection: (Set<String>, Set<String>) = ([], [])
+    var sizeTask: Task<Void, Never>?
 
     /// The editors of the applications, by identifier.
     private var editors: [String: ApplicationEditorModel] = [:]
@@ -282,91 +212,6 @@ final class ApplicationsModel {
     /// - Returns: The size, zero when it is not known.
     func size(of application: MackeepApplication) -> Int {
         sizes[application.name] ?? 0
-    }
-
-    /// Set whether the application is used for the backup, and write the
-    /// config file.
-    ///
-    /// The applications that are checked are the ones to sync, the ones of
-    /// the list that are not checked are the ones to ignore. The
-    /// applications that are not in the list are not backed up.
-    ///
-    /// - Parameters:
-    ///   - application: The application.
-    ///   - enabled: Whether the application is backed up.
-    func setEnabled(_ enabled: Bool, for application: MackeepApplication) {
-        guard config != nil else { return }
-
-        if enabled {
-            syncedApps.insert(application.name)
-            ignoredApps.remove(application.name)
-        } else {
-            syncedApps.remove(application.name)
-            ignoredApps.insert(application.name)
-        }
-
-        writeTheLists()
-    }
-
-    /// Add an application of the library to the list of the user.
-    ///
-    /// The application is checked, it is used for the backup.
-    ///
-    /// - Parameter application: The application.
-    func addToTheList(_ application: MackeepApplication) {
-        setEnabled(true, for: application)
-    }
-
-    /// Remove an application of the library from the list of the user.
-    ///
-    /// The application is not backed up any more, and it is not in the list
-    /// of the user.
-    ///
-    /// - Parameter application: The application.
-    func removeFromTheList(_ application: MackeepApplication) {
-        syncedApps.remove(application.name)
-        ignoredApps.remove(application.name)
-        writeTheLists()
-    }
-
-    /// Write the lists of the applications in the config file.
-    private func writeTheLists() {
-        guard let config else { return }
-
-        config.setSyncedApplications(Array(syncedApps), ignored: Array(ignoredApps))
-        let document = config.document
-        let url = config.url
-        saveRevision += 1
-        let revision = saveRevision
-        let selection = (syncedApps, ignoredApps)
-        let previous = pendingSave
-        pendingSave = Task {
-            await previous?.value
-            let message: String? = await Task.detached(priority: .userInitiated) {
-                do {
-                    let saving = MainConfig(url: url, document: document)
-                    saving.setSyncedApplications(
-                        document.values(inSection: "applications_to_sync"),
-                        ignored: document.values(inSection: "applications_to_ignore")
-                    )
-                    try saving.save()
-                    return nil
-                } catch {
-                    return error.localizedDescription
-                }
-            }.value
-            if message == nil { savedSelection = selection }
-            guard revision == saveRevision else { return }
-            saveError = message
-            if let message {
-                syncedApps = savedSelection.0
-                ignoredApps = savedSelection.1
-                presentedError = AppError(
-                    title: L10n.string("error.save.title"),
-                    message: message
-                )
-            }
-        }
     }
 
     /// Wait until the queued configuration writes finish.
@@ -506,147 +351,4 @@ final class ApplicationsModel {
         return result.errorMessage == nil
     }
 
-    /// What is read from Mackeep.
-    private struct LoadResult: Sendable {
-        /// The applications of Mackeep.
-        let applications: [MackeepApplication]
-
-        /// The path of the config file Mackeep uses.
-        let configURL: URL?
-
-        /// The content of the config file.
-        let configDocument: INIDocument?
-
-        /// The directory where the config files of the user are.
-        let customAppsDir: String?
-
-        /// The message of the error, when there is one.
-        let errorMessage: String?
-    }
-
-    /// Read the applications and the config of Mackeep.
-    ///
-    /// - Parameter command: The command line tool of Mackeep.
-    /// - Returns: What was read.
-    nonisolated private static func load(with command: MackeepCommand) -> LoadResult {
-        do {
-            let applications: [MackeepApplication] = try command.runJSON(
-                ["--json", "list"],
-                as: [MackeepApplication].self
-            )
-
-            // The config file Mackeep uses is the one that is edited
-            let json: MackeepConfig = try command.runJSON(
-                ["--json", "config"],
-                as: MackeepConfig.self
-            )
-            let url: URL = URL(fileURLWithPath: json.configFile)
-            let document: INIDocument = try INIFile.load(
-                from: url,
-                stripsInlineComments: true
-            )
-            return LoadResult(
-                applications: applications,
-                configURL: url,
-                configDocument: document,
-                customAppsDir: json.customAppsDir,
-                errorMessage: nil
-            )
-        } catch {
-            return LoadResult(
-                applications: [],
-                configURL: nil,
-                configDocument: nil,
-                customAppsDir: nil,
-                errorMessage: error.localizedDescription
-            )
-        }
-    }
-
-    /// Take what was read from Mackeep.
-    ///
-    /// - Parameter result: What was read.
-    private func apply(_ result: LoadResult) {
-        if let message: String = result.errorMessage {
-            presentedError = AppError(
-                title: L10n.string("error.load.title"),
-                message: message
-            )
-            return
-        }
-
-        applications = result.applications
-        customAppsDir = result.customAppsDir
-        if let url: URL = result.configURL, let document: INIDocument = result.configDocument {
-            setConfig(MainConfig(url: url, document: document))
-        }
-        sizeTask?.cancel()
-        sizes = [:]
-    }
-
-    /// Estimate only the selected application, never the entire catalog.
-    func estimateSize(for application: MackeepApplication) {
-        guard sizes[application.name] == nil else { return }
-        sizeTask?.cancel()
-        sizeTask = Task {
-            let worker = Task.detached(priority: .utility) {
-                var size = 0
-                var seen: Set<URL> = []
-                for (paths, isXDG) in [(application.files, false), (application.xdgFiles, true)] {
-                    for path in paths where path.exists {
-                        if Task.isCancelled { return 0 }
-                        let url = EditorPath.absoluteURL(of: path.path, isXDG: isXDG)
-                            .standardizedFileURL
-                        if seen.insert(url).inserted { size += Self.size(of: url) }
-                    }
-                }
-                return size
-            }
-            let size = await withTaskCancellationHandler {
-                await worker.value
-            } onCancel: {
-                worker.cancel()
-            }
-            if !Task.isCancelled { sizes[application.name] = size }
-        }
-    }
-
-    /// The size of a file or of a directory.
-    ///
-    /// - Parameter url: The path of the file.
-    /// - Returns: The size in bytes.
-    nonisolated static func size(of url: URL) -> Int {
-        let manager: FileManager = .default
-        var isDirectory: ObjCBool = false
-        guard manager.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
-            return 0
-        }
-        guard isDirectory.boolValue else {
-            let attributes: [FileAttributeKey: Any] =
-                (try? manager.attributesOfItem(
-                    atPath: url.path
-                )) ?? [:]
-            return (attributes[.size] as? Int) ?? 0
-        }
-
-        var size: Int = 0
-        guard
-            let enumerator: FileManager.DirectoryEnumerator = manager.enumerator(
-                at: url,
-                includingPropertiesForKeys: [.fileSizeKey],
-                options: []
-            )
-        else {
-            return 0
-        }
-        for case let file as URL in enumerator {
-            if Task.isCancelled { break }
-            let attributes: [FileAttributeKey: Any] =
-                (try? manager.attributesOfItem(
-                    atPath: file.path
-                )) ?? [:]
-            size += (attributes[.size] as? Int) ?? 0
-        }
-        return size
-    }
 }

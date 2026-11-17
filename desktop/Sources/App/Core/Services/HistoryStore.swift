@@ -114,16 +114,17 @@ final class HistoryStore {
         return Array(records.sorted { $0.date > $1.date }.prefix(Self.maximumRuns))
     }
 
+    private static func isMissingFile(_ error: CocoaError) -> Bool {
+        error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile
+    }
+
     private func loadDesktopHistory() throws -> [RunRecord] {
         do {
             try validateFile()
             let data = try Data(contentsOf: url)
             return try Self.decoder.decode([RunRecord].self, from: data)
                 .sorted { $0.date > $1.date }
-        } catch let error as CocoaError
-            where
-            error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile
-        {
+        } catch let error as CocoaError where Self.isMissingFile(error) {
             return []
         }
     }
@@ -190,10 +191,7 @@ final class HistoryStore {
                 $0.pathExtension == "json"
                     && UUID(uuidString: $0.deletingPathExtension().lastPathComponent) != nil
             }
-        } catch let error as CocoaError
-            where
-            error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile
-        {
+        } catch let error as CocoaError where Self.isMissingFile(error) {
             return []
         }
     }

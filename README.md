@@ -5,11 +5,16 @@
 [![ty](https://github.com/Joynik/mackeep/actions/workflows/ty.yaml/badge.svg)](https://github.com/Joynik/mackeep/actions/workflows/ty.yaml)
 [![License](https://img.shields.io/github/license/Joynik/mackeep.svg)](LICENSE)
 
-Back up and restore application settings on macOS and Linux. Mackeep copies selected files into a
-storage folder; Dropbox, iCloud, or another sync client can transfer that folder between machines.
+Back up and restore application settings and project files on macOS and Linux. Mackeep copies
+selected files into a storage folder; Dropbox, iCloud, or another sync client can transfer that
+folder between machines.
 
 The native macOS desktop application edits the same configuration and runs operations through the
 CLI. Backups are manual snapshots, not continuous sync.
+
+Enable the optional **Projects** tab in desktop Settings to manage an independent project list. Each
+project uses its own root folder, relative paths, and exclusions. Disabling the feature keeps its
+definitions and backups. See [Projects](doc/README.md#projects) for configuration and CLI usage.
 
 ## Quickstart
 
@@ -82,6 +87,8 @@ not merge their contents.
 | --- | --- |
 | `mackeep-cli list` | List supported application identifiers |
 | `mackeep-cli show git` | Show an application's configured paths and exclusions |
+| `mackeep-cli projects list` | List independent project definitions |
+| `mackeep-cli projects backup [UUID]` | Back up selected projects or one project |
 | `mackeep-cli config` | Show active configuration and storage |
 | `mackeep-cli backup [application]` | Copy local settings into storage |
 | `mackeep-cli backup [application] --summary` | Show a compact backup result |

@@ -278,9 +278,8 @@ final class ApplicationSearchModelTests: XCTestCase {
         _ model: ApplicationSearchModel, containing expected: URL? = nil
     ) async throws {
         for _ in 0..<200 {
-            if !model.isSearching,
-                expected == nil || model.results.contains(where: { $0.url == expected })
-            {
+            let found = expected == nil || model.results.contains(where: { $0.url == expected })
+            if !model.isSearching, found {
                 break
             }
             try await Task.sleep(for: .milliseconds(10))

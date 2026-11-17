@@ -156,46 +156,7 @@ struct ExclusionsEditorView: View {
         ) {
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(children(of: path.url), id: \.self) { child in
-                    let relative = pattern(of: child, in: path)
-                    let reason = matcher.reason(for: relative, isDirectory: child.hasDirectoryPath)
-                    let remaining = GlobMatcher(
-                        patterns: globalPatterns + patterns.filter { $0 != relative })
-                    let inherited = remaining.matches(relative, isDirectory: child.hasDirectoryPath)
-                    HStack(spacing: 8) {
-                        Toggle(
-                            "",
-                            isOn: Binding(
-                                get: { reason == nil },
-                                set: { isChecked in
-                                    if isChecked {
-                                        removePattern(of: child, in: path)
-                                    } else {
-                                        addPattern(of: child, in: path)
-                                    }
-                                }
-                            )
-                        )
-                        .labelsHidden()
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
-                        .disabled(reason != nil && inherited)
-                        .accessibilityLabel(child.lastPathComponent)
-                        .help(reason.map { L10n.string("editor.exclusions.rule", $0) } ?? "")
-
-                        Image(systemName: child.hasDirectoryPath ? "folder" : "doc")
-                            .foregroundStyle(.secondary)
-
-                        VStack(alignment: .leading) {
-                            Text(child.lastPathComponent).font(.callout)
-                            if let reason {
-                                Text(reason).font(.caption.monospaced()).foregroundStyle(.secondary)
-                            }
-                        }
-
-                        Spacer(minLength: 0)
-                    }
-                    // The files of the list are on the left of the block.
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    folderChild(child, path: path, matcher: matcher)
                 }
             }
             .padding(.vertical, 8)
@@ -215,6 +176,50 @@ struct ExclusionsEditorView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    @ViewBuilder
+    private func folderChild(_ child: URL, path: EditorPath, matcher: GlobMatcher) -> some View {
+        let relative = pattern(of: child, in: path)
+        let reason = matcher.reason(for: relative, isDirectory: child.hasDirectoryPath)
+        let remaining = GlobMatcher(
+            patterns: globalPatterns + patterns.filter { $0 != relative })
+        let inherited = remaining.matches(relative, isDirectory: child.hasDirectoryPath)
+        HStack(spacing: 8) {
+            Toggle(
+                "",
+                isOn: Binding(
+                    get: { reason == nil },
+                    set: { isChecked in
+                        if isChecked {
+                            removePattern(of: child, in: path)
+                        } else {
+                            addPattern(of: child, in: path)
+                        }
+                    }
+                )
+            )
+            .labelsHidden()
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+            .disabled(reason != nil && inherited)
+            .accessibilityLabel(child.lastPathComponent)
+            .help(reason.map { L10n.string("editor.exclusions.rule", $0) } ?? "")
+
+            Image(systemName: child.hasDirectoryPath ? "folder" : "doc")
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading) {
+                Text(child.lastPathComponent).font(.callout)
+                if let reason {
+                    Text(reason).font(.caption.monospaced()).foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        // The files of the list are on the left of the block.
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// The children of a folder.

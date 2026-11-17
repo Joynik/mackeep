@@ -129,8 +129,10 @@ final class MackeepModelsTests: XCTestCase {
     func testTheEventsAreDecoded() throws {
         let lines: [String] = [
             #"{"schema_version": 4, "event": "start", "app": "demo", "action": "backup"}"#,
-            #"{"schema_version": 4, "event": "file", "app": "demo", "action": "copy", "src": "/a", "dst": "/b", "size_bytes": 3}"#,
-            #"{"schema_version": 4, "event": "done", "app": "demo", "action": "backup", "files": 1, "bytes": 3, "skipped": 0}"#,
+            #"{"schema_version": 4, "event": "file", "app": "demo", "action": "copy","#
+                + #" "src": "/a", "dst": "/b", "size_bytes": 3}"#,
+            #"{"schema_version": 4, "event": "done", "app": "demo", "action": "backup","#
+                + #" "files": 1, "bytes": 3, "skipped": 0}"#
         ]
         let decoder: JSONDecoder = JSONDecoder()
         var events: [MackeepEvent] = []

@@ -39,6 +39,8 @@ struct AppFieldStyle: TextFieldStyle {
     /// The height of the field.
     static let height: CGFloat = AppControl.height
 
+    // TextFieldStyle requires this protocol witness name.
+    // swiftlint:disable:next identifier_name
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
             .textFieldStyle(.plain)

@@ -35,9 +35,9 @@ final class ApplicationEditorModelTests: XCTestCase {
         """
 
     /// Write a config file and return the editor.
-    private func makeEditor(_ text: String = ApplicationEditorModelTests.config)
-        throws -> (ApplicationEditorModel, URL)
-    {
+    private func makeEditor(
+        _ text: String = ApplicationEditorModelTests.config
+    ) throws -> (ApplicationEditorModel, URL) {
         let url: URL = directory.appendingPathComponent("test-app.cfg")
         try text.write(to: url, atomically: true, encoding: .utf8)
         let document: INIDocument = try INIFile.load(from: url)

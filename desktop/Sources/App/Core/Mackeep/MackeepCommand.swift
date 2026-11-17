@@ -41,7 +41,7 @@ struct MackeepCommand: Sendable {
         "/usr/bin",
         "/bin",
         "/usr/sbin",
-        "/sbin",
+        "/sbin"
     ]
 
     /// Create a command.
@@ -61,7 +61,6 @@ struct MackeepCommand: Sendable {
                 ?? (home == EditorPath.homeDirectory.path
                     ? EditorPath.xdgDirectory.path
                     : URL(fileURLWithPath: home).appendingPathComponent(".config").path)
-                ,
         ]
     }
 
@@ -79,7 +78,7 @@ struct MackeepCommand: Sendable {
     /// - Parameter arguments: The arguments of the command.
     /// - Returns: The output of the command.
     func run(_ arguments: [String]) throws -> String {
-        let result: (output: String, error: String, code: Int32) = try execute(arguments)
+        let result = try execute(arguments)
         try checkStatus(result)
         return result.output
     }
@@ -126,9 +125,7 @@ struct MackeepCommand: Sendable {
     ) throws {
         var buffer = Data()
         var invalid: String?
-        var active: Set<String> = []
-        var completed = 0
-        var sawError = false
+        var progress = EventProgress()
         func consume(_ data: Data) {
             guard !data.isEmpty, invalid == nil else { return }
             do {
@@ -137,24 +134,7 @@ struct MackeepCommand: Sendable {
                     throw MackeepCommandError.invalidAnswer(
                         path: path, message: "Unsupported event schema")
                 }
-                switch event.event {
-                case "start":
-                    guard let app = event.app, active.insert(app).inserted else {
-                        throw MackeepCommandError.invalidAnswer(
-                            path: path, message: "Invalid application start")
-                    }
-                case "done":
-                    guard let app = event.app, active.remove(app) != nil else {
-                        throw MackeepCommandError.invalidAnswer(
-                            path: path, message: "Completion without start")
-                    }
-                    completed += 1
-                case "error": sawError = true
-                case "file", "skip": break
-                default:
-                    throw MackeepCommandError.invalidAnswer(
-                        path: path, message: "Unknown event: \(event.event)")
-                }
+                try progress.record(event, path: path)
                 onEvent(event)
             } catch {
                 struct Failure: Decodable { let error: MackeepError }
@@ -176,7 +156,7 @@ struct MackeepCommand: Sendable {
         }
         try checkStatus(result)
         if let invalid { throw MackeepCommandError.invalidAnswer(path: path, message: invalid) }
-        guard active.isEmpty, !sawError, completed > 0 || allowEmpty else {
+        guard progress.isSuccessful(allowEmpty: allowEmpty) else {
             throw MackeepCommandError.invalidAnswer(
                 path: path, message: "Missing successful completion")
         }
@@ -214,7 +194,7 @@ struct MackeepCommand: Sendable {
     private func execute(
         _ arguments: [String],
         onOutput: ((Data) -> Void)? = nil
-    ) throws -> (output: String, error: String, code: Int32) {
+    ) throws -> CommandOutput {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: path)
         process.arguments = arguments
@@ -249,13 +229,23 @@ struct MackeepCommand: Sendable {
         guard let text = String(data: data, encoding: .utf8) else {
             throw MackeepCommandError.invalidAnswer(path: path, message: "Output is not UTF-8")
         }
-        return (text, String(decoding: diagnostics.data, as: UTF8.self), process.terminationStatus)
+        return CommandOutput(
+            output: text,
+            error: String(data: diagnostics.data, encoding: .utf8)
+                ?? "Command diagnostics are not UTF-8.",
+            code: process.terminationStatus)
+    }
+
+    private struct CommandOutput {
+        let output: String
+        let error: String
+        let code: Int32
     }
 
     /// Read only after the dispatch group has synchronized the pipe reader.
     private final class PipeData: @unchecked Sendable { var data = Data() }
 
-    private func checkStatus(_ result: (output: String, error: String, code: Int32)) throws {
+    private func checkStatus(_ result: CommandOutput) throws {
         if result.code != 0 {
             throw MackeepCommandError.failed(
                 path: path, code: result.code,
@@ -278,4 +268,36 @@ struct MackeepCapabilities: Equatable {
 
     /// Whether the tool is recent enough for the application.
     var isSupported: Bool { supportsJSON && supportsExclusions }
+}
+
+/// Track protocol completion independently from pipe buffering.
+private struct EventProgress {
+    private var active: Set<String> = []
+    private var completed = 0
+    private var sawError = false
+
+    mutating func record(_ event: MackeepEvent, path: String) throws {
+        switch event.event {
+        case "start":
+            guard let app = event.app, active.insert(app).inserted else {
+                throw MackeepCommandError.invalidAnswer(
+                    path: path, message: "Invalid application start")
+            }
+        case "done":
+            guard let app = event.app, active.remove(app) != nil else {
+                throw MackeepCommandError.invalidAnswer(
+                    path: path, message: "Completion without start")
+            }
+            completed += 1
+        case "error": sawError = true
+        case "file", "skip": break
+        default:
+            throw MackeepCommandError.invalidAnswer(
+                path: path, message: "Unknown event: \(event.event)")
+        }
+    }
+
+    func isSuccessful(allowEmpty: Bool) -> Bool {
+        active.isEmpty && !sawError && (completed > 0 || allowEmpty)
+    }
 }

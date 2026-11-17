@@ -74,10 +74,10 @@ struct MackeepConfig: Codable, Equatable, Sendable {
     let errors: [String]?
 
     /// Missing on older CLI versions, which do not support this setting.
-    var allowExternalPaths: Bool? = nil
+    var allowExternalPaths: Bool?
     var projectsEnabled: Bool?
-    var storageConfigured: Bool? = nil
-    var supportsSafeCancellation: Bool? = nil
+    var storageConfigured: Bool?
+    var supportsSafeCancellation: Bool?
 
     enum CodingKeys: String, CodingKey {
         case allowExternalPaths = "allow_external_paths"
@@ -217,7 +217,7 @@ struct MackeepAction: Codable, Equatable, Identifiable, Sendable {
     let wouldOverwrite: Bool?
 
     /// Schema 4 explicitly marks stale paths that will be deleted.
-    var willRemove: Bool? = nil
+    var willRemove: Bool?
 
     var id: String { "\(app)|\(action)|\(src)" }
 
@@ -322,8 +322,8 @@ struct MackeepEvent: Codable, Equatable, Sendable {
 
     /// The message of an error event.
     let message: String?
-    var willRemove: Bool? = nil
-    var wouldOverwrite: Bool? = nil
+    var willRemove: Bool?
+    var wouldOverwrite: Bool?
 
     /// Share the table row format with dry-run actions.
     var actionRow: MackeepAction? {

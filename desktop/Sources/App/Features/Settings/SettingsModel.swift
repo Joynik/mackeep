@@ -68,7 +68,7 @@ final class SettingsModel {
 
     /// Whether the settings were already read.
     private var hasLoaded: Bool = false
-    private var savedValues: (StorageEngine, String, String, Bool, [String], Bool)?
+    private var savedValues: SavedValues?
 
     /// The main config file of Mackeep.
     private var mainConfig: MainConfig?
@@ -196,6 +196,16 @@ final class SettingsModel {
         let errorMessage: String?
     }
 
+    /// The values to restore when saving the configuration fails.
+    private struct SavedValues {
+        let engine: StorageEngine
+        let storagePath: String
+        let directory: String
+        let allowExternalPaths: Bool
+        let globalExclude: [String]
+        let projectsEnabled: Bool
+    }
+
     /// Read the configuration of Mackeep.
     ///
     /// - Parameter command: The command line tool of Mackeep.
@@ -271,9 +281,7 @@ final class SettingsModel {
         if let document: INIDocument = result.document {
             mainConfig = MainConfig(url: url, document: document)
         }
-        savedValues = (
-            engine, storagePath, directory, allowExternalPaths, globalExclude, projectsEnabled
-        )
+        savedValues = currentValues
     }
 
     /// Write the settings in the config file of Mackeep.
@@ -293,23 +301,30 @@ final class SettingsModel {
 
         do {
             try mainConfig.save()
-            savedValues = (
-                engine, storagePath, directory, allowExternalPaths, globalExclude, projectsEnabled
-            )
+            savedValues = currentValues
             resolvedBackupDirectory = ""
             storageIsConfigured = engine == .fileSystem ? !storagePath.isEmpty : engine.isAvailable
         } catch {
             if let savedValues {
-                (
-                    engine, storagePath, directory, allowExternalPaths, globalExclude,
-                    projectsEnabled
-                ) = savedValues
+                engine = savedValues.engine
+                storagePath = savedValues.storagePath
+                directory = savedValues.directory
+                allowExternalPaths = savedValues.allowExternalPaths
+                globalExclude = savedValues.globalExclude
+                projectsEnabled = savedValues.projectsEnabled
             }
             presentedError = AppError(
                 title: L10n.string("error.save.title"),
                 message: error.localizedDescription
             )
         }
+    }
+
+    private var currentValues: SavedValues {
+        SavedValues(
+            engine: engine, storagePath: storagePath, directory: directory,
+            allowExternalPaths: allowExternalPaths, globalExclude: globalExclude,
+            projectsEnabled: projectsEnabled)
     }
 
     /// Add a global exclusion rule.

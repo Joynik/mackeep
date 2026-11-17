@@ -5,7 +5,7 @@ import XCTest
 /// The tests of the settings of Mackeep.
 @MainActor
 final class SettingsModelTests: XCTestCase {
-    private var directory: URL!
+    var directory: URL!
     private var cancellations: [CommandCancellation] = []
 
     override func setUpWithError() throws {
@@ -24,7 +24,7 @@ final class SettingsModelTests: XCTestCase {
     }
 
     /// A fake tool that answers the configuration of Mackeep.
-    private func makeTool() throws -> MackeepCommand {
+    func makeTool() throws -> MackeepCommand {
         let url: URL = directory.appendingPathComponent("mackeep-cli")
         let script: String = """
             #!/bin/sh
@@ -43,7 +43,7 @@ final class SettingsModelTests: XCTestCase {
     }
 
     /// Write the answer of the tool and return the command.
-    private func makeTool(config: String) throws -> MackeepCommand {
+    func makeTool(config: String) throws -> MackeepCommand {
         var command: MackeepCommand = try makeTool()
         let path: URL = directory.appendingPathComponent("config.json")
         try config.write(to: path, atomically: true, encoding: .utf8)
@@ -52,7 +52,7 @@ final class SettingsModelTests: XCTestCase {
     }
 
     /// The answer of the tool with the given values.
-    private func makeConfig(
+    func makeConfig(
         engine: String = "file_system",
         path: String = "/Users/user/dotfiles",
         directory: String = "Mackeep",
@@ -104,7 +104,7 @@ final class SettingsModelTests: XCTestCase {
     }
 
     /// Wait for the model to finish the command it runs.
-    private func waitForTheSettings(_ model: SettingsModel) async throws {
+    func waitForTheSettings(_ model: SettingsModel) async throws {
         try await waitUntil("Settings loaded; error: \(String(describing: model.presentedError))") {
             !model.isLoading
         }
@@ -152,54 +152,6 @@ final class SettingsModelTests: XCTestCase {
         try await waitForTheSettings(model)
 
         XCTAssertEqual(model.customAppsDir, "/Users/user/.mackeep")
-    }
-
-    func testTheStorageIsWrittenInTheConfigFile() async throws {
-        let configURL: URL = directory.appendingPathComponent(".mackeep.cfg")
-        try "[storage]\nengine = file_system\npath = /Users/user/dotfiles\n".write(
-            to: configURL,
-            atomically: true,
-            encoding: .utf8
-        )
-
-        // The tool answers the config file, the model writes it
-        let command: MackeepCommand = try makeTool(
-            config: """
-                {
-                  "schema_version": 4,
-                  "version": "0.20.0",
-                  "config_file": "\(configURL.path)",
-                  "custom_apps_dir": "/Users/user/.mackeep",
-                  "custom_apps_dirs": ["/Users/user/.mackeep"],
-                  "storage": {
-                    "engine": "file_system",
-                    "path": "/Users/user/dotfiles",
-                    "directory": "Mackeep",
-                    "resolved_backup_dir": "/Users/user/dotfiles/Mackeep",
-                    "exists": true
-                  },
-                  "apps_to_sync": [],
-                  "apps_to_ignore": [],
-                  "global_exclude": [],
-                  "global_xdg_exclude": []
-                }
-                """)
-        let model: SettingsModel = SettingsModel(command: command, capabilities: nil)
-        model.load()
-        try await waitForTheSettings(model)
-
-        // The user changes the path of the storage and the name of the folder
-        model.storagePath = "/Users/user/other"
-        model.directory = "Backups"
-        model.addGlobalExclude("**/*.log")
-        model.save()
-
-        // The values are in the config file
-        let saved: MainConfig = try MainConfig.load(from: configURL)
-        XCTAssertEqual(saved.storageEngine, "file_system")
-        XCTAssertEqual(saved.storagePath, "/Users/user/other")
-        XCTAssertEqual(saved.storageDirectory, "Backups")
-        XCTAssertEqual(saved.globalExclude, ["**/*.log"])
     }
 
     func testTheBackupFolderIsTakenFromTheTool() async throws {
@@ -274,114 +226,4 @@ final class SettingsModelTests: XCTestCase {
                 )
         )
     }
-
-    func testTheStorageIsWritten() throws {
-        let configURL: URL = directory.appendingPathComponent(".mackeep.cfg")
-        try "[storage]\nengine = dropbox\n".write(
-            to: configURL,
-            atomically: true,
-            encoding: .utf8
-        )
-        let config: MainConfig = try MainConfig.load(from: configURL)
-
-        config.setStorage(
-            engine: "file_system",
-            path: "/Users/user/dotfiles",
-            directory: "Backups"
-        )
-        config.setGlobalExclude(["**/.DS_Store"])
-        try config.save()
-
-        let saved: MainConfig = try MainConfig.load(from: configURL)
-        XCTAssertEqual(saved.storageEngine, "file_system")
-        XCTAssertEqual(saved.storagePath, "/Users/user/dotfiles")
-        XCTAssertEqual(saved.storageDirectory, "Backups")
-        XCTAssertEqual(saved.globalExclude, ["**/.DS_Store"])
-    }
-    func testTheExternalPathPolicyIsRead() async throws {
-        let model = SettingsModel(
-            command: try makeConfig(allowExternalPaths: true), capabilities: nil)
-        model.load()
-        try await waitForTheSettings(model)
-        XCTAssertTrue(model.allowExternalPaths)
-        XCTAssertTrue(model.supportsExternalPaths)
-    }
-
-    func testUnconfiguredStorageDoesNotShowAnInventedBackupPath() async throws {
-        let model = SettingsModel(
-            command: try makeConfig(engine: "unconfigured", path: ""), capabilities: nil)
-        model.load()
-        try await waitForTheSettings(model)
-        XCTAssertEqual(model.engine, .unconfigured)
-        XCTAssertEqual(model.backupDirectory, "—")
-    }
-
-    func testOlderCLIRequiresCLIUpdateAndBlocksOperations() {
-        let model = SettingsModel(
-            command: nil,
-            capabilities: MackeepCapabilities(
-                version: "0.25.0", supportsJSON: true, supportsExclusions: true),
-            desktopVersion: "0.25.1")
-        XCTAssertFalse(model.isToolSupported)
-        XCTAssertThrowsError(try model.requireSupportedTool())
-        XCTAssertEqual(
-            model.toolCompatibilityMessage,
-            L10n.string("settings.tool.updateCLI", "0.25.1", "0.25.0"))
-    }
-
-    func testOlderDesktopRequiresDesktopUpdate() {
-        let model = SettingsModel(
-            command: nil,
-            capabilities: MackeepCapabilities(
-                version: "0.10.0", supportsJSON: true, supportsExclusions: true),
-            desktopVersion: "0.9.0")
-        XCTAssertFalse(model.isToolSupported)
-        XCTAssertEqual(
-            model.toolCompatibilityMessage,
-            L10n.string("settings.tool.updateDesktop", "0.9.0", "0.10.0"))
-    }
-
-    func testMatchingReleaseStillRequiresCompatibleJSON() {
-        let model = SettingsModel(
-            command: nil,
-            capabilities: MackeepCapabilities(
-                version: "0.25.1", supportsJSON: false, supportsExclusions: false),
-            desktopVersion: "0.25.1")
-        XCTAssertFalse(model.isToolSupported)
-        XCTAssertThrowsError(try model.requireSupportedTool())
-    }
-
-    func testRecheckAcceptsUpdatedCLIWithoutCallingConfigForWrongVersion() async throws {
-        let command = try makeConfig()
-        let version = directory.appendingPathComponent("version")
-        try "0.14.0".write(to: version, atomically: true, encoding: .utf8)
-        try """
-        #!/bin/sh
-        set -eu
-        printf '%s\\n' "$*" >> "$HOME/calls"
-        case "$1" in
-          --version) printf 'Mackeep %s\\n' "$(cat "$HOME/version")" ;;
-          --json) cat "$CONFIG" ;;
-          *) exit 64 ;;
-        esac
-        """.write(to: URL(fileURLWithPath: command.path), atomically: true, encoding: .utf8)
-        try FileManager.default.setAttributes(
-            [.posixPermissions: 0o755], ofItemAtPath: command.path)
-        let model = SettingsModel(command: command, capabilities: nil, desktopVersion: "0.15.1")
-        model.refreshToolCompatibility()
-        try await waitUntil("Initial compatibility check") { !model.isCheckingTool }
-        XCTAssertFalse(model.isToolSupported)
-        let calls = directory.appendingPathComponent("calls")
-        XCTAssertEqual(try String(contentsOf: calls, encoding: .utf8), "--version\n")
-
-        try "0.15.1".write(to: version, atomically: true, encoding: .utf8)
-        model.refreshToolCompatibility()
-        try await waitUntil("Updated CLI compatibility check") { !model.isCheckingTool }
-        XCTAssertTrue(model.isToolSupported)
-        XCTAssertNoThrow(try model.requireSupportedTool())
-        XCTAssertEqual(
-            try String(contentsOf: calls, encoding: .utf8),
-            "--version\n--version\n--json config\n")
-    }
-
 }

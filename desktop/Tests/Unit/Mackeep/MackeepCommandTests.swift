@@ -2,6 +2,16 @@ import XCTest
 
 @testable import MackeepDesktop
 
+private struct MackeepCommandAnswer: Decodable {
+    let schemaVersion: Int
+    let version: String
+
+    enum CodingKeys: String, CodingKey {
+        case schemaVersion = "schema_version"
+        case version
+    }
+}
+
 /// The tests of the command line tool of Mackeep.
 final class MackeepCommandTests: XCTestCase {
     private var directory: URL!
@@ -101,17 +111,8 @@ final class MackeepCommandTests: XCTestCase {
         )
         let command: MackeepCommand = MackeepCommand(path: path, home: "/tmp")
 
-        struct Answer: Decodable {
-            let schemaVersion: Int
-            let version: String
-
-            enum CodingKeys: String, CodingKey {
-                case schemaVersion = "schema_version"
-                case version
-            }
-        }
-
-        let answer: Answer = try command.runJSON(["--json", "config"], as: Answer.self)
+        let answer: MackeepCommandAnswer = try command.runJSON(
+            ["--json", "config"], as: MackeepCommandAnswer.self)
 
         XCTAssertEqual(answer.version, "1.2.3")
     }
@@ -220,7 +221,7 @@ final class MackeepCommandTests: XCTestCase {
     func testMalformedAndIncompleteStreamsAreRejected() throws {
         for text in [
             "not-json", "{\"schema_version\":4,\"event\":\"start\",\"app\":\"demo\"}",
-            "{\"schema_version\":99,\"event\":\"done\",\"app\":\"demo\"}",
+            "{\"schema_version\":99,\"event\":\"done\",\"app\":\"demo\"}"
         ] {
             let path = try makeTool("#!/bin/sh\nprintf '%s\\n' '\(text)'\n")
             XCTAssertThrowsError(try MackeepCommand(path: path).streamEvents([]) { _ in })
