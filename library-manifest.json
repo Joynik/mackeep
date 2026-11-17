@@ -190,7 +190,7 @@
     "gitkraken.cfg": "b2a4f272d6e383f30929229259dbd77f58dfe416cb9a28cf4b82101db63b188b",
     "gitup.cfg": "dc426c8ca281bbe664868613646a8e1570caf3fe6b70303346a8554c68dcc90f",
     "gmail-notifr.cfg": "016f0118ed5627147d4113bcacbf14ee2fa572bf941ccede0e424bae26d71a3c",
-    "gmailctl.cfg": "d870bfb3172472f868a6931306022a126086505eb86d5b4023f4aaaec0201769",
+    "gmailctl.cfg": "56571bb9e7469fbdfa2f68d358ec6ecfa71bc71a5c105acfd1e756fc015856a2",
     "gmvault.cfg": "fbf6df5fe74b7c79c07fc685143d823267c363116d373599c926a111f55e4d57",
     "gnu-stow.cfg": "78f07f9179cac8b2136f13ce39e39c7ead0d726e520c58c8b1b0e5ef7654543d",
     "gnupg.cfg": "077dd560eb6a6d58caa8051ebd782b78839cd93477259fc76489291ec94e5797",
@@ -1225,7 +1225,7 @@
     "zoxide.cfg": "zoxide",
     "zsh.cfg": "Zsh"
   },
-  "revision": "8d70353d80ec61482cbe86ec307df9b8c28e5171",
+  "revision": "26d48028db63fda2527c233c984b888d83ad56e8",
   "schema_version": 4,
   "version": 1
 }
