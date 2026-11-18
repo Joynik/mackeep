@@ -6,7 +6,7 @@
 .idea/
 
 # Mac
-.DS_Store/
+.DS_Store
 
 # ENV
 .env
@@ -23,19 +23,18 @@
 graphify-out/
 
 # Beads
-.beads
+.beads/
 .dolt/
 *.db
 .beads-credential-key
-.beads/proxieddb/
 *.gate.lock*
 
 # Agents settings
-.agents
-.codex
-.claude
-.pi
-.opencode
+.agents/
+.codex/
+.claude/
+.pi/
+.opencode/
 AGENTS.md
 **/AGENTS.md
 PROJECT.md
