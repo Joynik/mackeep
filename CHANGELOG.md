@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.26.4 — 2026-11-18
+
+### Fixed
+
+- Show the total size of selected project files and folders in project details.
+
 ## 0.26.3 — 2026-11-18
 
 ### Fixed

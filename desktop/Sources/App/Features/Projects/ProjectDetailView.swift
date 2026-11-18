@@ -6,6 +6,7 @@ struct ProjectDetailView: View {
     let onEdit: () -> Void
     let onCopy: () -> Void
     let onDelete: () -> Void
+    @State private var size = 0
 
     var body: some View {
         ScrollView {
@@ -16,6 +17,16 @@ struct ProjectDetailView: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)
+                    Label(
+                        L10n.string(
+                            "applications.size.label",
+                            ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
+                        ),
+                        systemImage: "internaldrive"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 4)
                 }
                 HStack(spacing: 8) {
                     Button(action: onEdit) {
@@ -56,6 +67,29 @@ struct ProjectDetailView: View {
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .task(id: [project.root] + project.files) { await estimateSize() }
+    }
+
+    private func estimateSize() async {
+        size = 0
+        let project = project
+        let worker = Task.detached(priority: .utility) {
+            let root = URL(fileURLWithPath: project.root, isDirectory: true)
+            let paths = Set(
+                project.files.map { root.appendingPathComponent($0).standardizedFileURL })
+            var total = 0
+            for path in paths {
+                if Task.isCancelled { return 0 }
+                total += ApplicationsModel.size(of: path)
+            }
+            return total
+        }
+        let total = await withTaskCancellationHandler {
+            await worker.value
+        } onCancel: {
+            worker.cancel()
+        }
+        if !Task.isCancelled { size = total }
     }
 
     private func resolvedPath(_ path: String) -> MackeepPath {
