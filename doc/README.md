@@ -314,14 +314,14 @@ not apply to projects. Nested symbolic links are copied as links, without traver
 
 Definitions are stored beside the selected main config, with `.projects.json` appended to its name
 (default: `~/.mackeep.cfg.projects.json`). Existing backups are stored in
-`<resolved_backup_dir>/Project/<UUID>/`, preserving the selected paths relative to the project root.
-Renaming a project keeps its UUID and existing backup location. Restore writes into the currently
-configured root. Deleting a definition keeps source files and snapshots. Back up the definitions
-file separately when moving configuration to another computer.
+`<resolved_backup_dir>/Project/<name>/`, preserving the selected paths relative to the project root.
+Renaming a project keeps its UUID; the next backup uses the new name. Restore writes into the
+currently configured root. Deleting a definition keeps source files and snapshots. Back up the
+definitions file separately when moving configuration to another computer.
 
 ```text
-Project root/src/code.py → Backup/Project/<UUID>/src/code.py
-Project root/src/code.py ← Backup/Project/<UUID>/src/code.py
+Project root/src/code.py → Backup/Project/<name>/src/code.py
+Project root/src/code.py ← Backup/Project/<name>/src/code.py
 ```
 
 Global `backup` and `restore` include checked projects only when `[projects] enabled = true`.

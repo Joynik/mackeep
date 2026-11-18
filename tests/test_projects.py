@@ -31,7 +31,7 @@ def test_project_backup_restore_preserves_exclusions(home, project):
     project["exclude"] = ["cache"]
     profile = ProjectProfile(Mackeep(), project, False, False)
     profile.copy_files_to_mackeep_folder()
-    backup = home / "storage/Mackeep/Project" / project["id"] / "src"
+    backup = home / "storage/Mackeep/Project" / project["name"] / "src"
     assert (backup / "code").read_text() == "original"
     assert not (backup / "cache").exists()
     (root / "src/code").write_text("changed")
@@ -106,7 +106,7 @@ def test_cli_crud_and_global_toggle(home, project, monkeypatch, capsys):
     code, events = cli(monkeypatch, capsys, "backup")
     assert code == 0
     assert events[-1]["event"] == "done"
-    backup = home / "storage/Mackeep/Project" / project["id"] / "src"
+    backup = home / "storage/Mackeep/Project" / project["name"] / "src"
     assert backup.read_text() == "original"
     config.write_text(config.read_text().replace("enabled = true", "enabled = false"))
     (root / "src").write_text("new")
@@ -151,7 +151,7 @@ def test_project_failure_retains_previous_snapshot(home, project, monkeypatch):
     monkeypatch.setattr(utils, "copy", fail)
     profile.copy_files_to_mackeep_folder()
     assert profile.failed
-    backup = home / "storage/Mackeep/Project" / project["id"] / "src"
+    backup = home / "storage/Mackeep/Project" / project["name"] / "src"
     assert backup.read_text() == "original"
     assert (root / "src").read_text() == "new"
 
@@ -182,8 +182,8 @@ def test_removed_project_entry_cleans_only_owned_backup(home, project):
     project["files"] = []
     ProjectProfile(Mackeep(), project, False, False).copy_files_to_mackeep_folder()
     base = home / "storage/Mackeep/Project"
-    assert not (base / project["id"] / "src").exists()
-    assert (base / other["id"] / "src").read_text() == "data"
+    assert not (base / project["name"] / "src").exists()
+    assert (base / other["name"] / "src").read_text() == "data"
 
 
 def test_nested_symlink_is_copied_without_traversal(home, project):
@@ -192,7 +192,7 @@ def test_nested_symlink_is_copied_without_traversal(home, project):
     (root / "src").mkdir()
     (root / "src/link").symlink_to(home, target_is_directory=True)
     ProjectProfile(Mackeep(), project, False, False).copy_files_to_mackeep_folder()
-    link = home / "storage/Mackeep/Project" / project["id"] / "src/link"
+    link = home / "storage/Mackeep/Project" / project["name"] / "src/link"
     assert link.is_symlink()
     assert link.readlink() == home
 
@@ -240,7 +240,7 @@ def test_project_commit_failure_rolls_back(home, project, monkeypatch):
     monkeypatch.setattr(os, "replace", fail_state)
     profile.copy_files_to_mackeep_folder()
     assert profile.failed
-    assert (home / "storage/Mackeep/Project" / project["id"] / "src").read_text() == "old"
+    assert (home / "storage/Mackeep/Project" / project["name"] / "src").read_text() == "old"
 
 
 def test_corrupt_store_does_not_overwrite_definitions(home, project):
@@ -300,7 +300,7 @@ def test_unchecked_project_is_excluded_from_global_backup(home, project, monkeyp
     assert not (home / "storage/Mackeep/Project").exists()
     code, _ = cli(monkeypatch, capsys, "projects", "backup", project["id"])
     assert code == 0
-    assert (home / "storage/Mackeep/Project" / project["id"] / "src").read_text() == "data"
+    assert (home / "storage/Mackeep/Project" / project["name"] / "src").read_text() == "data"
 
 
 def test_project_namespace_symlink_cannot_redirect_backup(home, project):
@@ -312,7 +312,23 @@ def test_project_namespace_symlink_cannot_redirect_backup(home, project):
     other = base / "other"
     other.mkdir()
     (other / "src").write_text("keep")
-    (base / project["id"]).symlink_to(other, target_is_directory=True)
+    (base / project["name"]).symlink_to(other, target_is_directory=True)
     with pytest.raises(ConfigError, match="symbolic link"):
         ProjectProfile(Mackeep(), project, False, False).copy_files_to_mackeep_folder()
     assert (other / "src").read_text() == "keep"
+
+
+@pytest.mark.parametrize("name", [".", "..", "../outside", "nested/name", "nested\\name"])
+def test_project_name_must_be_one_folder(project, name):
+    """Names cannot escape the project backup namespace."""
+    with pytest.raises(ConfigError, match="folder names"):
+        validate({**project, "name": name})
+
+
+def test_project_rename_uses_new_folder(home, project):
+    """The next backup follows a renamed project and retains its ownership identity."""
+    (Path(project["root"]) / "src").write_text("data")
+    ProjectProfile(Mackeep(), project, False, False).copy_files_to_mackeep_folder()
+    project["name"] = "Renamed"
+    ProjectProfile(Mackeep(), project, False, False).copy_files_to_mackeep_folder()
+    assert (home / "storage/Mackeep/Project/Renamed/src").read_text() == "data"

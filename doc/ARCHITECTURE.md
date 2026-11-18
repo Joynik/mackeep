@@ -189,7 +189,7 @@ local lock and atomic replacement. Invalid definitions fail instead of resetting
 `ProjectProfile` reuses `ApplicationProfile` staging, rollback, exclusions, permission restoration,
 and ownership cleanup. It overrides source mapping and preflight only. Project sources use their own
 absolute root and never inherit HOME/XDG restrictions or exclusions. The common ownership index uses
-`project:<UUID>` keys; project snapshots live in `Project/<UUID>/`. Application preflight protects
+`project:<UUID>` keys; project snapshots live in `Project/<name>/`. Application preflight protects
 this namespace when project definitions or snapshots exist.
 
 Global operations add enabled project profiles only when the config enables the feature. Named

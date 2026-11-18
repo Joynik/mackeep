@@ -90,6 +90,8 @@ def validate(value: Any) -> dict[str, Any]:
     root = value.get("root", "")
     if not isinstance(name, str) or not name.strip() or any(c in name for c in "\n\r\0"):
         raise ConfigError("A project name is required")
+    if name.strip() in {".", ".."} or any(c in name for c in "/\\"):
+        raise ConfigError("Project names must be valid folder names")
     if not isinstance(root, str) or not os.path.isabs(root) or "\0" in root:
         raise ConfigError("The project root must be an absolute path")
     files = value.get("files", [])
@@ -139,7 +141,7 @@ class ProjectProfile(ApplicationProfile):
                 os.path.join(
                     self.mackeep.mackeep_folder,
                     "Project",
-                    self.project["id"],
+                    self.project["name"],
                     filename,
                 )
             ),
@@ -150,8 +152,8 @@ class ProjectProfile(ApplicationProfile):
         root = self.project["root"]
         storage = self.mackeep.mackeep_folder
         validate_pair(root, storage)
-        namespace = os.path.join(storage, "Project", self.project["id"])
-        expected = os.path.join(os.path.realpath(storage), "Project", self.project["id"])
+        namespace = os.path.join(storage, "Project", self.project["name"])
+        expected = os.path.join(os.path.realpath(storage), "Project", self.project["name"])
         if os.path.realpath(namespace) != expected:
             raise ConfigError(f"Project backup namespace contains a symbolic link: {namespace}")
         for filename in self.files:

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.26.2 — 2026-11-18
+
+### Fixed
+
+- Use project names for backup folders instead of UUIDs.
+
 ## 0.26.1 — 2026-11-18
 
 ### Fixed
