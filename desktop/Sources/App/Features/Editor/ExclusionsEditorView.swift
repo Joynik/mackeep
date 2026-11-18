@@ -15,6 +15,7 @@ struct ExclusionsEditorView: View {
     /// Whether the rules are the XDG ones.
     let isXDG: Bool
     var globalPatterns: [String] = []
+    var projectRoot: URL?
     @State private var preview: [String] = []
 
     /// The mask written by hand.
@@ -136,7 +137,7 @@ struct ExclusionsEditorView: View {
     /// The rules of the exclusions are relative to it, the way the tool
     /// matches them.
     private var root: URL {
-        isXDG ? EditorPath.xdgDirectory : EditorPath.homeDirectory
+        projectRoot ?? (isXDG ? EditorPath.xdgDirectory : EditorPath.homeDirectory)
     }
 
     /// The tree of a folder of the application.
@@ -252,12 +253,21 @@ struct ExclusionsEditorView: View {
     /// The rules are relative to the root of the section, the way the tool
     /// matches them, so the full path of the file is written.
     private func pattern(of child: URL, in path: EditorPath) -> String {
-        EditorPath.relativePath(of: child, isXDG: isXDG)
+        if projectRoot != nil {
+            let prefix =
+                root.standardizedFileURL.path.hasSuffix("/")
+                ? root.standardizedFileURL.path : root.standardizedFileURL.path + "/"
+            return String(child.standardizedFileURL.path.dropFirst(prefix.count))
+        }
+        return EditorPath.relativePath(of: child, isXDG: isXDG)
     }
 
     /// Add the mask that is written by hand.
     private func addMask() {
-        let pattern: String = EditorPath.corrected(mask, isXDG: isXDG)
+        let pattern =
+            projectRoot == nil
+            ? EditorPath.corrected(mask, isXDG: isXDG)
+            : mask.trimmingCharacters(in: .whitespaces)
         guard !pattern.isEmpty, !patterns.contains(pattern) else { return }
         patterns.append(pattern)
         mask = ""

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.26.1 — 2026-11-18
+
+### Fixed
+
+- Match the Projects list and editor layout to Applications, including toolbar placement and the
+  settings toggle size.
+
 ## 0.26.0 — 2026-11-18
 
 ### Added

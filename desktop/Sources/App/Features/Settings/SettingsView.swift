@@ -29,13 +29,8 @@ struct SettingsView: View {
         Form {
             AppearanceSettingsSection(environment: environment)
                 .listRowInsets(rowInsets)
-            Section(L10n.string("section.projects.title")) {
-                Toggle(L10n.string("projects.settings.enabled"), isOn: $model.projectsEnabled)
-                    .onChange(of: model.projectsEnabled) { model.save() }
-                Text(L10n.string("projects.settings.help"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            ProjectsSettingsSection(model: model)
+                .listRowInsets(rowInsets)
             locations
                 .listRowInsets(rowInsets)
             ToolSettingsSection(model: model)

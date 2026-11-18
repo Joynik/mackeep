@@ -107,4 +107,17 @@ final class EditorPathTests: XCTestCase {
         )
     }
 
+    func testProjectPathsUseTheirOwnRootWithoutChangingApplicationPaths() {
+        let root = URL(fileURLWithPath: "/Volumes/Projects/Example", isDirectory: true)
+        XCTAssertEqual(
+            EditorPath(path: "src/config.json", projectRoot: root).url.path,
+            "/Volumes/Projects/Example/src/config.json")
+        XCTAssertEqual(
+            EditorPath(path: ".", projectRoot: root).url.standardizedFileURL.path,
+            root.path)
+        XCTAssertEqual(
+            EditorPath(path: "src/config.json").url.path,
+            EditorPath.homeDirectory.appendingPathComponent("src/config.json").path)
+    }
+
 }

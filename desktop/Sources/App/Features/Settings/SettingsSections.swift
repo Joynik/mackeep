@@ -103,3 +103,24 @@ struct AppearanceSettingsSection: View {
     }
 
 }
+
+/// The optional project list visibility.
+struct ProjectsSettingsSection: View {
+    @Bindable var model: SettingsModel
+
+    var body: some View {
+        Section(L10n.string("section.projects.title")) {
+            LabeledContent(L10n.string("projects.settings.enabled")) {
+                Toggle("", isOn: $model.projectsEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .accessibilityLabel(L10n.string("projects.settings.enabled"))
+                    .onChange(of: model.projectsEnabled) { model.save() }
+            }
+            Text(L10n.string("projects.settings.help"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}

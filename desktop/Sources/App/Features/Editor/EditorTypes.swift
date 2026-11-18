@@ -8,9 +8,13 @@ struct EditorPath: Identifiable, Equatable {
     /// Whether the path is an XDG one.
     var isXDG: Bool = false
 
+    /// Projects supply their own root; applications keep HOME/XDG resolution.
+    var projectRoot: URL?
+
     /// The absolute path of the file or of the folder.
     var url: URL {
-        EditorPath.absoluteURL(of: path, isXDG: isXDG)
+        if let projectRoot { return projectRoot.appendingPathComponent(path) }
+        return EditorPath.absoluteURL(of: path, isXDG: isXDG)
     }
 
     var id: String { "\(isXDG ? "xdg:" : "home:")\(path)" }
