@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.26.3 — 2026-11-18
+
+### Fixed
+
+- Show checked items as excluded in the application and project exclusion editors.
+- Distinguish files, folders, and missing paths with their icons in project details.
+
 ## 0.26.2 — 2026-11-18
 
 ### Fixed

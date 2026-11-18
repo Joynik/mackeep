@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The editor of the exclusion rules of an application.
 ///
-/// The folders of the application are shown as a tree: unchecking an item
+/// The folders of the application are shown as a tree: checking an item
 /// adds it to the exclusion rules. A mask can be written by hand, and the
 /// files it matches are shown.
 struct ExclusionsEditorView: View {
@@ -190,12 +190,12 @@ struct ExclusionsEditorView: View {
             Toggle(
                 "",
                 isOn: Binding(
-                    get: { reason == nil },
+                    get: { reason != nil },
                     set: { isChecked in
                         if isChecked {
-                            removePattern(of: child, in: path)
-                        } else {
                             addPattern(of: child, in: path)
+                        } else {
+                            removePattern(of: child, in: path)
                         }
                     }
                 )

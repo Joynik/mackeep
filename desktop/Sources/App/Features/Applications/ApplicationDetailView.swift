@@ -181,7 +181,7 @@ struct ApplicationDetailView: View {
 }
 
 /// A path of an application.
-private struct PathRow: View {
+struct PathRow: View {
     /// The path.
     let path: MackeepPath
 
