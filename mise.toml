@@ -21,11 +21,11 @@ PYTHON_BUILD_DIRECTORY = "{{ env.PYTHON_BUILD_DIRECTORY | default(value=vars.pyt
 [vars]
 project_root = "."  # Relative to mise.toml; absolute paths are also allowed.
 python_source = "."  # Relative to project_root; use "." for the project folder.
-swift_directory = "desktop"
-swift_backend = "xcode"
-xcode_project = "MackeepDesktop.xcodeproj"
-xcode_scheme = "MackeepDesktop"
-xcode_destination = "platform=macOS,arch=arm64"
+swift_directory = "."
+swift_backend = ""
+xcode_project = "xcode"
+xcode_scheme = ""
+xcode_destination = "platform=macOS"
 python_tests = "tests"  # Relative to project_root; absolute paths are also allowed.
 python_entrypoint = "main.py"  # Entry file, relative to project_root.
 python_build_directory = "dist"  # Output folder, relative to project_root.
@@ -288,3 +288,16 @@ printf '%s\n' "$output" | awk '
 )
 '''
 # kitflow:end task.check-deps
+
+# kitflow:begin task.env:local
+[tasks."env:local"]
+description = "Create .env from the example without replacing an existing file"
+run = '''
+set -eu
+if [ -e .env ] || [ -L .env ]; then
+    echo ".env already exists; edit it manually" >&2
+    exit 2
+fi
+(set -C; cat .env.example > .env)
+'''
+# kitflow:end task.env:local
