@@ -2,6 +2,8 @@
 
 import json
 import os
+import shutil
+import tempfile
 import uuid
 from pathlib import Path
 from typing import Any
@@ -13,7 +15,6 @@ from .jsonapi import SCHEMA_VERSION
 from .locking import storage_lock
 from .mackeep import Mackeep
 from .paths import inside, validate_pair
-from .transaction import Transaction
 
 PREFIX = "project:"
 
@@ -62,18 +63,23 @@ class ProjectStore:
                 projects = [old for old in projects if old["id"] != project["id"]]
                 projects.append(project)
 
-            def write(staged: str) -> None:
-                Path(staged).write_text(json.dumps(projects, indent=2) + "\n")
-
-            transaction = Transaction()
+            self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+            descriptor, temporary = tempfile.mkstemp(
+                prefix=".mackeep-projects-", dir=self.path.parent
+            )
             try:
-                transaction.prepare(
-                    str(self.path),
-                    write,
-                )
-                transaction.commit()
+                with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                    stream.write(json.dumps(projects, indent=2) + "\n")
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                if self.path.exists():
+                    backup = self.path.with_name(self.path.name + ".bak")
+                    if backup.is_symlink():
+                        raise ConfigError("The project settings backup cannot be a symlink")
+                    shutil.copy2(self.path, backup)
+                os.replace(temporary, self.path)
             finally:
-                transaction.close()
+                Path(temporary).unlink(missing_ok=True)
         return projects
 
 

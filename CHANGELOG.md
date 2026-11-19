@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.27.0 — 2026-11-19
+
+### Changed
+
+- Reconcile the whole backup folder after successful full backups, removing obsolete snapshots and
+  unindexed leftovers while preserving service data and protected projects.
+- Remove owned backup copies of source entries that no longer exist.
+
+### Fixed
+
+- Keep a previous-version copy of project settings and replace the live file atomically.
+- Preserve backups and report missing settings in normal, summary, and JSON backup output.
+
 ## 0.26.4 — 2026-11-18
 
 ### Fixed

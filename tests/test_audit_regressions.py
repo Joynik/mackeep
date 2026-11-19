@@ -422,7 +422,7 @@ def test_linking_a_missing_local_file_does_not_require_new_source(home):
     assert (home / "app").is_symlink()
 
 
-def test_first_index_keeps_shared_files_of_other_listed_apps(home):
+def test_full_backup_cleans_first_index_files_owned_only_by_ignored_apps(home):
     backup = setup(home)
     definition(home, "app/shared", name="other")
     config = home / ".mackeep.cfg"
@@ -433,7 +433,7 @@ def test_first_index_keeps_shared_files_of_other_listed_apps(home):
     (backup / "app").mkdir(parents=True)
     (backup / "app/shared").write_text("other application's backup")
     assert run("--force", "backup") == 0
-    assert (backup / "app/shared").read_text() == "other application's backup"
+    assert not (backup / "app/shared").exists()
 
 
 def test_declining_cleanup_does_not_remove_old_entries(home):
@@ -446,13 +446,13 @@ def test_declining_cleanup_does_not_remove_old_entries(home):
     assert (backup / "app").read_text() == "old"
 
 
-def test_missing_source_keeps_backup_when_its_rule_still_exists(home):
+def test_missing_source_removes_its_owned_backup(home):
     backup = setup(home)
     (home / "app").write_text("saved configuration")
     assert run("--force", "backup") == 0
     (home / "app").unlink()
     assert run("--force", "backup") == 0
-    assert (backup / "app").read_text() == "saved configuration"
+    assert not (backup / "app").exists()
 
 
 def test_excluding_entire_legacy_entry_removes_only_its_owned_files(home):

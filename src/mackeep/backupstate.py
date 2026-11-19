@@ -111,10 +111,18 @@ class BackupState:
                     break
                 parent = os.path.dirname(parent)
 
-    def save(self, transaction: Transaction, app: str, paths: set[str]) -> None:
+    def save(
+        self,
+        transaction: Transaction,
+        app: str | None,
+        paths: set[str],
+        *,
+        remove: frozenset[str] = frozenset(),
+    ) -> None:
         """Stage the updated index in the same transaction as the data."""
-        owners = dict(self.owners)
-        owners[app] = sorted(paths)
+        owners = {owner: leaves for owner, leaves in self.owners.items() if owner not in remove}
+        if app is not None:
+            owners[app] = sorted(paths)
         leaves = {path for entries in owners.values() for path in entries}
         retained = set(leaves)
         for leaf in leaves:

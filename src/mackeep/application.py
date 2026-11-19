@@ -71,6 +71,7 @@ class ApplicationProfile:
         self._restoring = False
         self._active_source = ""
         self.ownership_baseline: dict[str, list[str]] = {}
+        self.backup_paths: set[str] = set()
 
         # The XDG config home, relative to the home directory
         self._xdg_home: str | None = self._get_xdg_home()
@@ -765,9 +766,12 @@ class ApplicationProfile:
         if any(inside(backup, root) for root in changed_roots):
             return
         source, destination = (backup, local) if self._restoring else (local, backup)
-        if not os.path.exists(source):
+        try:
+            os.stat(source)
+        except FileNotFoundError:
             self._report("skip_missing", src=source, dst=destination)
-            if state:
+            config_path = self.mackeep.config.config_path
+            if state and os.path.abspath(source) in {config_path, config_path + ".projects.json"}:
                 state.keep_previous(self.app_name, backup, owned)
             return
         if self.is_excluded(filename, os.path.isdir(source)):
@@ -908,6 +912,8 @@ class ApplicationProfile:
                 self._pending_events = None
                 for event, details in events:
                     self._report(event, **details)
+            if state:
+                self.backup_paths = owned.copy()
         except OSError as exc:
             self.failed = True
             self._pending_events = None

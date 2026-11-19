@@ -316,8 +316,10 @@ Definitions are stored beside the selected main config, with `.projects.json` ap
 (default: `~/.mackeep.cfg.projects.json`). Existing backups are stored in
 `<resolved_backup_dir>/Project/<name>/`, preserving the selected paths relative to the project root.
 Renaming a project keeps its UUID; the next backup uses the new name. Restore writes into the
-currently configured root. Deleting a definition keeps source files and snapshots. Back up the
-definitions file separately when moving configuration to another computer.
+currently configured root. Deleting a definition keeps source files. Its snapshot remains until the
+next successful full backup with projects enabled. Each settings update keeps the previous JSON in
+`.projects.json.bak` and replaces the live file atomically. Back up the definitions file separately
+when moving configuration to another computer.
 
 ```text
 Project root/src/code.py → Backup/Project/<name>/src/code.py
@@ -328,6 +330,24 @@ Global `backup` and `restore` include checked projects only when `[projects] ena
 Disabling projects retains all definitions and snapshots. Named application operations stay limited
 to that application. The `Project` backup namespace is protected against application entries that
 would overwrite existing project data.
+
+After a successful full backup, MacKeep scans the entire backup folder and compares its contents
+with the current copied-file manifest. Files, links, and folders outside that manifest are removed,
+including leftovers missing from the previous index. The backup folder is exclusively for MacKeep;
+unrelated files placed there will also be removed. Shared files remain while an active owner needs
+them. Named backups do not sweep the whole storage. MacKeep preserves its state directory and
+transaction workspaces containing recovery data. Disabling the Projects feature retains the entire
+Project folder; disabling an individual project removes its snapshot on the next successful full
+backup with the feature enabled. Dry-run previews cleanup using the planned copied-file manifest
+without writing data or the index. Cleanup failures report an error and roll back staged deletions.
+
+If the main config is missing, backup stops without recreating it or deleting existing snapshots. If
+project snapshots exist but the project settings file is missing, applications can still be backed
+up, but project cleanup is skipped and the operation reports an error. An existing empty project
+list is an intentional empty selection. Both normal and `--summary` output show a settings issue
+count and a warning after the table; terminals display the warning in red. JSON output reports an
+error instead of a successful operation. Copy failures prevent post-backup cleanup. Settings changed
+during a backup also prevent post-backup cleanup; retry after saving settings.
 
 ```bash
 mackeep-cli --json projects list

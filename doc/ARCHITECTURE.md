@@ -87,10 +87,18 @@ restore reapplies recorded modes. Its update is staged with the data. This suppo
 definition removes a path, while retaining other applications' leaves in shared directories.
 
 On the first indexed backup, the CLI infers a baseline from current definitions, including
-configured ignored apps. Historical paths removed before that index cannot be inferred. A
-still-listed missing source or declined replacement retains its previous ownership. Malformed index
-data refuses cleanup with a configuration error. Cleanup failures warn and leave the relevant
-workspace for manual inspection; workspaces retained after failed rollback are never purged.
+configured ignored apps. Historical paths removed before that index cannot be inferred. A declined
+replacement retains its previous ownership. Missing source entries release their owned copies, while
+access errors fail the operation. After a successful full backup, `cleanup.py` scans the storage
+without following symbolic links and compares all entries with the current retained leaf paths and
+their ancestors. It removes entire obsolete subtrees, including unindexed leftovers, in one
+transaction with the updated index. The state directory and transaction recovery workspaces remain
+protected. Dry-run uses each profile's planned ownership rather than its previous index entries.
+Disabled Projects retain their entire group folder. Missing configuration files protect the affected
+snapshots and produce an error; settings changed during copying prevent post-backup cleanup.
+Malformed index data refuses cleanup with a configuration error. Cleanup failures warn and leave the
+relevant workspace for manual inspection; workspaces retained after failed rollback are never
+purged.
 
 HOME and XDG matchers are separate. Global rules precede per-app rules; the last match wins within a
 matcher. `Matcher` searches backward for that rule, but still checks ancestor exclusion because
@@ -184,7 +192,10 @@ the standard library and `docopt-ng`.
 
 `ProjectStore` keeps the project list outside the application definition catalog. A config-scoped
 JSON file stores UUIDs, names, roots, selections, and exclusion patterns. Definition writes use a
-local lock and atomic replacement. Invalid definitions fail instead of resetting the list.
+local lock, a persistent `.bak` copy, and one atomic replacement of the live file. The live path is
+never moved away before the replacement is ready. Invalid definitions fail instead of resetting the
+list. An absent project file with existing snapshots is reported as missing settings rather than
+treated as an intentional empty selection during backup.
 
 `ProjectProfile` reuses `ApplicationProfile` staging, rollback, exclusions, permission restoration,
 and ownership cleanup. It overrides source mapping and preflight only. Project sources use their own

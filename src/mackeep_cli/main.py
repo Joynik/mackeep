@@ -92,6 +92,7 @@ import sys
 import traceback
 from contextlib import redirect_stdout
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, TextIO
 
 from docopt import docopt
@@ -100,6 +101,7 @@ from mackeep import jsonapi, library, utils
 from mackeep.application import ApplicationProfile, Reporter
 from mackeep.appsdb import ApplicationsDatabase
 from mackeep.backupstate import BackupState
+from mackeep.cleanup import cleanup_backup
 from mackeep.config import ConfigError
 from mackeep.constants import (
     MACKEEP_APP_NAME,
@@ -113,7 +115,7 @@ from mackeep.migrate import run as run_migration
 from mackeep.paths import validate_pair
 from mackeep.projects import PREFIX, ProjectProfile, ProjectStore
 from mackeep_cli.history import OperationHistory
-from mackeep_cli.summary import BackupSummary, SummaryOutput
+from mackeep_cli.summary import BackupSummary, SummaryOutput, report_problem
 
 # The ANSI escape codes used to color the error messages
 ANSI_CODES = re.compile(r"\033\[[0-9;]*m")
@@ -166,6 +168,7 @@ class _Context:
     detail: str = "entries"
     max_actions: int = 5000
     replace_backup: bool = True
+    full_backup: bool = False
 
 
 def _print_app_header(app_name: str, verbose: bool) -> None:
@@ -374,7 +377,13 @@ def _perform_action(
 ) -> None:
     """Run an ApplicationProfile method over each app, in sorted order."""
     profiles = _preflight(ctx, app_names, action)
+    settings_before: dict[Path, bytes | None] = {}
     if action == "copy_files_to_mackeep_folder":
+        project_store = ProjectStore(ctx.mckp.config.config_path)
+        settings_before = {
+            path: path.read_bytes() if path.is_file() else None
+            for path in (Path(ctx.mckp.config.config_path), project_store.path)
+        }
         state = BackupState(ctx.mckp.mackeep_folder)
         if not state.owners:
             baseline = _ownership_baseline(ctx, app_names)
@@ -400,8 +409,74 @@ def _perform_action(
         failed = failed or app.failed
     if _cancel_requested:
         sys.exit(CANCELLED_EXIT_CODE)
+    if action == "copy_files_to_mackeep_folder":
+        planned_owners = (
+            {name: profile.backup_paths for name, profile in profiles} if ctx.dry_run else None
+        )
+        failed = _finish_backup(ctx, app_names, failed, settings_before, planned_owners)
     if failed:
         sys.exit("One or more applications could not be copied.")
+
+
+def _finish_backup(
+    ctx: _Context,
+    app_names: set[str],
+    failed: bool,
+    settings_before: dict[Path, bytes | None],
+    planned_owners: dict[str, set[str]] | None,
+) -> bool:
+    """Check settings again before removing obsolete indexed snapshots."""
+    problems: list[str] = []
+    project_store = ProjectStore(ctx.mckp.config.config_path)
+    config_missing = not Path(ctx.mckp.config.config_path).is_file()
+    settings_changed = False
+    state = BackupState(ctx.mckp.mackeep_folder)
+    if not project_store.path.is_file() and (
+        any(owner.startswith(PREFIX) for owner in state.owners)
+        or Path(ctx.mckp.mackeep_folder, "Project").exists()
+        or any(
+            os.path.relpath(project_store.path, Path.home()) in paths
+            for paths in state.owners.values()
+        )
+    ):
+        problems.append(
+            f"Missing settings file: {project_store.path}. Project backups retained; project cleanup skipped."
+        )
+    if config_missing:
+        problems.append(
+            f"Missing settings file: {ctx.mckp.config.config_path}. Backup cleanup skipped."
+        )
+    problems.extend(ctx.mckp.config.errors)
+    for path, previous in settings_before.items():
+        if path.is_file() and path.read_bytes() != previous:
+            settings_changed = True
+            problems.append(
+                f"Settings changed during backup: {path}. Backup cleanup skipped; retry the backup."
+            )
+    if ctx.full_backup and not (failed or config_missing or settings_changed or problems):
+        try:
+            cleanup_backup(
+                ctx.mckp.mackeep_folder,
+                app_names,
+                preserve_projects=bool(problems) or not ctx.mckp.config.projects_enabled,
+                dry_run=ctx.dry_run,
+                replace_backup=ctx.replace_backup,
+                reporter=ctx.reporter,
+                planned_owners=planned_owners,
+            )
+        except (OSError, ConfigError, ValueError) as exc:
+            failed = True
+            if ctx.reporter:
+                ctx.reporter("error", {"app": "Backup cleanup", "message": str(exc)})
+            print(f"Error: Backup cleanup: {exc}", file=sys.stderr)
+    for message in problems:
+        if ctx.reporter:
+            ctx.reporter("error", {"app": "Settings", "message": message})
+        if not isinstance(ctx.reporter, BackupSummary):
+            report_problem(message)
+    if problems:
+        sys.exit("Backup incomplete: settings need attention; previous backups retained.")
+    return failed
 
 
 def _cmd_list(app_db: ApplicationsDatabase) -> None:
@@ -462,6 +537,7 @@ def _cmd_backup(args: dict[str, Any], ctx: _Context) -> None:
     # Resolve and validate the target apps before the env check, so an
     # unknown application name fails cleanly without creating the Mackeep
     # folder or prompting first.
+    ctx.full_backup = not args["<application>"]
     app_names = _resolve_apps(args["<application>"], ctx, include_projects=True)
     _preflight(ctx, app_names, "copy_files_to_mackeep_folder")
     if ctx.dry_run:
@@ -471,12 +547,16 @@ def _cmd_backup(args: dict[str, Any], ctx: _Context) -> None:
         ctx.mckp.check_for_usable_backup_env()
 
     # Create a backup of the files of each application
-    if args.get("--summary"):
+    if not ctx.dry_run:
         summary = BackupSummary()
         ctx.reporter = summary
-        ctx.verbose = False
+        if args.get("--summary"):
+            ctx.verbose = False
         try:
-            with SummaryOutput() as output, redirect_stdout(output):
+            if args.get("--summary"):
+                with SummaryOutput() as output, redirect_stdout(output):
+                    _run_action(ctx, app_names, "copy_files_to_mackeep_folder")
+            else:
                 _run_action(ctx, app_names, "copy_files_to_mackeep_folder")
         finally:
             summary.display()
@@ -621,6 +701,7 @@ class _JsonReporter:
         self.total_bytes = 0
         self.total_files = 0
         self._last_copy: tuple[Any, Any, Any] | None = None
+        self._stale_paths: set[str] = set()
 
     def summary(self, app_names: set[str]) -> dict[str, Any]:
         """Return complete totals while retaining only a bounded action list."""
@@ -644,6 +725,11 @@ class _JsonReporter:
             payload (dict): The details of the operation.
         """
         if self.collect:
+            if action == "stale_in_backup":
+                path = str(payload.get("dst", ""))
+                if path in self._stale_paths:
+                    return
+                self._stale_paths.add(path)
             if action not in {"start", "done"}:
                 self.total_actions += 1
                 self.counts[action] = self.counts.get(action, 0) + 1
@@ -879,6 +965,7 @@ def _cmd_json(args: dict[str, Any], ctx: _Context, stream: TextIO) -> None:
             raise _UnsupportedApplicationError(f"Unsupported application: {app_name}")
         jsonapi.emit(_app_json(ctx.app_db, app_name), stream)
     elif args["backup"] or args["restore"]:
+        ctx.full_backup = bool(args["backup"] and not args["<application>"])
         action: str = (
             "copy_files_to_mackeep_folder" if args["backup"] else "copy_files_from_mackeep_folder"
         )
@@ -947,6 +1034,7 @@ def _cmd_projects(args: dict[str, Any], ctx: _Context, stream: TextIO | None) ->
         for project in projects
         if (project["id"] == identifier if identifier else project["enabled"])
     }
+    ctx.full_backup = False
     if identifier and not selected:
         raise ConfigError(f"Unknown project: {identifier}")
     action = "copy_files_to_mackeep_folder" if args["backup"] else "copy_files_from_mackeep_folder"
@@ -1151,7 +1239,14 @@ def _run(args: dict[str, Any], json_mode: bool, stdout: TextIO) -> None:
         return
 
     config_file: str | None = args.get("--config-file")
-    mckp = Mackeep(config_file, read_only=bool(args["--dry-run"]))
+    mckp = Mackeep(config_file, read_only=bool(args["--dry-run"] or args["backup"]))
+    if args["backup"] and not Path(mckp.config.config_path).is_file():
+        message = f"Missing settings file: {mckp.config.config_path}. Backup and cleanup skipped; previous backups retained."
+        if not json_mode:
+            summary = BackupSummary()
+            summary("error", {"app": "Settings", "message": message})
+            summary.display()
+        sys.exit(message)
     ctx = _Context(
         config_file=config_file,
         mckp=mckp,
